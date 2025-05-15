@@ -1,0 +1,48 @@
+.navbar {
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 56px; /* Controlled navbar height */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  background: linear-gradient(to right, #1f2937, #111827);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 9999; /* Boost z-index */
+}
+
+.navbar h1 {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: bold;
+  line-height: 56px; /* Align with navbar height */
+}
+
+.navbar a {
+  color: #ffffff;
+  margin-left: 1rem;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+  color: #facc15;
+}
+
+.navbar .flex {
+  display: flex;
+  align-items: center;
+}
+
+/* FINALIZED LOGO STYLE */
+.navbar-logo {
+  height: 72px;            /* Significantly larger than navbar */
+  width: auto;
+  margin-right: 1rem;
+  position: relative;
+  top: 12px;               /* Strong overhang */
+}
