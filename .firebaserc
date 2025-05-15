@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "sermon-notes-assistant"
-  }
+  },
+  "targets": {
+    "sermon-notes-assistant": {
+      "hosting": {
+        "default": [
+          "sermon-notes-assistant"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

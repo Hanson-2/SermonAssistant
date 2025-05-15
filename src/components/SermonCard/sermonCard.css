@@ -1,0 +1,73 @@
+.sermon-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  transition: transform 0.2s ease-in-out;
+  aspect-ratio: 1 / 1; /* Ensures cards are square */
+  width: 100%;
+  height: 100%;
+}
+
+.sermon-card:hover {
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .sermon-card {
+    padding: 0.5rem;
+  }
+}
+
+.sermon-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sermon-card-fallback {
+  color: #ffffff;
+  text-align: center;
+  padding: 1rem;
+}
+
+.sermon-card-title {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.sermon-card-date {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.sermon-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 150px; /* Adjust as needed */
+  width: 100%;
+  border: 2px solid red; /* Debug border */
+  background-color: rgba(0, 0, 255, 0.1); /* Debug background */
+  min-height: 150px;
+  min-width: 150px;
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sermon-card:hover {
+  background-color: #374151;
+}
+
+.sermon-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
