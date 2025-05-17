@@ -7,7 +7,17 @@ export default function NewExpositoryPage() {
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    // Load existing images for selection
+    import("../services/firebaseService").then(({ listExpositoryImages }) => {
+      listExpositoryImages().then(setExistingImages).finally(() => setLoading(false));
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,55 +45,74 @@ export default function NewExpositoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-8">
-      <h1 className="text-white text-2xl mb-4">Create New Expository</h1>
-      <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded shadow-md w-full max-w-md">
-        <label className="block text-white mb-2">
-          Title
+    <div className="edit-expository-layout">
+      <div className="form-and-preview-stack">
+        <form className="edit-expository-form" onSubmit={handleSubmit}>
+          <label htmlFor="titleInput" className="form-label">Expository Title</label>
           <input
+            id="titleInput"
             type="text"
+            placeholder="Enter Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full mt-1 p-2 rounded bg-gray-700 text-white"
+            className="form-input"
           />
-        </label>
 
-        <label className="block text-white mb-2 mt-4">
-          Description
+          <label htmlFor="descriptionInput" className="form-label">Expository Description</label>
           <textarea
+            id="descriptionInput"
+            placeholder="Enter Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full mt-1 p-2 rounded bg-gray-700 text-white"
+            className="form-textarea"
           />
-        </label>
 
-        <label className="block text-white mb-4 mt-4">
-          Date
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full mt-1 p-2 rounded bg-gray-700 text-white"
-          />
-        </label>
+          <div className="file-upload-wrapper">
+            <label htmlFor="imageUpload" className="form-label">Upload Image</label>
+            <input
+              id="imageUpload"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              className="file-upload-input"
+            />
+          </div>
 
-        <label className="block text-white mb-4 mt-4">
-          Cover Image (Optional)
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-            className="w-full mt-1 p-2 rounded bg-gray-700 text-white"
-          />
-        </label>
+          <button type="submit" className="primary-action-button">Save Expository</button>
+        </form>
 
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
-        >
-          Save Expository
-        </button>
-      </form>
+        <div className="large-preview-panel">
+          {imageFile ? (
+            <img src={URL.createObjectURL(imageFile)} alt="Selected preview" className="preview-image-large" />
+          ) : (
+            <div className="empty-preview-placeholder">No Image Selected</div>
+          )}
+        </div>
+      </div>
+      <div className="vertical-divider blue-divider"></div>
+      <div className="existing-images-column">
+        <h3>Select Existing Image</h3>
+        <div className="horizontal-divider"></div>
+        <div className="inner-divider-line blue-divider"></div>
+        <div className="thumbnails-grid shifted-thumbnails">
+          {existingImages.map((url, index) => (
+            <img
+              key={index}
+              src={url}
+              alt={`Thumbnail ${index + 1}`}
+              className="thumbnail-item"
+              onClick={() => {
+                setImageFile(null);
+                // Set preview to selected image
+                (document.getElementById('imageUpload') as HTMLInputElement).value = '';
+                // Optionally, you could store the selected URL in a separate state if needed
+                // For now, just show in preview and use for submission
+                (document.getElementById('previewImage') as HTMLImageElement).src = url;
+              }}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

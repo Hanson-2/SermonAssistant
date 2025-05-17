@@ -1,106 +1,111 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { archiveSermon, deleteSermon } from "../../services/firebaseService";
+import { archiveSermon, deleteSermon, createSermon } from "../../services/firebaseService";
+import "./sermonCard.css";
 
 export type Sermon = {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
   date: string;
   imageUrl?: string;
-  imageOnly?: boolean;
-  isArchived?: boolean;
 };
 
 type SermonCardProps = {
   sermon: Sermon;
+  className?: string;
 };
 
-export default function SermonCard({ sermon }: SermonCardProps) {
+const SermonCard: React.FC<SermonCardProps> = ({ sermon, className }) => {
+  const [showOverlay, setShowOverlay] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const [showMenu, setShowMenu] = useState(false);
 
-  if (!sermon || !sermon.id || !sermon.title) return null;
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setShowOverlay(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const handleCardClick = () => navigate(`/expository/${sermon.id}`);
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/edit-expository/${sermon.id}`);
-  };
-
-  const handleArchiveClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    await archiveSermon(sermon.id);
-    alert("Expository archived.");
-    setShowMenu(false);
-    window.location.reload();
-  };
-
-  const handleDeleteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm("Are you sure you want to delete this expository?")) {
-      await deleteSermon(sermon.id);
-      alert("Expository deleted.");
-      setShowMenu(false);
-      window.location.reload();
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button') {
+      setShowOverlay(!showOverlay);
     }
   };
 
+  const handleView = () => navigate(`/expository/${sermon.id}`);
+  const handleEdit = () => navigate(`/edit-expository/${sermon.id}`);
+  const handleDuplicate = async () => {
+    const { id, ...copyData } = sermon;
+    await createSermon(copyData);
+    alert("Duplicated successfully.");
+  };
+  const handleArchive = async () => {
+    await archiveSermon(sermon.id.toString());
+    alert("Archived successfully.");
+  };
+  const handleDelete = async () => {
+    if (confirm("Are you sure you want to delete this sermon?")) {
+      await deleteSermon(sermon.id.toString());
+      alert("Deleted successfully.");
+    }
+  };
+
+  const actionButtons = [
+    { label: "View", action: handleView },
+    { label: "Edit", action: handleEdit },
+    { label: "Duplicate", action: handleDuplicate },
+    { label: "Archive", action: handleArchive },
+    { label: "Delete", action: handleDelete },
+  ];
+
   return (
-    <div
-      onClick={handleCardClick}
-      className="relative w-full h-full rounded-lg overflow-hidden shadow-lg cursor-pointer text-left"
-    >
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-black opacity-80 z-0" />
-
-      {/* Three-Dot Menu */}
-      <div className="absolute top-2 right-2 z-20">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowMenu(!showMenu);
-          }}
-          className="text-white bg-black bg-opacity-50 rounded-full px-2"
-        >
-          ⋯
-        </button>
-        {showMenu && (
-          <div className="absolute right-0 mt-2 bg-gray-800 text-white rounded shadow">
-            <button
-              onClick={handleEditClick}
-              className="block px-4 py-2 hover:bg-gray-700 w-full text-left"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleArchiveClick}
-              className="block px-4 py-2 hover:bg-gray-700 w-full text-left"
-            >
-              Archive
-            </button>
-            <button
-              onClick={handleDeleteClick}
-              className="block px-4 py-2 hover:bg-red-700 w-full text-left"
-            >
-              Delete
-            </button>
-          </div>
-        )}
-      </div>
-
-      {sermon.imageOnly && sermon.imageUrl ? (
-        <img
-          src={sermon.imageUrl}
-          alt={sermon.title}
-          className="absolute inset-0 w-full h-full object-cover z-0"
-        />
-      ) : (
-        <div className="relative p-4 z-10 flex flex-col h-full justify-between">
-          <h2 className="text-xl font-bold text-white">{sermon.title}</h2>
-          <p className="text-sm text-gray-300 mt-2">{sermon.description}</p>
-          <p className="text-xs text-gray-400 mt-4">{sermon.date}</p>
+    <div className="sermon-card-wrapper">
+      <div
+        ref={cardRef}
+        onClick={handleCardClick}
+        className={`sermon-card relative ${className || ''}`}
+        style={{
+          backgroundImage: sermon.imageUrl
+            ? `url(${sermon.imageUrl})`
+            : 'linear-gradient(90deg, #1e293b 0%, #374151 100%)',
+        }}
+      >
+        <div className="sermon-card-gradient-overlay"></div>
+        <div className="sermon-card-content">
+          <h2 className="sermon-card-title">{sermon.title}</h2>
+          <p>{sermon.description}</p>
+          <p className="sermon-card-date">{sermon.date}</p>
         </div>
-      )}
+
+        {/* Slide-In Flyout */}
+        <div
+          className={`absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-black/80 to-transparent flex items-center justify-end px-4 transition-transform duration-300 ${
+            showOverlay ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="flyout-actions flex gap-2 p-2">
+            {actionButtons.map(({ label, action }) => (
+              <button
+                key={label}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  action();
+                }}
+                className={`sermon-action-button sermon-action-${label.toLowerCase()}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default SermonCard;

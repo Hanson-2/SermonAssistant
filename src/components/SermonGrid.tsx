@@ -1,59 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SermonCard from "./SermonCard/SermonCard";
 
 export type Sermon = {
   id: string | number;
   title: string;
+  description: string;
   date: string;
   imageUrl?: string;
 };
 
 type SermonGridProps = {
   sermons: Sermon[];
-  itemsPerPage?: number;
-  columns?: number;
 };
 
-const SermonGrid: React.FC<SermonGridProps> = ({ sermons, itemsPerPage = 9, columns = 3 }) => {
+const ITEMS_PER_BATCH = 5;
+
+const SermonGrid: React.FC<SermonGridProps> = ({ sermons }) => {
+  const [visibleSermons, setVisibleSermons] = useState<Sermon[]>([]);
   const [page, setPage] = useState(1);
-  const start = (page - 1) * itemsPerPage;
-  const paginatedSermons = sermons.slice(start, start + itemsPerPage);
-  const totalPages = Math.ceil(sermons.length / itemsPerPage);
+  const observerRef = useRef<HTMLDivElement | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const gridColsMap: Record<number, string> = {
-    1: "grid-cols-1",
-    2: "grid-cols-2",
-    3: "grid-cols-3",
-    4: "grid-cols-4",
-    5: "grid-cols-5",
-    6: "grid-cols-6",
-  };
+  useEffect(() => {
+    setVisibleSermons(sermons.slice(0, ITEMS_PER_BATCH));
+    setPage(1);
+  }, [sermons]);
 
-  const gridColsClass = gridColsMap[columns] || "grid-cols-3";
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && visibleSermons.length < sermons.length) {
+        setIsLoading(true);
+        setTimeout(() => {
+          const nextPage = page + 1;
+          const nextBatch = sermons.slice(0, nextPage * ITEMS_PER_BATCH);
+          setVisibleSermons(nextBatch);
+          setPage(nextPage);
+          setIsLoading(false);
+        }, 500);
+      }
+    });
+
+    if (observerRef.current) observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [page, sermons, visibleSermons]);
 
   return (
-    <div className="sermon-grid-container max-w-screen-lg mx-auto px-6 py-8">
-      <div className={`grid grid-cols-3 gap-8 w-full`}>
-        {paginatedSermons.map((sermon) => (
-          <SermonCard key={sermon.id} sermon={sermon} className="h-full w-full" />
-        ))}
-      </div>
+    <div className="flex flex-col items-center w-full px-4 md:px-8 py-8 space-y-6 max-w-screen-xl mx-auto">
+      {visibleSermons.map((sermon) => (
+        <div key={sermon.id} className="w-full">
+          <SermonCard sermon={sermon} className="w-full" />
+        </div>
+      ))}
 
-      <div className="flex justify-between mt-8">
-        <button
-          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          className="bg-gray-700 text-white px-4 py-2 rounded disabled:opacity-50"
-          disabled={page === 1}
-        >
-          Previous
-        </button>
-        <button
-          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-          className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
-          disabled={page === totalPages}
-        >
-          Next
-        </button>
+      <div ref={observerRef} className="h-10 flex justify-center items-center w-full">
+        {isLoading && <span className="text-white">Loading more...</span>}
+        {!isLoading && visibleSermons.length >= sermons.length && (
+          <span className="text-gray-400">No more items</span>
+        )}
       </div>
     </div>
   );

@@ -1,73 +1,134 @@
+.sermon-card-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
 .sermon-card {
+  position: relative; /* Ensure positioning context for flyout */
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-  background-color: #fff;
-  transition: transform 0.2s ease-in-out;
-  aspect-ratio: 1 / 1; /* Ensures cards are square */
+  justify-content: flex-start;
+  align-items: flex-start;
+  height: 150px;
   width: 100%;
-  height: 100%;
-}
-
-.sermon-card:hover {
-  transform: scale(1.05);
-}
-
-@media (max-width: 768px) {
-  .sermon-card {
-    padding: 0.5rem;
-  }
-}
-
-.sermon-card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.sermon-card-fallback {
-  color: #ffffff;
-  text-align: center;
+  min-height: 150px;
+  border-radius: .25rem;
+  color: white;
+  cursor: pointer;
+  box-sizing: border-box;
   padding: 1rem;
+  border: 2px solid;
+  border-image: linear-gradient(90deg, #910000, #ff9800) 1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.sermon-card-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+  z-index: 1;
+}
+
+.sermon-card-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: white;
 }
 
 .sermon-card-title {
-  font-size: 1rem;
+  font-size: 2rem;
   font-weight: bold;
 }
 
 .sermon-card-date {
   font-size: 0.875rem;
   margin-top: 0.25rem;
+  color: #919292;
 }
 
-.sermon-card {
+.flyout-actions {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 150px; /* Adjust as needed */
-  width: 100%;
-  border: 2px solid red; /* Debug border */
-  background-color: rgba(0, 0, 255, 0.1); /* Debug background */
-  min-height: 150px;
-  min-width: 150px;
-  border-radius: 0.5rem;
+  gap: 0.5rem;
+  transform: translateX(40%);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+.translate-x-0 .flyout-actions {
+  transform: none !important;
+}
+
+@media (max-width: 640px) {
+  .flyout-actions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .flyout-actions button {
+    padding: 0.15rem 0.25rem;
+    font-size: 0.65rem;
+  }
+}
+
+/* Sermon Card Action Button Styles */
+.sermon-action-button {
   color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  background: linear-gradient(to right, #9a3412, #c2410c); /* Rusty Orange Gradient */
 }
 
-.sermon-card:hover {
-  background-color: #374151;
+.sermon-action-button:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
 }
 
-.sermon-card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 0.5rem;
+@media (max-width: 640px) {
+  .flyout-actions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .sermon-action-button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.65rem;
+    width: 100%;
+  }
+}
+
+/* Optional: Specific Variants if Needed Later */
+.sermon-action-view,
+.sermon-action-edit,
+.sermon-action-duplicate,
+.sermon-action-archive,
+.sermon-action-delete {
+  background: linear-gradient(to right, #9a3412, #c2410c); /* Consistent Rusty Orange */
+}
+
+.with-image {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.with-gradient {
+  background: linear-gradient(90deg, #1e293b 0%, #374151 100%);
+}
+
+/* Dynamically set background image using data attribute */
+.with-image[data-bg-url] {
+  background-image: var(--sermon-bg-url);
 }

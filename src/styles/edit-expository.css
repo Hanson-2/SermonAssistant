@@ -1,0 +1,312 @@
+/* Layout */
+.edit-expository-layout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 3rem;
+  padding: 4rem;
+}
+
+/* Stack Form + Preview Vertically */
+.form-and-preview-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2rem;
+}
+
+/* Form Container (Yellow Box Size) */
+.edit-expository-form {
+  width: 500px;
+  padding: 2rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.418);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Large Image Preview Area (Orange Box Size) */
+.large-preview-panel {
+  width: 500px;
+  aspect-ratio: 4 / 1;
+  border: 2px dashed #555;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Preview Panel */
+.preview-panel {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 300px;
+  min-height: 300px;
+  border: 2px dashed #555;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.preview-image-large {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Preview Image */
+.preview-image {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Divider */
+.vertical-divider {
+  width: 1px;
+  background: linear-gradient(to bottom, #444 0%, #222 100%);
+  opacity: 0.4;
+  border-radius: 2px;
+  height: auto;
+}
+
+/* Blue Divider Styling */
+.vertical-divider,
+.inner-divider-line {
+  width: 1px;
+  background: linear-gradient(to bottom, #444 0%, #222 100%);
+  opacity: 0.4;
+  border-radius: 2px;
+  height: 100%;
+}
+
+.blue-divider {
+  background-color: #3498db;
+}
+
+/* Improved Divider Line */
+.divider-line {
+  margin: 2rem 0;
+  width: 100%;
+  border: none;
+  border-top: 1px solid #555;
+  opacity: 0.5;
+}
+
+/* Right Column Styling */
+.existing-images-column {
+  flex: 0 0 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left: 2rem;
+  position: relative;
+  background: none;
+  margin-right: -2rem; /* Cut right margin in half */
+}
+
+.existing-images-column h3 {
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Horizontal divider under heading */
+.existing-images-column .horizontal-divider {
+  width: 80%;
+  height: 3px;
+  background: linear-gradient(to right, #ffffff 0%, #222 100%);
+  opacity: 0.8;
+  margin: 0 0 1rem 0;
+  border-radius: 2px;
+  align-self: center;
+}
+
+/* Vertical divider on left boundary */
+.existing-images-column::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 400%;
+  background: linear-gradient(to bottom, #ffffff 0%, #222 100%);
+  opacity: 0.8;
+  border-radius: 2px;
+  z-index: 0;
+}
+
+/* Existing Images Panel */
+.existing-images-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2.5rem;
+  width: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+  background: transparent;
+  animation: fadeInSlide 0.4s ease-out;
+}
+
+/* Thumbnails Grid */
+.thumbnails-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.thumbnails-grid.shifted-thumbnails {
+  margin-top: 0.5rem;
+  width: 90%;
+}
+
+/* Thumbnail Items */
+.thumbnail-item {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #444;
+  transition: transform 0.2s, box-shadow 0.2s;
+  max-width: 64px; /* Slightly larger thumbnail */
+  max-height: 64px;
+}
+
+.thumbnail-item:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: #888;
+}
+
+/* Animations */
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Enhanced Form Labels */
+.form-label {
+  font-weight: bold;
+  color: #ddd;
+  margin-bottom: 0.25rem;
+}
+
+/* Enhanced Inputs and Textareas */
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  margin-bottom: 1rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: #888;
+  box-shadow: 0 0 5px rgba(136, 136, 136, 0.5);
+  outline: none;
+}
+
+/* Enhanced File Upload */
+.file-upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.file-upload-input {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.file-upload-input:hover {
+  border-color: #888;
+  box-shadow: 0 0 5px rgba(136, 136, 136, 0.5);
+}
+
+/* Enhanced Save Button */
+.primary-action-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #1f2937, #374151,#1f2937);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.primary-action-button:hover {
+  background: linear-gradient(135deg, #374151, #1f2937);
+  transform: scale(1.02);
+}
+
+@media (max-width: 768px) {
+  /* Stack Everything Vertically */
+  .edit-expository-layout {
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+
+  /* Expand Form and Preview to Full Width */
+  .form-and-preview-stack {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .edit-expository-form,
+  .large-preview-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Hide Dividers on Mobile */
+  .vertical-divider,
+  .inner-divider-line,
+  .horizontal-divider {
+    display: none;
+  }
+
+  /* Existing Images Column Full Width on Mobile */
+  .existing-images-column {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 0;
+    margin-top: 2rem;
+  }
+
+  /* Center Thumbnails on Mobile */
+  .thumbnails-grid {
+    justify-content: center;
+  }
+}

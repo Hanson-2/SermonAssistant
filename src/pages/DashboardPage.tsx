@@ -9,7 +9,11 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const viewArchived = searchParams.get("view") === "archived";
+  // Filter panel state
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [includeArchived, setIncludeArchived] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("");
 
   useEffect(() => {
     fetchSermons().then((data: any[]) => {
@@ -27,33 +31,25 @@ export default function DashboardPage() {
     });
   }, []);
 
-  const filteredSermons = sermons.filter((sermon) =>
-    viewArchived ? sermon.isArchived : !sermon.isArchived
-  );
+  function applyFilters(sermons: Sermon[]): Sermon[] {
+    return sermons.filter((sermon) => {
+      const sermonDate = new Date(sermon.date);
+      const matchesArchived = includeArchived || !(sermon as any).isArchived;
+      const matchesMonth = selectedMonth ? sermonDate.getMonth() + 1 === Number(selectedMonth) : true;
+      const matchesYear = selectedYear ? sermonDate.getFullYear() === Number(selectedYear) : true;
+      return matchesArchived && matchesMonth && matchesYear;
+    });
+  }
 
-  const toggleView = () => {
-    setSearchParams({ view: viewArchived ? "active" : "archived" });
-  };
-
-  if (filteredSermons.length === 0) {
+  if (applyFilters(sermons).length === 0) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-white mb-4">
-          {viewArchived ? "No archived expositories available." : "No expositories available yet."}
-        </h1>
-        {!viewArchived && (
-          <button
-            onClick={() => navigate("/new-sermon")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-          >
-            Create Your First Expository
-          </button>
-        )}
+        <h1 className="text-white mb-4">No expositories available yet.</h1>
         <button
-          onClick={toggleView}
-          className="mt-4 bg-gray-700 text-white px-4 py-2 rounded"
+          onClick={() => navigate("/new-sermon")}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
         >
-          {viewArchived ? "View Active" : "View Archived"}
+          Create Your First Expository
         </button>
       </div>
     );
@@ -61,19 +57,78 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-start p-8">
-      <div className="flex justify-between w-full max-w-7xl mb-4">
-        <h1 className="text-white text-xl">
-          {viewArchived ? "Archived Expositories" : "Active Expositories"}
-        </h1>
+      <div className="flex justify-between items-center px-6 pt-8 pb-4 w-full max-w-7xl relative">
+        <div className="h-6" /> {/* svgpacer keeps height where title was */}
         <button
-          onClick={toggleView}
-          className="bg-gray-700 text-white px-4 py-2 rounded"
+          onClick={() => setFilterOpen(true)}
+          className="p-2 rounded hover:bg-gray-700 transition"
+          aria-label="Filter"
         >
-          {viewArchived ? "View Active" : "View Archived"}
+          <svg
+            className="w-6 h-6 text-white"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 13.414V20a1 1 0 01-1.447.894l-4-2A1 1 0 019 18v-4.586L3.293 6.707A1 1 0 013 6V4z"
+            />
+          </svg>
         </button>
+        {filterOpen && (
+          <div className="absolute top-20 right-6 bg-gray-800 text-white rounded-lg shadow-lg p-4 z-50 w-72">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold">Filter Options</h3>
+              <button onClick={() => setFilterOpen(false)}>&times;</button>
+            </div>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={includeArchived}
+                  onChange={(e) => setIncludeArchived(e.target.checked)}
+                  className="accent-blue-600"
+                />
+                <span>Include Archived</span>
+              </label>
+              <label htmlFor="month-select" className="block">Month</label>
+              <select
+                id="month-select"
+                title="Month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="w-full bg-gray-700 text-white p-2 rounded"
+              >
+                <option value="">Month</option>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i} value={i + 1}>
+                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+              <label htmlFor="year-select" className="block">Year</label>
+              <select
+                id="year-select"
+                title="Year"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="w-full bg-gray-700 text-white p-2 rounded"
+              >
+                <option value="">Year</option>
+                {[2023, 2024, 2025].map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
-
-      <SermonGrid sermons={filteredSermons} />
+      <SermonGrid sermons={applyFilters(sermons)} />
     </div>
   );
 }
