@@ -1,3 +1,4 @@
-# Add serviceAccountKey.json and .env to .gitignore
+# Add secret files to ignore
 serviceAccountKey.json
 .env
+exported_files.txt

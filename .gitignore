@@ -15,6 +15,7 @@ dist-ssr
 # Firebase/Secrets
 .env
 scripts/serviceAccountKey.json
+scripts/exported_files.txt
 
 # Editor directories and files
 .vscode/*
