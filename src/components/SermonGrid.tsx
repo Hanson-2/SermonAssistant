@@ -55,7 +55,12 @@ const SermonGrid: React.FC<SermonGridProps> = ({ sermons }) => {
       <div ref={observerRef} className="h-10 flex justify-center items-center w-full">
         {isLoading && <span className="text-white">Loading more...</span>}
         {!isLoading && visibleSermons.length >= sermons.length && (
-          <span className="text-gray-400">No more items</span>
+          <button
+            className="add-expository-btn"
+            onClick={() => window.location.href = '/new-sermon'}
+          >
+            + Add New Expository
+          </button>
         )}
       </div>
     </div>

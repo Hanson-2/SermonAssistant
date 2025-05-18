@@ -9,6 +9,7 @@ export type Sermon = {
   description: string;
   date: string;
   imageUrl?: string;
+  notes?: Record<string, string>; // Add notes field for multi-slide support
 };
 
 type SermonCardProps = {
