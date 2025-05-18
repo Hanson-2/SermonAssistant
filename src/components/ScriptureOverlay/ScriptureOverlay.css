@@ -7,15 +7,35 @@
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.2s;
-  backdrop-filter: blur(6px) saturate(1.2);
   -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  backdrop-filter: blur(6px) saturate(1.2);
   pointer-events: auto;
 }
 
+/* Make it wider and center content */
+.scripture-overlay-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(30,41,59,0.92) 100%);
+  color: #f3f4f6;
+  border-radius: 1.1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 2px 16px #facc1533;
+  width: 90vw;
+  max-width: 1200px; /* wider max */
+  max-height: 90vh;
+  padding: 2rem 2.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  border: 1.5px solid rgba(250, 204, 21, 0.18);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+/* Keep mini-card banner untouched */
 .expository-scripture-banner {
   position: sticky;
   top: 5.5rem;
-  z-index: 40; /* Higher than page content, lower than overlay */
+  z-index: 40;
   background: rgba(17, 23, 39, 0.9);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -26,24 +46,7 @@
   border-bottom: 1px solid #374151;
 }
 
-.scripture-overlay-card {
-  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(30,41,59,0.92) 100%);
-  color: #f3f4f6;
-  border-radius: 1.1rem;
-  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.22), 0 2px 16px 0 #facc1533;
-  max-width: 36rem;
-  width: 96vw;
-  max-height: 92vh;
-  padding: 2.2rem 2rem 1.5rem 2rem;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-  border: 1.5px solid rgba(250,204,21,0.18);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-}
-
+/* Header with gradient text */
 .scripture-overlay-header {
   display: flex;
   align-items: center;
@@ -77,6 +80,7 @@
   transform: scale(1.15) rotate(8deg);
 }
 
+/* Scrollable content */
 .scripture-overlay-content {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -87,6 +91,7 @@
   text-shadow: 0 1px 2px #0005;
 }
 
+/* Preformatted scripture block */
 .scripture-overlay-content pre {
   white-space: pre-wrap;
   font-family: 'Fira Mono', 'Consolas', monospace;
@@ -99,6 +104,22 @@
   line-height: 1.9;
 }
 
+/* Verse block spacing */
+.scripture-verse-block {
+  display: block;
+  margin-bottom: 1.2rem;
+  line-height: 1.8;
+}
+
+/* Reference highlighting */
+.scripture-verse-ref {
+  text-decoration: underline;
+  font-weight: bold;
+  color: #facc15;
+  margin-right: 0.5rem;
+}
+
+/* Fade-in Animation */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

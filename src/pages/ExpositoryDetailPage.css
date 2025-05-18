@@ -1,5 +1,9 @@
-/* ExpositoryDetailPage.css */
+/******************************
+ * ExpositoryDetailPage.css   *
+ * Cleaned and deduplicated   *
+ ******************************/
 
+/* --- Expository Detail Root --- */
 .expository-detail-root {
   min-height: 100vh;
   background: #111827;
@@ -7,6 +11,7 @@
   padding: 0;
 }
 
+/* --- Sticky Banner --- */
 .expository-sticky-banner {
   position: sticky;
   top: 3rem;
@@ -47,6 +52,7 @@
   text-overflow: ellipsis;
 }
 
+/* --- Scripture Mini-Card Banner --- */
 .expository-scripture-banner {
   position: sticky;
   top: 5.5rem;
@@ -59,31 +65,30 @@
   overflow-x: auto;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #374151;
+  border-bottom: 1px solid #e0e0e0;
   margin-top: 0.5rem;
   margin-bottom: 0;
-  border-bottom: 1px solid #e0e0e0;
 }
 .expository-mini-card {
   min-width: 120px;
   padding: 0.5rem 1.1rem;
   border-radius: 0.75rem;
-  background: linear-gradient(135deg, #232526 0%, #2563eb 100%) !important;
-  color: #fff;
+  background: linear-gradient(135deg, #494949 0%, #000000 100%) !important;
+  color: #ffd000;
   font-weight: 600;
   font-size: 1.01rem;
-  box-shadow: 0 2px 8px 0 rgba(16,185,129,0.08);
-  transition: transform 0.15s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: background 0.18s, color 0.18s, transform 0.12s;
   border: none;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s, transform 0.12s;
 }
 .expository-mini-card:hover, .expository-mini-card:focus {
-  background: linear-gradient(135deg, #232526 0%, #60a5fa 100%) !important;
-  color: #facc15;
+  background: linear-gradient(135deg, #e2d02a 0%, #614201 100%) !important;
+  color: #000000;
   transform: scale(1.07);
 }
 
+/* --- Overlay --- */
 .expository-overlay {
   position: fixed;
   inset: 0;
@@ -98,10 +103,13 @@
   color: #111827;
   border-radius: 0.75rem;
   box-shadow: 0 8px 32px 0 rgba(0,0,0,0.18);
-  max-width: 32rem;
+  max-width: 80vw;
   width: 100%;
+  max-height: 90vh; 
   padding: 1.5rem;
   position: relative;
+  overflow-y: auto; 
+  aspect-ratio: 16/9;
 }
 .expository-overlay-close {
   position: absolute;
@@ -123,6 +131,7 @@
   font-family: 'Fira Mono', 'Consolas', monospace;
 }
 
+/* --- Slides Row --- */
 .expository-slides-row {
   display: flex;
   flex-direction: row;
@@ -164,344 +173,51 @@
   outline-offset: 2px;
 }
 
-/* Plus buttons outside slide */
-.expository-slide-plus-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 5;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 2.5rem;
-  height: 2.5rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 8px 0 rgba(59,130,246,0.13);
-  transition: background 0.15s, transform 0.12s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.expository-slide-plus-btn.left {
-  left: -3.5rem;
-}
-.expository-slide-plus-btn.right {
-  right: -3.5rem;
-}
-.expository-slide-plus-btn:hover {
-  background: #1d4ed8;
-  transform: translateY(-50%) scale(1.12);
-}
-
-/* Delete button bottom center */
-.expository-slide-delete-btn {
-  position: absolute;
-  left: 50%;
-  bottom: 1.2rem;
-  transform: translateX(-50%);
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  border-radius: 1.5rem;
-  padding: 0.5rem 1.5rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 8px 0 rgba(220,38,38,0.13);
-  transition: background 0.15s, transform 0.12s;
-  z-index: 6;
-}
-.expository-slide-delete-btn:hover {
-  background: #991b1b;
-  transform: translateX(-50%) scale(1.08);
-}
-
-/* Remove old controls from top right */
-.expository-slide-controls {
-  display: none;
-}
-
-.expository-slide-controls {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  display: flex;
-  gap: 0.5rem;
-  z-index: 10;
-}
-.expository-slide-btn {
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 0.375rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.expository-slide-btn:hover {
-  background: #1d4ed8;
-}
-.expository-slide-btn.delete {
-  background: #dc2626;
-}
-.expository-slide-btn.delete:hover {
-  background: #991b1b;
-}
-.expository-slide-textarea {
-  width: 100%;
-  height: 550px;
-  background: #111827;
-  color: #fff;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  resize: vertical;
-  font-size: 1.125rem;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-  border: none;
-  outline: none;
-  box-shadow: 0 1px 4px 0 rgba(59,130,246,0.04);
-  margin-top: 0.5rem;
-}
-.expository-slide-textarea:focus {
-  outline: 2px solid #3b82f6;
-}
-.expository-slide-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  font-size: 0.95rem;
-}
-.expository-slide-status .saving {
-  color: #38bdf8;
-  animation: pulse 1s infinite alternate;
-}
-.expository-slide-status .saved {
-  color: #22d3ee;
-}
-@keyframes pulse {
-  0% { opacity: 1; }
-  100% { opacity: 0.5; }
-}
-
-.sermon-description-block {
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid #1f2937;
-  margin-bottom: 1rem;
-}
-
-.sermon-description-block h2 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #facc15;
-}
-
-.sermon-description-block p {
-  font-size: 1.1rem;
-  color: #d1d5db;
-}
-
-.add-expository-btn {
-  background: linear-gradient(90deg, #232526 0%, #414345 100%);
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.1rem;
-  padding: 0.75rem 5rem;
-  border: 3px solid;
-  border-image: linear-gradient(90deg, #FFD700 0%, #facc15 50%, #FFD700 100%);
-  border-image-slice: 1;
-  border-radius: 0.75rem;
-  box-shadow:
-    0 2px 12px 0 rgba(16,185,129,0.10),
-    0 4px 24px 0 rgba(255, 215, 0, 0.10),
-    inset 0 2px 8px 0 rgba(255,255,255,0.10),
-    inset 0 -4px 16px 0 rgba(0,0,0,0.18);
-  transition: background 0.18s, transform 0.12s, box-shadow 0.18s, border-color 0.18s;
-  cursor: pointer;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.01em;
-  outline: none;
-  position: relative;
-}
-.add-expository-btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 8px 0 #fff3, 0 1.5px 0 0 #fff2 inset;
-  pointer-events: none;
-  opacity: 0.7;
-}
-.add-expository-btn:hover, .add-expository-btn:focus {
-  background: linear-gradient(90deg, #232526 0%, #232526 100%);
-  border-image: linear-gradient(90deg, #ffe066 0%, #ffd700 50%, #facc15 100%);
-  border-image-slice: 1;
-  transform: translateY(-2px) scale(1.04);
-  box-shadow:
-    0 6px 24px 0 rgba(59,130,246,0.13),
-    0 8px 32px 0 rgba(255, 215, 0, 0.18),
-    inset 0 2px 12px 0 rgba(255,255,255,0.13),
-    inset 0 -6px 24px 0 rgba(0,0,0,0.22);
-  outline: none;
-}
-
+/* --- Slide Editor Modernization --- */
 .slide-container {
   position: relative;
-  padding: 1rem;
-  border: 2px solid #2563eb;
-  border-radius: 0.75rem;
-  margin-top: 1rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background: #0f172a;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
+  align-items: stretch;
+  justify-content: center;
+  min-width: 600px;
+  max-width: 950px;
+  width: 100%;
+  min-height: 540px;
+  background: linear-gradient(135deg, #0b0f25 0%, #1e293b 60%, #0b0f25 100%);
+  border-radius: 1.1rem;
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.12);
+  outline: 2px solid #424242;
+  outline-offset: 2px;
+  margin: 0 2.5rem;
+  padding: 3rem 2.5rem 3.5rem 2.5rem;
 }
-
-.slide-textarea {
+.slide-editor-textarea {
   width: 100%;
   min-height: 400px;
+  height: 100%;
   background: #1e293b;
-  color: #fff;
-  border: none;
-  padding: 1rem;
-  border-radius: 0.5rem;
+  color: #f3f4f6;
+  font-size: 1.08rem;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
   resize: vertical;
-  font-size: 1.125rem;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-  margin-bottom: 0.5rem;
-}
-
-.slide-navigation {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.add-slide-button {
-  background: none !important;
-  color: #facc15;
-  font-size: 2.2rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 0;
-  padding: 0.1rem 0.2rem;
-  margin: 0.2rem 0;
-  box-shadow: none;
-  transition: color 0.18s, transform 0.12s;
   outline: none;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  left: 0.7rem;
-}
-.add-slide-button.right {
-  left: -0.7rem;
-}
-.add-slide-button::before,
-.add-slide-button::after {
-  display: none !important;
-}
-
-/* Remove any border, box, or background from + button */
-.add-slide-button {
-  border: none !important;
-  background: none !important;
-  box-shadow: none !important;
-}
-
-.add-slide-button:hover, .add-slide-button:focus {
-  background: linear-gradient(90deg, #232526 0%, #232526 100%);
-  color: #fffbe6;
-  transform: scale(1.12);
-}
-
-.nav-arrow {
-  background: none !important;
-  color: #60a5fa;
-  font-size: 2.2rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 0;
-  padding: 0.1rem 0.2rem;
-  margin: 0.2rem 0;
   box-shadow: none;
-  transition: color 0.18s, transform 0.12s;
-  outline: none;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  left: 0.7rem;
-}
-.nav-arrow.right {
-  left: -0.7rem;
-}
-.nav-arrow:hover, .nav-arrow:focus {
-  color: #fffbe6;
-  transform: scale(1.18);
-}
-
-.nav-arrow {
-  background: linear-gradient(90deg, #232526 0%, #414345 100%);
-  color: #60a5fa;
-  font-size: 2.1rem;
-  font-weight: 700;
+  margin: 0;
+  padding: 1.5rem 1.2rem;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+  border-radius: 0.75rem;
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.1rem 0.7rem 0.2rem 0.7rem;
-  margin: 0.2rem 0;
-  box-shadow: 0 2px 8px 0 #0004;
-  transition: background 0.18s, transform 0.12s, color 0.18s;
-  outline: none;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #1e293b;
+  box-sizing: border-box;
 }
-.nav-arrow:hover, .nav-arrow:focus {
-  background: linear-gradient(90deg, #232526 0%, #232526 100%);
-  color: #fffbe6;
-  transform: scale(1.12);
+.slide-editor-textarea:focus {
+  outline: 2px solid #60a5fa;
 }
 
-.add-slide-button.left,
-.add-slide-button.right {
-  box-shadow: none;
-  border-radius: 0.5rem;
-  background: linear-gradient(90deg, #232526 0%, #414345 100%);
-}
-
-.delete-slide-button {
-  background: none;
-  border: none;
-  color: #f87171;
-  font-size: 1.2rem;
-  align-self: flex-end;
-  cursor: pointer;
-  margin-top: 0.5rem;
-  transition: color 0.15s;
-}
-.delete-slide-button:hover {
-  color: #dc2626;
-}
-
+/* --- Slide Editor Controls --- */
 .slide-editor-row {
   display: flex;
   flex-direction: row;
@@ -516,314 +232,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  justify-content: center;
-  min-width: 2.5rem;
-}
-
-.add-slide-button {
-  background: none !important;
-  color: #facc15;
-  font-size: 2.2rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 0;
-  padding: 0.1rem 0.2rem;
-  margin: 0.2rem 0;
-  box-shadow: none;
-  transition: color 0.18s, transform 0.12s;
-  outline: none;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  left: 0.5rem;
-}
-.add-slide-button.right {
-  left: -0.5rem;
-}
-.add-slide-button:hover, .add-slide-button:focus {
-  color: #fffbe6;
-  transform: scale(1.18);
-}
-
-.nav-arrow {
-  background: linear-gradient(90deg, #232526 0%, #414345 100%);
-  color: #60a5fa;
-  font-size: 2.1rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.1rem 0.7rem 0.2rem 0.7rem;
-  margin: 0.2rem 0;
-  box-shadow: 0 2px 8px 0 #0004;
-  transition: background 0.18s, transform 0.12s, color 0.18s;
-  outline: none;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.nav-arrow:hover, .nav-arrow:focus {
-  background: linear-gradient(90deg, #232526 0%, #232526 100%);
-  color: #fffbe6;
-  transform: scale(1.12);
-}
-
-.slide-editor-center {
-  position: relative;
-  flex: 1 1 700px;
-  max-width: 900px;
-  min-width: 350px;
-  margin: 0 0.5rem;
-  border: 2px solid #2563eb;
-  border-radius: 1rem;
-  background: #111827;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 2.5rem 1.5rem 2.5rem 1.5rem;
-  box-sizing: border-box;
-}
-.add-slide-button.top {
-  position: absolute;
-  top: -1.6rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: none;
-  border: 2px solid #60a5fa;
-  color: #60a5fa;
-  border-radius: 50%;
-  width: 2.2rem;
-  height: 2.2rem;
-  font-size: 1.3rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.add-slide-button.top:hover {
-  background: #60a5fa;
-  color: #0f172a;
-}
-
-.slide-textarea {
-  width: 100%;
-  min-height: 400px;
-  background: #1e293b;
-  color: #fff;
-  border: none;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  resize: vertical;
-  font-size: 1.125rem;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-  margin-bottom: 0.5rem;
-}
-
-.delete-slide-button {
-  position: absolute;
-  right: 1.2rem;
-  bottom: 1.2rem;
-  background: none;
-  border: none;
-  color: #f87171;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: color 0.15s;
-  z-index: 3;
-}
-.delete-slide-button:hover {
-  color: #dc2626;
-}
-
-.saving, .saved {
-  position: absolute;
-  left: 1.2rem;
-  bottom: 1.2rem;
-  font-size: 1rem;
-  color: #60a5fa;
-  z-index: 3;
-}
-.saved {
-  color: #22d3ee;
-}
-
-/* --- Slide Editor Controls Modernization --- */
-.slide-editor-side-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-  justify-content: center;
-  min-width: 3.5rem;
-}
-
-.add-slide-button {
-  background: linear-gradient(90deg, #232526 0%, #414345 100%);
-  color: #facc15;
-  font-size: 2.1rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.1rem 0.7rem 0.2rem 0.7rem;
-  margin: 0.2rem 0;
-  box-shadow: 0 2px 8px 0 #0004;
-  transition: background 0.18s, transform 0.12s, color 0.18s;
-  outline: none;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.add-slide-button:hover, .add-slide-button:focus {
-  background: linear-gradient(90deg, #232526 0%, #232526 100%);
-  color: #fffbe6;
-  transform: scale(1.12);
-}
-
-.nav-arrow {
-  background: linear-gradient(90deg, #232526 0%, #414345 100%);
-  color: #60a5fa;
-  font-size: 2.1rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.1rem 0.7rem 0.2rem 0.7rem;
-  margin: 0.2rem 0;
-  box-shadow: 0 2px 8px 0 #0004;
-  transition: background 0.18s, transform 0.12s, color 0.18s;
-  outline: none;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.nav-arrow:hover, .nav-arrow:focus {
-  background: linear-gradient(90deg, #232526 0%, #232526 100%);
-  color: #fffbe6;
-  transform: scale(1.12);
-}
-
-/* Remove circle/oval backgrounds from + buttons */
-.add-slide-button.left, .add-slide-button.right {
-  box-shadow: none;
-  border-radius: 0.5rem;
-  background: linear-gradient(90deg, #232526 0%, #414345 100%);
-}
-
-/* --- Slide Container & Textarea --- */
-.slide-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  min-width: 600px;
-  max-width: 950px;
-  width: 100%;
-  min-height: 540px;
-  background: #232b3e;
-  border-radius: 1.1rem;
-  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.12);
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-  margin: 0 2.5rem;
-  padding: 3rem 2.5rem 3.5rem 2.5rem;
-}
-.slide-editor-textarea {
-  width: 100%;
-  min-height: 400px;
-  height: 100%;
-  background: none;
-  border: none;
-  color: #f3f4f6;
-  font-size: 1.08rem;
-  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
-  resize: vertical;
-  outline: none;
-  box-shadow: none;
-  margin: 0;
-  padding: 1.5rem 1.2rem;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
-  font-weight: 400;
-  border-radius: 0.75rem;
-  background: #1e293b;
-  box-sizing: border-box;
-}
-.slide-editor-textarea:focus {
-  outline: 2px solid #60a5fa;
-}
-
-/* --- Trash Button Modernization --- */
-.slide-delete-btn {
-  position: absolute;
-  right: 1.1rem;
-  bottom: 1.1rem;
-  background: none;
-  border: none;
-  color: #f87171;
-  font-size: 1.3rem;
-  cursor: pointer;
-  padding: 0.1rem 0.2rem;
-  transition: color 0.15s, transform 0.12s;
-  opacity: 0.85;
-}
-.slide-delete-btn:hover, .slide-delete-btn:focus {
-  color: #fff;
-  transform: scale(1.18) rotate(-8deg);
-  opacity: 1;
-}
-
-/* --- Scripture Mini-Card Banner: Darker Gradient --- */
-.expository-scripture-banner {
-  background: linear-gradient(90deg, #1e293b 0%, #232b3e 100%) !important;
-}
-
-/* --- Mini-card Button Modernization --- */
-.expository-mini-card {
-  background: linear-gradient(135deg, #232526 0%, #2563eb 100%) !important;
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.01rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 8px 0 rgba(16,185,129,0.08);
-  border: none;
-  padding: 0.5rem 1.1rem;
-  transition: background 0.18s, color 0.18s, transform 0.12s;
-}
-.expository-mini-card:hover, .expository-mini-card:focus {
-  background: linear-gradient(135deg, #232526 0%, #60a5fa 100%) !important;
-  color: #facc15;
-  transform: scale(1.07);
-}
-
-/* --- Slide Editor Controls: Minimal Modern Patch --- */
-.slide-editor-side-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 1.2rem;
   justify-content: center;
   min-width: 1.5rem;
 }
-
 .add-slide-button, .nav-arrow {
   background: none !important;
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  color: #facc15;
+  color: #272727;
   font-size: 2.2rem;
   font-weight: 700;
   padding: 0.1rem 0.2rem;
@@ -846,14 +264,12 @@
   color: #fffbe6;
   transform: scale(1.18);
 }
-
-/* Remove any pseudo-element, border, or background from + button */
 .add-slide-button::before,
 .add-slide-button::after {
   display: none !important;
 }
 
-/* --- Keep delete button minimal --- */
+/* --- Trash Button --- */
 .slide-delete-btn {
   position: absolute;
   right: 1.1rem;
@@ -873,7 +289,20 @@
   opacity: 1;
 }
 
-/* Remove TipTap and notes-area styles */
+/* --- Save Status --- */
+.saving, .saved {
+  position: absolute;
+  left: 1.2rem;
+  bottom: 1.2rem;
+  font-size: 1rem;
+  color: #60a5fa;
+  z-index: 3;
+}
+.saved {
+  color: #22d3ee;
+}
+
+/* --- Remove TipTap and notes-area styles --- */
 .tiptap, .notes-area, .notes-editor-area, .word-toolbar, .editor-toolbar {
   display: none !important;
 }
