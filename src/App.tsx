@@ -16,6 +16,7 @@ import CurrentlyAddedScripturePage from "./pages/CurrentlyAddedScripturePage";
 import ScriptureBookPage from "./pages/ScriptureBookPage";
 import LoginPage from "./pages/LoginPage";
 import { ThemesAndTopicsPage, TaggedVersesPage } from "./pages/ThemesAndTopicsPage"; // Added import
+import AboutPage from "./pages/AboutPage"; // Added import for AboutPage
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -57,6 +58,9 @@ function App() {
 
           {/* Login Page */}
           <Route path="/login" element={<LoginPage />} />
+
+          {/* About Page */}
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </main>
     </div>
