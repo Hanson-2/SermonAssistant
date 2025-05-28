@@ -4,7 +4,7 @@ import os
 relevant_extensions = ['.js', '.jsx', '.ts', '.tsx', '.json', '.css', '.html', '.md']
 
 # Folders to skip
-excluded_folders = ['node_modules', '.git', '.firebase', 'dist', 'build', 'coverage', '.next']
+excluded_folders = ['node_modules', '.git', '.firebase', 'dist', 'build', 'coverage', '.next', 'bibles']
 
 # Output file in the script's directory
 script_directory = os.path.dirname(os.path.abspath(__file__))
@@ -17,8 +17,9 @@ def collect_files_recursively(directory, base_dir=""):
         full_path = os.path.join(directory, entry)
         relative_path = os.path.join(base_dir, entry)
 
+        # Only skip 'bibles' if it's at the project root, but skip all other excluded folders at any depth
         if os.path.isdir(full_path):
-            if entry in excluded_folders:
+            if (entry == 'bibles' and base_dir == "") or (entry in excluded_folders and entry != 'bibles'):
                 continue  # Skip excluded directories
             results.extend(collect_files_recursively(full_path, relative_path))
         elif os.path.isfile(full_path) and os.path.splitext(entry)[1] in relevant_extensions:

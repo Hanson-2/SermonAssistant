@@ -55,6 +55,9 @@ export default function AddScripturePage() {
   const [parsedVerses, setParsedVerses] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [translation, setTranslation] = useState("EXB");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState("");
+  const [progress, setProgress] = useState(0);
 
   const handleParse = () => {
     try {
@@ -68,10 +71,26 @@ export default function AddScripturePage() {
   };
 
   const handleSubmit = async () => {
-    await saveScriptureVerses(parsedVerses);
-    alert("Scriptures added successfully.");
-    setInput("");
-    setParsedVerses([]);
+    setSubmitting(true);
+    setSubmitStatus("");
+    setProgress(0);
+    try {
+      let completed = 0;
+      for (const verse of parsedVerses) {
+        await saveScriptureVerses([verse]);
+        completed++;
+        setProgress(Math.round((completed / parsedVerses.length) * 100));
+      }
+      setSubmitStatus("Scriptures added successfully.");
+      setInput("");
+      setParsedVerses([]);
+    } catch (err) {
+      setSubmitStatus("Error submitting to Firebase.");
+    } finally {
+      setSubmitting(false);
+      setTimeout(() => setSubmitStatus(""), 2500);
+      setProgress(0);
+    }
   };
 
   return (
@@ -130,9 +149,19 @@ export default function AddScripturePage() {
           <button
             onClick={handleSubmit}
             className="add-scripture-submit-btn"
+            disabled={submitting}
           >
-            Submit All to Firebase
+            {submitting ? `Submitting... (${progress}%)` : "Submit All to Firebase"}
           </button>
+          {submitting && (
+            <div className="add-scripture-progress-bar-wrapper">
+              <div className="add-scripture-progress-bar" style={{ width: progress + '%' }}></div>
+              <span className="add-scripture-progress-label">{progress}%</span>
+            </div>
+          )}
+          {submitStatus && (
+            <div className="add-scripture-submit-status">{submitStatus}</div>
+          )}
         </div>
       )}
     </div>

@@ -6,9 +6,24 @@
 /* --- Expository Detail Root --- */
 .expository-detail-root {
   min-height: 100vh;
-  background: #111827;
+  position: relative;
   color: #fff;
   padding: 0;
+  background: none;
+}
+
+/* --- Texas Logo Wallpaper Overlay --- */
+.expository-bg-overlay {
+  pointer-events: none;
+  position: absolute;
+  z-index: 9;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('/Texas_Logo_Wallpaper.png') center center no-repeat;
+  background-size: cover;
+  opacity: 0.25;
 }
 
 /* --- Sticky Banner --- */
@@ -70,22 +85,54 @@
   margin-bottom: 0;
 }
 .expository-mini-card {
-  min-width: 120px;
-  padding: 0.5rem 1.1rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #494949 0%, #000000 100%) !important;
+  position: relative;
+  overflow: hidden;
+
+  /* smaller dimensions */
+  min-width: 100px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.9rem;
+
+  /* gradient border */
+  border: 2px solid transparent;
+  border-image: linear-gradient(45deg, #FFD700, #FFA500) 1;
+
+  /* your original dark background */
+  background: linear-gradient(135deg, #494949 0%, #000000 100%);
   color: #ffd000;
   font-weight: 600;
-  font-size: 1.01rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4);
-  transition: background 0.18s, color 0.18s, transform 0.12s;
-  border: none;
-  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4);
+
+  transition: transform 0.12s, color 0.18s;
 }
-.expository-mini-card:hover, .expository-mini-card:focus {
-  background: linear-gradient(135deg, #e2d02a 0%, #614201 100%) !important;
-  color: #000000;
-  transform: scale(1.07);
+
+/* Diagonal shimmer overlay */
+.expository-mini-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: -150%;
+  width: 150%; height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0)   0%,
+    rgba(255,255,255,0.4) 50%,
+    rgba(255,255,255,0)   100%
+  );
+  transform: skewX(-30deg);
+  transition: left 0.6s ease;
+}
+
+/* Hover/focus state */
+.expository-mini-card:hover,
+.expository-mini-card:focus {
+  transform: scale(1.05);      /* slight pop */
+  color: #000;
+}
+
+/* Move the shimmer across on hover */
+.expository-mini-card:hover::before,
+.expository-mini-card:focus::before {
+  left: 150%;
 }
 
 /* --- Overlay --- */
@@ -131,110 +178,74 @@
   font-family: 'Fira Mono', 'Consolas', monospace;
 }
 
-/* --- Slides Row --- */
-.expository-slides-row {
+/* --- Slide Editor Vertical Layout (Consolidated) --- */
+.slide-editor-vertical-layout {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: stretch;
-  overflow-x: auto;
-  gap: 2rem;
-  padding: 2rem 2rem;
+  flex-direction: column;
+  height: calc(100vh - 10.5rem); /* adjust for banners */
+  width: 100vw;
   max-width: 100vw;
-  width: 100%;
-  position: relative;
-}
-
-.expository-slide-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.expository-slide {
-  background: #1f2937;
-  border-radius: 1rem;
-  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.12);
-  padding: 2rem;
-  min-width: 80vw;
-  max-width: 900px;
-  width: 100%;
-  font-size: 1.125rem;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  align-items: center;
-  margin: 0 2.5rem;
-}
-
-.expository-slide.active {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* --- Slide Editor Modernization --- */
-.slide-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  min-width: 600px;
-  max-width: 950px;
-  width: 100%;
-  min-height: 540px;
-  background: linear-gradient(135deg, #0b0f25 0%, #1e293b 60%, #0b0f25 100%);
+  margin: 0;
+  background: radial-gradient(circle at 60% 40%, #545455 0%, #1e293b 60%, #1e293b 100%);
   border-radius: 1.1rem;
   box-shadow: 0 4px 24px 0 rgba(0,0,0,0.12);
   outline: 2px solid #424242;
   outline-offset: 2px;
-  margin: 0 2.5rem;
-  padding: 3rem 2.5rem 3.5rem 2.5rem;
+  position: relative;
+}
+.slide-editor-notes-area {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  position: relative;
+  padding: .8rem 1.5rem 0 .8rem;
 }
 .slide-editor-textarea {
   width: 100%;
-  min-height: 400px;
   height: 100%;
+  min-height: 300px;
+  max-height: none;
+  resize: none;
   background: #1e293b;
   color: #f3f4f6;
   font-size: 1.08rem;
   font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
-  resize: vertical;
-  outline: none;
-  box-shadow: none;
-  margin: 0;
+  border-radius: 0.75rem;
+  border: none;
   padding: 1.5rem 1.2rem;
+  box-sizing: border-box;
   line-height: 1.5;
   letter-spacing: 0.01em;
   font-weight: 400;
-  border-radius: 0.75rem;
-  border: none;
-  background: #1e293b;
-  box-sizing: border-box;
+  margin: 0;
+  outline: none;
+  box-shadow: none;
 }
 .slide-editor-textarea:focus {
   outline: 2px solid #60a5fa;
 }
-
-/* --- Slide Editor Controls --- */
-.slide-editor-row {
+.slide-editor-bottom-bar {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 48px;
+  background: #101828;
+  border-bottom-left-radius: 1.1rem;
+  border-bottom-right-radius: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 -2px 8px 0 rgba(0,0,0,0.08);
+  border-top: 1px solid #232b3e;
+  padding: 0.2rem 1.5rem;
+}
+.slide-editor-bottom-controls {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 2.5rem;
-  margin: 2.5rem 0 2rem 0;
-  width: 100%;
-  margin-top: 1.2rem;
-}
-.slide-editor-side-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 1.2rem;
+  width: 100%;
   justify-content: center;
-  min-width: 1.5rem;
 }
 .add-slide-button, .nav-arrow {
   background: none !important;
@@ -268,12 +279,11 @@
 .add-slide-button::after {
   display: none !important;
 }
-
-/* --- Trash Button --- */
 .slide-delete-btn {
-  position: absolute;
-  right: 1.1rem;
-  bottom: 1.1rem;
+  position: static;
+  margin: 0 0.5rem;
+  bottom: auto;
+  right: auto;
   background: none;
   border: none;
   color: #f87171;
@@ -288,11 +298,9 @@
   transform: scale(1.18) rotate(-8deg);
   opacity: 1;
 }
-
-/* --- Save Status --- */
-.saving, .saved {
+.expository-slide-status {
   position: absolute;
-  left: 1.2rem;
+  left: 2.2rem;
   bottom: 1.2rem;
   font-size: 1rem;
   color: #60a5fa;
@@ -301,8 +309,136 @@
 .saved {
   color: #22d3ee;
 }
-
-/* --- Remove TipTap and notes-area styles --- */
-.tiptap, .notes-area, .notes-editor-area, .word-toolbar, .editor-toolbar {
+/* Remove old/unused layouts */
+.expository-slides-row, .expository-slide-wrapper, .expository-slide, .expository-slide.active, .slide-container, .slide-editor-row, .slide-editor-side-controls, .tiptap, .notes-area, .notes-editor-area, .word-toolbar, .editor-toolbar {
   display: none !important;
+}
+
+/* Modern MiniCard Styles */
+.scripture-mini-card-modern {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  background: linear-gradient(90deg, #1e293b 60%, #232b3e 100%);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 8px rgba(36,36,36,0.10);
+  border-left: 4px solid #2563eb;
+  font-size: 1.08rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.18s;
+}
+.scripture-mini-card-modern:focus,
+.scripture-mini-card-modern:hover {
+  box-shadow: 0 4px 16px #2563eb33;
+  background: #232b3e;
+}
+.scripture-mini-card-ref-modern {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #60a5fa;
+  margin-bottom: 0.2em;
+}
+.scripture-mini-card-text-modern {
+  font-size: 1.05rem;
+  color: #fff;
+  margin-bottom: 0.15em;
+  line-height: 1.5;
+}
+.scripture-mini-card-remove-modern {
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 1.2rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.12s;
+  opacity: 0.85;
+}
+.scripture-mini-card-remove-modern:hover {
+  color: #fff;
+  transform: scale(1.18) rotate(-8deg);
+  opacity: 1;
+}
+
+/* --- Scripture Mini-Card Banner --- */
+.expository-scripture-banner .scripture-mini-card {
+  position: relative !important;
+  overflow: hidden !important;
+  min-width: 100px !important;
+  padding: 0.3rem 0.8rem !important;
+  font-size: 0.9rem !important;
+  border: 2px solid transparent !important;
+  border-image: linear-gradient(45deg, #FFD700, #FFA500) 1 !important;
+  background: linear-gradient(135deg, #494949 0%, #000000 100%) !important;
+  color: #ffd000 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4) !important;
+  transition: transform 0.12s, color 0.18s !important;
+  margin: 0.5rem 0.5rem 0.5rem 0 !important;
+  border-radius: 0.75rem !important;
+  cursor: pointer !important;
+  z-index: 1;
+}
+
+.expository-scripture-banner .scripture-mini-card::before {
+  content: "";
+  position: absolute !important;
+  top: 0; left: -150%;
+  width: 150%; height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0)   0%,
+    rgba(255,255,255,0.4) 50%,
+    rgba(255,255,255,0)   100%
+  ) !important;
+  transform: skewX(-30deg);
+  transition: left 0.6s ease !important;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.expository-scripture-banner .scripture-mini-card:hover,
+.expository-scripture-banner .scripture-mini-card:focus {
+  transform: scale(1.05) !important;
+  color: #000 !important;
+}
+
+.expository-scripture-banner .scripture-mini-card:hover::before,
+.expository-scripture-banner .scripture-mini-card:focus::before {
+  left: 150% !important;
+}
+
+.expository-scripture-banner .scripture-mini-card-title {
+  color: #ffd700 !important;
+  font-size: 1.2em !important;
+  letter-spacing: 0.04em !important;
+  text-shadow: 0 1px 2px #000a !important;
+  font-weight: 700 !important;
+}
+
+.expository-scripture-banner .scripture-mini-card-text {
+  color: #ffd000 !important;
+  font-size: 1em !important;
+  font-weight: 500 !important;
+  margin-left: 0.5em;
+}
+
+.expository-scripture-banner .scripture-mini-card-remove {
+  background: none !important;
+  border: none !important;
+  color: #f87171 !important;
+  font-size: 1.2rem !important;
+  margin-left: 0.5rem !important;
+  cursor: pointer !important;
+  transition: color 0.15s, transform 0.12s !important;
+  opacity: 0.85 !important;
+}
+
+.expository-scripture-banner .scripture-mini-card-remove:hover {
+  color: #fff !important;
+  transform: scale(1.18) rotate(-8deg) !important;
+  opacity: 1 !important;
 }

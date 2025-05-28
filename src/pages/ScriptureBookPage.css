@@ -112,6 +112,27 @@
   line-height: 1.5;
 }
 
+.loading-chapters-text {
+  font-size: 1.1rem;
+  color: #3b82f6;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  text-shadow: 0 2px 8px rgba(59,130,246,0.08);
+  display: flex;
+  align-items: center;
+  min-height: 2.2em;
+}
+.animated-ellipsis {
+  display: inline-block;
+  width: 1.5em;
+  text-align: left;
+  animation: ellipsis-blink 1.2s infinite steps(4);
+}
+@keyframes ellipsis-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }

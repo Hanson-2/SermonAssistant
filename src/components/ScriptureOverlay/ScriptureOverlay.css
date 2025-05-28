@@ -27,8 +27,8 @@
   flex-direction: column;
   overflow: auto;
   border: 1.5px solid rgba(250, 204, 21, 0.18);
-  backdrop-filter: blur(12px) saturate(1.2);
   -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  backdrop-filter: blur(12px) saturate(1.2);
 }
 
 /* Keep mini-card banner untouched */
@@ -61,7 +61,6 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
 
 .scripture-overlay-header button {

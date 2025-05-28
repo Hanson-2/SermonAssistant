@@ -1,4 +1,4 @@
-import { db, storage } from "../lib/firebase";
+import { db, storage, auth } from "../lib/firebase";
 import {
   collection,
   doc,
@@ -19,9 +19,12 @@ import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "../utils/bookOrder";
 const sermonsRef = collection(db, "sermons");
 const scripturesRef = collection(db, "scriptures");
 
-// Fetch all sermons
+// Fetch all sermons for the current user
 export async function fetchSermons(): Promise<Sermon[]> {
-  const snapshot = await getDocs(sermonsRef);
+  const user = auth.currentUser;
+  if (!user) return [];
+  const q = query(sermonsRef, where("userID", "==", user.uid));
+  const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sermon));
 }
 
@@ -32,9 +35,11 @@ export async function getSermon(id: string): Promise<Sermon | null> {
   return docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as Sermon) : null;
 }
 
-// Create a new sermon
+// Create a new sermon, attaching the userID
 export async function createSermon(data: NewSermonData) {
-  return await addDoc(sermonsRef, data);
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  return await addDoc(sermonsRef, { ...data, userID: user.uid });
 }
 
 // Update an existing sermon
@@ -101,19 +106,23 @@ export async function saveScriptureVerses(verses: { book: string, chapter: strin
 
 // List all scripture book collection names (book IDs)
 export async function listScriptureBooks(): Promise<string[]> {
-  // Firestore web SDK cannot list subcollections at root, so we check for at least one chapter in each known book
-  const allBooks = [...CANONICAL_BOOKS, ...EXTRA_CANONICAL_BOOKS];
-  const available: string[] = [];
-  for (const book of allBooks) {
-    // Try to get the first chapter (chapter 1) for each book
-    const chapterCol = collection(db, 'scriptures', book, '1');
-    try {
-      const snapshot = await getDocs(chapterCol);
-      if (!snapshot.empty) available.push(book);
-    } catch (e) {
-      // Ignore errors for books/chapters that don't exist
+  const versesRef = collection(db, 'verses');
+  
+  // Query all verses to find available books
+  const snapshot = await getDocs(versesRef);
+  console.log(`[listScriptureBooks] Found ${snapshot.docs.length} total verses in database`);
+  
+  // Extract unique books
+  const bookSet = new Set<string>();
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (data.book) {
+      bookSet.add(data.book);
     }
-  }
+  });
+  
+  const available = Array.from(bookSet).sort();
+  console.log(`[listScriptureBooks] Available books:`, available);
   return available;
 }
 
@@ -128,27 +137,59 @@ export async function listCachedScriptureBooks(): Promise<string[]> {
 
 // List all chapters for a given book
 export async function listChaptersForBook(book: string): Promise<string[]> {
-  // Each chapter is a subcollection under the book collection
-  // Firestore web SDK does not support listing subcollections, so we fetch all chapter docs
-  const chaptersCol = collection(db, 'scriptures', book);
-  const snapshot = await getDocs(chaptersCol);
-  // Chapter IDs are numbers as strings
-  return snapshot.docs.map(doc => doc.id).sort((a, b) => Number(a) - Number(b));
+  const versesRef = collection(db, 'verses');
+  const bookLower = String(book).toLowerCase().replace(/\s+/g, ' ').trim();
+  
+  // Query to get all verses for this book
+  const q = query(
+    versesRef,
+    where('book_lower', '==', bookLower)
+  );
+  
+  const snapshot = await getDocs(q);
+  console.log(`[listChaptersForBook] Found ${snapshot.docs.length} verses for ${book}`);
+  
+  // Extract unique chapter numbers
+  const chapterSet = new Set<number>();
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (data.chapter && typeof data.chapter === 'number') {
+      chapterSet.add(data.chapter);
+    }
+  });
+  
+  // Convert to sorted string array
+  const chapters = Array.from(chapterSet).sort((a, b) => a - b).map(ch => String(ch));
+  console.log(`[listChaptersForBook] Available chapters for ${book}:`, chapters);
+  return chapters;
 }
 
 // Get all verses for a book and chapter, grouped by translation
 export async function getScriptureVersesForChapter(book: string, chapter: string): Promise<{ verse: string, text: string, translation: string }[]> {
-  const versesCol = collection(db, 'scriptures', book, chapter);
-  const snapshot = await getDocs(versesCol);
-  // Each doc is a verse, with text and translation fields
+  const versesRef = collection(db, 'verses');
+  const chapterNum = Number(chapter);
+  const bookLower = String(book).toLowerCase().replace(/\s+/g, ' ').trim();
+  
+  // Query the verses collection with the correct structure
+  const q = query(
+    versesRef,
+    where('book_lower', '==', bookLower),
+    where('chapter', '==', chapterNum)
+  );
+  
+  const snapshot = await getDocs(q);
+  console.log(`[getScriptureVersesForChapter] Found ${snapshot.docs.length} verses for ${book} chapter ${chapter}`);
+  
+  // Each doc contains verse, text, translation, book, chapter, etc.
   return snapshot.docs.map(doc => {
     const data = doc.data();
+    console.log(`[getScriptureVersesForChapter] Verse data:`, { verse: data.verse, translation: data.translation, text: data.text?.slice(0, 50) });
     return {
-      verse: doc.id,
-      text: data.text,
+      verse: String(data.verse),
+      text: data.text || "",
       translation: data.translation || "",
     };
-  });
+  }).sort((a, b) => Number(a.verse) - Number(b.verse)); // Sort by verse number
 }
 
 export async function updateSermonNotes(sermonId: string, notes: Record<string, string>): Promise<void> {

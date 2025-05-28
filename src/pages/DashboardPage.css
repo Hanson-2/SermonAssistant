@@ -1,0 +1,15 @@
+.dashboard-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0; /* Between background and content */
+  pointer-events: none;
+  background: #111827 url('/Texas_Logo_Wallpaper.png') no-repeat center center;
+  background-size: cover;
+  opacity: 0.45;
+  overflow: hidden;
+  display: block;
+}
+

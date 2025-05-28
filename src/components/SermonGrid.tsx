@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import SermonCard from "./SermonCard/SermonCard";
+import "./SermonGrid.css";
 
 export type Sermon = {
   id: string | number;

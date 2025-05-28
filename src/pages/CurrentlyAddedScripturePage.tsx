@@ -1,16 +1,17 @@
-import React, { useEffect, useState, ChangeEvent, JSX } from "react";
+import React, { useEffect, useState, ChangeEvent, JSX, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { listCachedScriptureBooks } from "../services/firebaseService";
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "../utils/bookOrder";
+import { getDisplayBookFull, normalizeBookName } from "../utils/getDisplayBookAbbrev";
 import "./CurrentlyAddedScripturePage.css";
 
-const CurrentlyAddedScripturePage: React.FC = () => {
-  const [availableBooks, setAvailableBooks] = useState<string[]>([]);
+const CurrentlyAddedScripturePage: React.FC = () => {  const [availableBooks, setAvailableBooks] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   // Set the initial state for showOnlyAvailable to true
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const navigate = useNavigate();
+  const bookCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     async function fetchBooks(): Promise<void> {
@@ -21,24 +22,79 @@ const CurrentlyAddedScripturePage: React.FC = () => {
     fetchBooks();
   }, []);
 
+  useEffect(() => {
+    document.body.classList.add("currently-added-scripture-page");
+    document.documentElement.classList.add("currently-added-scripture-page");
+    const root = document.getElementById("root");
+    if (root) root.classList.add("currently-added-scripture-page");
+    return () => {
+      document.documentElement.classList.remove("currently-added-scripture-page");
+      document.body.classList.remove("currently-added-scripture-page");
+      if (root) root.classList.remove("currently-added-scripture-page");
+    };
+  }, []);
+  useEffect(() => {
+    // Intersection Observer for rolling fade animation
+    const observer = new window.IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target instanceof HTMLElement) {
+            if (entry.isIntersecting) {
+              // Add a small delay for staggered effect if multiple cards enter at once
+              setTimeout(() => {
+                if (entry.target instanceof HTMLElement) {
+                  entry.target.classList.add("fade-in-out");
+                }
+              }, Math.random() * 100); // Random delay 0-100ms for natural stagger
+            } else {
+              entry.target.classList.remove("fade-in-out");
+            }
+          }
+        });
+      },
+      { 
+        threshold: 0.1, // Trigger earlier for smoother effect
+        rootMargin: "50px 0px" // Start animation 50px before element enters viewport
+      }
+    );
+    Object.values(bookCardRefs.current).forEach((el) => {
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [availableBooks, searchTerm, showOnlyAvailable]);
+
   const filterBooks = (books: string[]): string[] => {
     return books.filter((book) =>
       book.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
-
-  const renderBookCard = (book: string): JSX.Element | null => {
+  const handleMiniCardClick = async (book: string) => {
+    // Navigate to the proper ScriptureBookPage for chapter selection
+    navigate(`/scripture/${encodeURIComponent(book)}`);
+  };  const renderBookCard = (book: string): JSX.Element | null => {
     const isAvailable = availableBooks.includes(book);
     if (showOnlyAvailable && !isAvailable) return null;
 
+    // Adjusted class names: removed 'scripture-mini-card' and 'not-allowed' as new CSS handles disabled state differently.
+    // 'pointer' class is also not strictly necessary as cursor is defined in .book-card.
     const cardClass = isAvailable ? "book-card" : "book-card disabled";
+    
     const handleClick = (): void => {
-      if (isAvailable) navigate(`/scripture/${encodeURIComponent(book)}`);
+      if (isAvailable) handleMiniCardClick(book); // Navigate to book page
     };
 
+    // Use shared full book name utility instead of abbreviation
+    const fullBookName = getDisplayBookFull(normalizeBookName(book));
+    
     return (
-      <div key={book} className={cardClass} onClick={handleClick}>
-        <span className="book-card-title">{book}</span>
+      <div
+        key={book}
+        className={cardClass}
+        onClick={handleClick}
+        ref={el => { bookCardRefs.current[book] = el; }}
+      >
+        {/* Removed 'scripture-mini-card-title' class */}
+        <span className="book-card-title">{fullBookName}</span>
       </div>
     );
   };
@@ -48,53 +104,54 @@ const CurrentlyAddedScripturePage: React.FC = () => {
   };
 
   return (
-    <div className="currently-added-scripture-layout">
-      <h1 className="currently-added-scripture-title">Currently Added Scripture</h1>
+    <>
+      <div className="currently-added-scripture-background" />
+      <div className="currently-added-scripture-layout">
+        <h1 className="currently-added-scripture-title">Available Scripture</h1>
 
-      <div className="controls-panel">
-        <input
-          type="text"
-          placeholder="Search books..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          className="search-input"
-        />
-        <label className="modern-toggle">
+        <div className="controls-panel">
           <input
-            type="checkbox"
-            checked={showOnlyAvailable}
-            onChange={() => setShowOnlyAvailable(!showOnlyAvailable)}
+            type="text"
+            placeholder="Search books..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="search-input"
           />
-          <span>Show Only Available</span>
-        </label>
-      </div>
-
-      {loading ? (
-        <div className="loading-indicator-container">
-          <div className="lds-roller">
-            <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-          </div>
-          <span className="loading-text">Loading Books...</span>
+          <label className="modern-toggle">
+            <input
+              type="checkbox"
+              checked={showOnlyAvailable}
+              onChange={() => setShowOnlyAvailable(!showOnlyAvailable)}
+            />
+            <span>Show Only Available</span>
+          </label>
         </div>
-      ) : (
-        <>
-          <div className="section-banner">Old Testament</div>
-          <div className="book-card-grid">
-            {filterBooks(CANONICAL_BOOKS.slice(0, 39)).map(renderBookCard)}
-          </div>
 
-          <div className="section-banner">New Testament</div>
-          <div className="book-card-grid">
-            {filterBooks(CANONICAL_BOOKS.slice(39)).map(renderBookCard)}
+        {loading ? (
+          <div className="loading-indicator-container">
+            <div className="lds-roller">
+              <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+            </div>
+            <span className="loading-text">Loading Books...</span>
           </div>
+        ) : (
+          <>
+            <div className="section-banner">Old Testament</div>
+            <div className="book-card-grid">
+              {filterBooks(CANONICAL_BOOKS.slice(0, 39)).map(renderBookCard)}
+            </div>
 
-          <div className="section-banner">Extra-Canonical Books</div>
-          <div className="book-card-grid">
-            {filterBooks(EXTRA_CANONICAL_BOOKS).map(renderBookCard)}
-          </div>
-        </>
-      )}
-    </div>
+            <div className="section-banner">New Testament</div>
+            <div className="book-card-grid">
+              {filterBooks(CANONICAL_BOOKS.slice(39)).map(renderBookCard)}
+            </div>            <div className="section-banner">Extra-Canonical Books</div>
+            <div className="book-card-grid">
+              {filterBooks(EXTRA_CANONICAL_BOOKS).map(renderBookCard)}
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 };
 

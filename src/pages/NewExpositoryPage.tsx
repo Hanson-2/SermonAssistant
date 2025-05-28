@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createSermon, uploadExpositoryImage } from "../services/firebaseService";
+import '../styles/edit-expository.css';
+import MiniSermonList from '../components/MiniSermonList';
 
 export default function NewExpositoryPage() {
   const [title, setTitle] = useState("");
@@ -46,6 +48,11 @@ export default function NewExpositoryPage() {
 
   return (
     <div className="edit-expository-layout">
+      <div className="mini-dashboard-panel">
+        <MiniSermonList />
+      </div>
+      {/* Divider between mini-dashboard and form */}
+      <div className="vertical-divider left-of-form blue-divider" style={{ minHeight: '400px', height: '100vh', alignSelf: 'stretch', position: 'relative' }}></div>
       <div className="form-and-preview-stack">
         <form className="edit-expository-form" onSubmit={handleSubmit}>
           <label htmlFor="titleInput" className="form-label">Expository Title</label>

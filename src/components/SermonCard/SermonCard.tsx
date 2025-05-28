@@ -15,9 +15,10 @@ export type Sermon = {
 type SermonCardProps = {
   sermon: Sermon;
   className?: string;
+  hideActions?: boolean;
 };
 
-const SermonCard: React.FC<SermonCardProps> = ({ sermon, className }) => {
+const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions }) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -84,26 +85,28 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className }) => {
         </div>
 
         {/* Slide-In Flyout */}
-        <div
-          className={`absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-black/80 to-transparent flex items-center justify-end px-4 transition-transform duration-300 ${
-            showOverlay ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <div className="flyout-actions flex gap-2 p-2">
-            {actionButtons.map(({ label, action }) => (
-              <button
-                key={label}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  action();
-                }}
-                className={`sermon-action-button sermon-action-${label.toLowerCase()}`}
-              >
-                {label}
-              </button>
-            ))}
+        {!hideActions && (
+          <div
+            className={`absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-black/80 to-transparent flex items-center justify-end px-4 transition-transform duration-300 ${
+              showOverlay ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            <div className="flyout-actions flex gap-2 p-2">
+              {actionButtons.map(({ label, action }) => (
+                <button
+                  key={label}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    action();
+                  }}
+                  className={`sermon-action-button sermon-action-${label.toLowerCase()}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

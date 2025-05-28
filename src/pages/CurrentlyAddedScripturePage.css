@@ -1,12 +1,51 @@
 .currently-added-scripture-layout {
   min-height: 100vh;
-  background: radial-gradient(circle at top, #0f172a 0%, #000d1a 100%);
   color: #fff;
   padding: 4rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   animation: fadeIn 0.5s ease-in-out;
+  position: relative;
+  z-index: 1;
+  background: none !important; /* Remove blue/gradient background */
+}
+
+/* Remove the blue/gradient background so only the red wall shows */
+.currently-added-scripture-layout {
+  background: none !important;
+}
+
+/* Remove background from body for this page if needed */
+body.currently-added-scripture-page {
+  background: none !important;
+}
+
+/* Remove all backgrounds from html and body for this page */
+html.currently-added-scripture-page,
+body.currently-added-scripture-page {
+  background: none !important;
+}
+
+/* Remove background from #root for this page if needed */
+#root.currently-added-scripture-page {
+  background: none !important;
+}
+
+/* Red wall background overlay for Currently Added Scripture Page */
+.currently-added-scripture-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1; /* Lower than layout, higher than default */
+  pointer-events: none;
+  background: #111827 url('/Texas_Logo_Wallpaper.png') no-repeat center center;
+  background-size: cover;
+  opacity: 0.35;
+  overflow: hidden;
+  display: block;
 }
 
 .currently-added-scripture-title {
@@ -18,55 +57,103 @@
 
 .book-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  /* grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); */ /* Old setting */
+  grid-template-columns: repeat(5, 1fr); /* New: 5 columns */
   gap: 1.5rem;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1100px; /* Can be adjusted based on 5 columns */
   margin-bottom: 3rem;
 }
 
+/* Remove old .book-card styles and replace with theme-topic-button styles */
+/* Existing .book-card, .book-card.fade-in-out, .book-card:hover:not(.disabled), 
+   .book-card:nth-child(even) styles (lines 60-100 approx) should be removed or commented out.
+   For this operation, we will replace them. */
+
 .book-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-radius: 0.8rem;
-  padding: 1rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  display: flex;
+  position: relative;
+  overflow: hidden;
+  padding: 0.75rem 1rem; /* Adjusted padding slightly for potentially smaller buttons */
+  font-size: 0.9rem; /* Adjusted font size for book names */
+  border: 2px solid transparent;
+  border-image: linear-gradient(45deg, #FFD700, #FFA500) 1;
+  background: linear-gradient(135deg, #3a3a3a 0%, #000000 100%); /* Darker black gradient */
+  color: #fff; /* White text */
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4);
+  transition: transform 0.12s, color 0.18s, box-shadow 0.18s;
+  border-radius: 0.5rem; /* Standard border radius */
+  cursor: pointer;
+  text-align: center;
+  display: flex; /* Use flex for centering text */
   align-items: center;
   justify-content: center;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+  width: 100%; /* Button will take full width of its grid cell */
+  min-height: 60px; /* Ensure a minimum height for buttons */
 }
 
-.book-card:hover {
-  transform: translateY(-4px) scale(1.04);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-  border-color: #facc15;
+.book-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%; /* Start shimmer off-screen to the left */
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0)   0%,
+    rgba(255,255,255,0.3) 50%, /* Slightly less intense shimmer */
+    rgba(255,255,255,0)   100%
+  );
+  transform: skewX(-30deg);
+  transition: left 0.7s ease; /* Slightly slower shimmer */
+  pointer-events: none; /* Ensure hover works on the button itself */
+}
+
+.book-card:hover,
+.book-card:focus {
+  transform: scale(1.03); /* Slightly less pop */
+  color: #FFD700; /* Gold text on hover */
+  box-shadow: 0 6px 16px rgba(0,0,0,0.7), 0 3px 6px rgba(0,0,0,0.5), 0 0 15px #FFD700; /* Enhanced shadow with gold glow */
+}
+
+.book-card:hover::before,
+.book-card:focus::before {
+  left: 150%; /* Move shimmer across to the right */
 }
 
 .book-card-title {
-  font-weight: 600;
-  color: #60a5fa;
-  font-size: 1.1rem;
+  font-weight: 500; /* Adjusted from 600 to be slightly less bold if needed */
+  color: #fff; /* Default color, hover is handled by .book-card:hover */
+  font-size: 0.85rem; /* Smaller font size for book names to fit */
   text-align: center;
+  white-space: normal; /* Allow text wrapping */
+  overflow-wrap: break-word; /* Ensure long words break and wrap */
+  word-wrap: break-word; /* Older browsers */
+  -webkit-hyphens: auto; /* Safari on iOS 4.2+ */
+  hyphens: auto; /* Optional: allow hyphenation */
+  display: inline-block; 
+  max-width: 100%; 
 }
 
 .book-card.disabled {
-  filter: grayscale(100%) brightness(0.6);
+  /* filter: grayscale(100%) brightness(0.6); */ /* Old style */
+  background: linear-gradient(135deg, #2a2a2a 0%, #101010 100%); /* Darker, desaturated background */
+  border-image: linear-gradient(45deg, #555, #333) 1;
+  color: #777;
   cursor: not-allowed;
   pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 .book-card.disabled::after {
   content: "🔒";
   position: absolute;
-  top: 10px;
-  right: 12px;
-  font-size: 1.2rem;
-  color: #f87171;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem; /* Larger lock icon */
+  color: rgba(255, 255, 255, 0.3); /* Muted lock icon */
 }
 
 .extra-canonical-header,
@@ -216,3 +303,18 @@
   font-weight: 500;
   text-shadow: 0 2px 8px rgba(59,130,246,0.08);
 }
+
+/* Remove all .currently-added-scripture-page .book-card.scripture-mini-card related styles */
+/* These styles (lines 287-367 approx) are too specific and use !important. They will be removed. */
+/* For example:
+.currently-added-scripture-page .book-card.scripture-mini-card { ... }
+.currently-added-scripture-page .book-card.scripture-mini-card.fade-in-out { ... }
+.currently-added-scripture-page .book-card.scripture-mini-card.disabled { ... }
+.currently-added-scripture-page .book-card.scripture-mini-card:hover:not(.disabled),
+.currently-added-scripture-page .book-card.scripture-mini-card:focus:not(.disabled) { ... }
+.currently-added-scripture-page .book-card-title.scripture-mini-card-title { ... }
+.currently-added-scripture-page .scripture-mini-card { ... }
+.currently-added-scripture-page .scripture-mini-card.disabled,
+.currently-added-scripture-page .scripture-mini-card.not-allowed { ... }
+.currently-added-scripture-page .scripture-mini-card-title { ... }
+*/

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getSermon, updateSermon, uploadExpositoryImage, listExpositoryImages } from "../services/firebaseService";
 import "../styles/edit-expository.css";
+import MiniSermonList from '../components/MiniSermonList';
 
 export default function EditExpositoryPage() {
   const { id: sermonId } = useParams();
@@ -105,6 +106,10 @@ export default function EditExpositoryPage() {
 
   return (
     <div className="edit-expository-layout">
+      <div className="mini-dashboard-panel">
+        <MiniSermonList />
+      </div>
+      <div className="vertical-divider left-of-form blue-divider"></div>
       <div className="form-and-preview-stack">
         <form className="edit-expository-form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
           <label htmlFor="titleInput" className="form-label">Expository Title</label>

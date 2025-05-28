@@ -1,7 +1,8 @@
-// Utility to extract scripture references from a block of text
-// Supports formats like: Genesis 1:1, Genesis 1:1-5, Genesis 1:1-2:3, etc.
+// src/utils/smartParseScriptureInput.ts
+// Utility to extract scripture references (full names or abbreviations) from text.
 
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "./bookOrder";
+import { bookAliases } from "../hooks/useScriptureAutocomplete";
 
 export type ScriptureReference = {
   book: string;
@@ -11,48 +12,57 @@ export type ScriptureReference = {
   endVerse?: number;
 };
 
-const BOOKS = [...CANONICAL_BOOKS, ...EXTRA_CANONICAL_BOOKS].sort((a, b) => b.length - a.length); // Longest first for greedy match
+// Prepare full book names (longest first for greedy matching)
+const BOOKS = [...CANONICAL_BOOKS, ...EXTRA_CANONICAL_BOOKS].sort((a, b) => b.length - a.length);
+const bookPattern = BOOKS.map(b => b.replace(/ /g, "[ .]?")).join("|");
 
-const bookPattern = BOOKS.map(b => b.replace(/ /g, "[ .]?")) // allow for spaces/dots
+// Prepare abbreviation keys from bookAliases
+const aliasPattern = Object
+  .keys(bookAliases)
+  .map(ab => ab.replace(/\s/g, "[ .]?"))   // allow spaces/dots in aliases
+  .sort((a, b) => b.length - a.length)       // longest first
   .join("|");
 
-// Fix: Use \\s instead of \s in regex string for correct whitespace matching
+// Combined regex: full book names OR aliases, then chapter:verse, optional ranges
 const scriptureRegex = new RegExp(
-  `((?:${bookPattern}))\\s+(\\d+):(\\d+)(?:\\s*-\\s*(\\d+)(?::(\\d+))?)?`,
+  `((?:${bookPattern}|${aliasPattern}))\\s+(\\d+):(\\d+)(?:\\s*-\\s*(\\d+)(?::(\\d+))?)?`,
   "gi"
 );
 
 export function extractScriptureReferences(text: string): ScriptureReference[] {
   const refs: ScriptureReference[] = [];
   let match: RegExpExecArray | null;
+
   while ((match = scriptureRegex.exec(text))) {
-    const [_, book, chapter, verse, endChapterOrVerse, endVerse] = match;
-    if (endChapterOrVerse && endVerse) {
-      // Genesis 1:1-2:3
+    const [ , rawToken, chapStr, vsStr, endChapOrVsStr, endVsStr ] = match;
+    // Normalize alias key (strip dots/spaces, lowercase)
+    const key = rawToken.replace(/[.\s]/g, "").toLowerCase();
+    // Map to canonical book name, or clean up raw token
+    const book = bookAliases[key] || rawToken.replace(/[.]/g, " ").trim();
+
+    const chapter = parseInt(chapStr, 10);
+    const verse = parseInt(vsStr, 10);
+
+    if (endChapOrVsStr && endVsStr) {
       refs.push({
-        book: book.replace(/[.]/g, " ").trim(),
-        chapter: parseInt(chapter),
-        verse: parseInt(verse),
-        endChapter: parseInt(endChapterOrVerse),
-        endVerse: parseInt(endVerse),
+        book,
+        chapter,
+        verse,
+        endChapter: parseInt(endChapOrVsStr, 10),
+        endVerse: parseInt(endVsStr, 10),
       });
-    } else if (endChapterOrVerse) {
-      // Genesis 1:1-5
+    } else if (endChapOrVsStr) {
       refs.push({
-        book: book.replace(/[.]/g, " ").trim(),
-        chapter: parseInt(chapter),
-        verse: parseInt(verse),
-        endChapter: parseInt(chapter),
-        endVerse: parseInt(endChapterOrVerse),
+        book,
+        chapter,
+        verse,
+        endChapter: chapter,
+        endVerse: parseInt(endChapOrVsStr, 10),
       });
     } else {
-      // Genesis 1:1
-      refs.push({
-        book: book.replace(/[.]/g, " ").trim(),
-        chapter: parseInt(chapter),
-        verse: parseInt(verse),
-      });
+      refs.push({ book, chapter, verse });
     }
   }
+
   return refs;
 }
