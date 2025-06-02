@@ -7,6 +7,26 @@ service cloud.firestore {
       allow read, write: if request.auth != null && resource.data.userID == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.userID == request.auth.uid;
     }
+    // Restrict userScriptureVersions collection to owner only
+    match /userScriptureVersions/{versionId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    // Restrict userScriptures collection to owner only
+    match /userScriptures/{scriptureId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    // Restrict userTags collection to owner only
+    match /userTags/{tagId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    // Restrict sermonFolders collection to owner only
+    match /sermonFolders/{folderId} {
+      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
     // Allow read to anyone for other collections (or restrict as needed)
     match /{document=**} {
       allow read: if true;

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import SermonGrid from "../components/SermonGrid";
-import { fetchSermons } from "../services/firebaseService";
+import { fetchSermons, fetchSermonsByFolder, getSermonFolders, SermonFolder } from "../services/firebaseService";
 import { Sermon } from "../components/SermonCard/SermonCard";
 
 import "../pages/DashboardPage.css";
 
 export default function DashboardPage() {
   const [sermons, setSermons] = useState<Sermon[]>([]);
+  const [folders, setFolders] = useState<SermonFolder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -17,16 +19,33 @@ export default function DashboardPage() {
   const [selectedYear, setSelectedYear] = useState<string>("");
 
   useEffect(() => {
-    fetchSermons().then((data: any[]) => {
-      const validSermons = data
-        .filter(
-          (sermon) =>
-            sermon && sermon.id && sermon.title && sermon.description && sermon.date
-        )
-        .map((sermon) => sermon as Sermon);
-      setSermons(validSermons);
-    });
+    getSermonFolders().then(setFolders);
   }, []);
+
+  useEffect(() => {
+    if (selectedFolderId === undefined) return;
+    if (selectedFolderId === null) {
+      fetchSermons().then((data: any[]) => {
+        const validSermons = data
+          .filter(
+            (sermon) =>
+              sermon && sermon.id && sermon.title && sermon.description && sermon.date
+          )
+          .map((sermon) => sermon as Sermon);
+        setSermons(validSermons);
+      });
+    } else {
+      fetchSermonsByFolder(selectedFolderId).then((data: any[]) => {
+        const validSermons = data
+          .filter(
+            (sermon) =>
+              sermon && sermon.id && sermon.title && sermon.description && sermon.date
+          )
+          .map((sermon) => sermon as Sermon);
+        setSermons(validSermons);
+      });
+    }
+  }, [selectedFolderId]);
 
   function applyFilters(sermons: Sermon[]): Sermon[] {
     return sermons.filter((sermon) => {
@@ -61,7 +80,23 @@ export default function DashboardPage() {
       <div className="dashboard-background" />
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-start p-8">
         <div className="flex justify-between items-center px-6 pt-8 pb-4 w-full max-w-7xl relative">
-          <div className="h-6" />
+          {/* Folder Filter Dropdown */}
+          <div className="mr-4">
+            <label htmlFor="folder-filter" className="text-white mr-2">Folder:</label>
+            <select
+              id="folder-filter"
+              value={selectedFolderId || ""}
+              onChange={e => setSelectedFolderId(e.target.value || null)}
+              className="bg-gray-700 text-white p-2 rounded"
+            >
+              <option value="">All Folders</option>
+              <option value="__unassigned__">Unassigned</option>
+              {folders.map(folder => (
+                <option key={folder.id} value={folder.id}>{folder.name}</option>
+              ))}
+            </select>
+          </div>
+
           <button
             onClick={() => setFilterOpen(true)}
             className="p-2 rounded hover:bg-gray-700 transition"

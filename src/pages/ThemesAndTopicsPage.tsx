@@ -84,16 +84,13 @@ const ThemesAndTopicsPage: React.FC = () => {
             key={tag}
             className={
               tag === 'olivet_discourse'
-                ? 'theme-topic-button theme-topic-button-olivet' // Add a special class if you want to style it
+                ? 'theme-topic-button theme-topic-button-olivet'
                 : 'theme-topic-button'
             }
             onClick={() => handleTagClick(tag)}
-            title={normalizeTag(tag)} // Show full normalized tag on hover
+            title={normalizeTag(tag)}
           >
             <span className="theme-topic-button-text">{normalizeTag(tag)}</span>
-            {tag === 'olivet_discourse' && (
-              <span className="theme-topic-badge">NEW</span>
-            )}
           </button>
         ))}
       </div>

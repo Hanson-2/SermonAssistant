@@ -17,6 +17,14 @@ import ScriptureBookPage from "./pages/ScriptureBookPage";
 import LoginPage from "./pages/LoginPage";
 import { ThemesAndTopicsPage, TaggedVersesPage } from "./pages/ThemesAndTopicsPage"; // Added import
 import AboutPage from "./pages/AboutPage"; // Added import for AboutPage
+import UniversalSearchPage from "./pages/UniversalSearchPage";
+import AddTagsPage from "./pages/AddTagsPage"; // Import the new page
+import SermonFolderManagementPage from "./pages/SermonFolderManagementPage";
+import SmartCategorizationPage from "./pages/SmartCategorizationPage";
+import AdvancedSearchPage from "./pages/AdvancedSearchPage";
+import SermonSeriesManagementPage from "./pages/SermonSeriesManagementPage";
+import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
+import ImportExportPage from "./pages/ImportExportPage";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -51,16 +59,27 @@ function App() {
 
           {/* Scripture Management */}
           <Route path="/add-scripture" element={<AddScripturePage />} />
+          <Route path="/scripture/:bookName/:chapter" element={<ScriptureBookPage />} />
+          <Route path="/scripture/:bookName" element={<ScriptureBookPage />} /> {/* Added route for book without chapter */}
+          <Route path="/scripture-search" element={<UniversalSearchPage />} />
           <Route path="/currently-added-scripture" element={<CurrentlyAddedScripturePage />} />
-          <Route path="/scripture/:book" element={<ScriptureBookPage />} />
           <Route path="/themes-and-topics" element={<ThemesAndTopicsPage />} /> {/* Added route */}
           <Route path="/themes-and-topics/:tag" element={<TaggedVersesPage />} /> {/* Added route for specific tag */}
+
+          {/* Admin Pages */}
+          <Route path="/add-tags" element={<AddTagsPage />} />
 
           {/* Login Page */}
           <Route path="/login" element={<LoginPage />} />
 
           {/* About Page */}
-          <Route path="/about" element={<AboutPage />} />
+          <Route path="/about" element={<AboutPage />} />          {/* Settings Pages */}
+          <Route path="/sermon-folder-management" element={<SermonFolderManagementPage />} />
+          <Route path="/smart-categorization" element={<SmartCategorizationPage />} />
+          <Route path="/advanced-search" element={<AdvancedSearchPage />} />
+          <Route path="/sermon-series-management" element={<SermonSeriesManagementPage />} />
+          <Route path="/analytics-dashboard" element={<AnalyticsDashboardPage />} />
+          <Route path="/import-export" element={<ImportExportPage />} />
         </Routes>
       </main>
     </div>

@@ -1,0 +1,75 @@
+.user-versions-page {
+  padding: 20px;
+}
+
+.user-versions-error {
+  color: #b00020;
+  margin-bottom: 10px;
+}
+
+.user-versions-success {
+  color: #007e33;
+  margin-bottom: 10px;
+}
+
+.add-version-form {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fafbfc;
+}
+
+.add-version-form .form-row {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.add-version-form label {
+  min-width: 120px;
+  font-weight: 500;
+}
+
+.add-version-form input,
+.add-version-form textarea {
+  margin-left: 5px;
+  padding: 5px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.add-version-form textarea {
+  width: 100%;
+  min-width: 200px;
+  max-width: 100%;
+}
+
+.add-version-form button {
+  padding: 8px 15px;
+  background: #2d7ff9;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-version-form button:disabled {
+  background: #b0c4de;
+  cursor: not-allowed;
+}
+
+.versions-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.versions-list li {
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background: #fff;
+}

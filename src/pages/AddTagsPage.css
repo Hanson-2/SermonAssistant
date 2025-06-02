@@ -1,0 +1,588 @@
+/* Base layout - inspired by UniversalSearchPage and original AddTagsPage */
+.add-tags-layout {
+  min-height: 100vh;
+  /* background: linear-gradient(rgba(17, 24, 39, 0.92), rgba(10, 15, 25, 0.95)), url('/Blue Wall Background.png') center center fixed no-repeat; */
+  /* Using a simpler background for now to match UniversalSearchPage's direct body background */
+  background: url('/Blue Wall Background.png') center center fixed no-repeat;
+  background-size: cover;
+  color: #e0c97f;
+  padding: 2rem 1rem;
+  display: flex; /* Added to center container */
+  flex-direction: column; /* Added to center container */
+  align-items: center; /* Added to center container */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  animation: fadeIn 0.5s ease-in-out;
+  position: relative; /* Ensure this is relative for z-index context if needed */
+  z-index: 1; /* Match UniversalSearchPage structure */
+}
+
+.add-tags-container {
+  position: relative;
+  z-index: 1; /* Match UniversalSearchPage structure */
+  width: 100%;
+  max-width: 800px; 
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; 
+  /* Match filter-section from UniversalSearchPage for container background */
+  background: linear-gradient(135deg, rgba(35,35,35,0.95) 0%, rgba(24,24,24,0.95) 100%), url('/Blue Wall Background.png') center center fixed no-repeat;
+  background-size: cover; /* Ensure cover for the image part */
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid #4B3A1A;
+  box-shadow: 
+    0 8px 25px rgba(0,0,0,0.5), 
+    inset 0 1px 2px rgba(255,255,255,0.03),
+    inset 0 -1px 2px rgba(0,0,0,0.1);
+}
+
+.add-tags-title { /* Adapted from .universal-search-title */
+  text-align: center;
+  color: #e0c97f;
+  font-size: 2.4rem; /* Adjusted from 2.8rem of universal */
+  margin-bottom: 25px; /* Adjusted */
+  font-weight: 700;
+  font-family: 'Trajan Pro', serif;
+  letter-spacing: 1.5px;
+  text-shadow: 
+    0 0 15px rgba(224, 201, 127, 0.3),
+    1px 1px 0px #4B3A1A,
+    2px 2px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* Search Controls Section for AddTagsPage */
+.search-controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem; /* Increased padding to match .filter-group more closely */
+  background: rgba(0,0,0,0.1); 
+  border: 1px solid #3a2e13; 
+  border-radius: 8px;
+  margin-bottom: 1rem; 
+}
+
+.search-controls-section h2, 
+.results-section-tags h2, /* Will be mostly overridden for results title */
+.batch-tag-inputs-container h2 { 
+  margin-top: 0;
+  margin-bottom: 20px; 
+  font-size: 1.6rem; 
+  color: #e0c97f;
+  font-weight: 700;
+  font-family: 'Trajan Pro', serif; 
+  letter-spacing: 1px; 
+  text-shadow: 
+    1px 1px 0px #4B3A1A, 
+    2px 2px 3px rgba(0,0,0,0.6); 
+  padding-bottom: 10px; 
+  border-bottom: 1px solid rgba(224, 201, 127, 0.2); 
+  /* cursor: pointer; REMOVED - will be handled by .clickable */
+}
+/* Apply cursor and hover only to h2 elements with the .clickable class */
+h2.clickable {
+  cursor: pointer;
+}
+h2.clickable:hover {
+  color: #fffbe6;
+}
+
+/* Search Controls Section - Specific for AddTagsPage */
+.search-controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem; /* Increased padding to match .filter-group more closely */
+  background: rgba(0,0,0,0.1); 
+  border: 1px solid #3a2e13; 
+  border-radius: 8px;
+  margin-bottom: 1rem; 
+}
+
+.search-bar-and-button { /* New wrapper for search input and button */
+  display: flex;
+  gap: 0.75rem; /* Space between input and button */
+  align-items: center;
+}
+
+.search-bar-tags { /* Adapted from .search-bar in UniversalSearchPage */
+  flex-grow: 1; /* Allow input to take available space */
+  padding: 12px 15px; /* Adjusted padding */
+  font-size: 1rem;
+  border: 1px solid #4B3A1A;
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #1a1a1a, #242424);
+  color: #e0c97f;
+  font-weight: 500;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+.search-bar-tags:focus {
+  border-color: #f0e68c;
+  background-color: #2a2a2a;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), 0 0 0 3px rgba(224, 201, 127, 0.3), 0 1px 2px rgba(0,0,0,0.3);
+  outline: none;
+}
+
+/* Action Buttons (Search, Clear) & General Button Styling */
+/* .search-actions-tags removed as button is now part of .search-bar-and-button */
+
+.atp-button { /* Base button style for AddTagsPage, from UniversalSearchPage */
+  padding: 12px 22px;
+  font-size: 1rem;
+  background: linear-gradient(to bottom, #3a3a3a 0%, #282828 100%);
+  color: #e0c97f;
+  border: 1px solid #4B3A1A;
+  border-top-color: #5c4a2a;
+  border-radius: 8px;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.05), inset 0 -1px 1px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap; /* Prevent text wrapping on buttons */
+}
+.atp-button:hover {
+  background: linear-gradient(to bottom, #4a4a4a 0%, #383838 100%);
+  color: #fffbe6;
+  border-color: #e0c97f;
+  box-shadow: 0 6px 10px rgba(0,0,0,0.5), 0 2px 4px rgba(224, 201, 127, 0.2), inset 0 1px 1px rgba(255,255,255,0.1), inset 0 -1px 1px rgba(0,0,0,0.3);
+}
+.atp-button:active {
+  background: linear-gradient(to top, #3a3a3a 0%, #282828 100%);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
+  transform: translateY(1px);
+}
+.atp-button:disabled {
+  background: #2b2b2b;
+  color: #776a4b;
+  border-color: #3a2e13;
+  cursor: not-allowed;
+  box-shadow: none;
+  text-shadow: none;
+  opacity: 0.7; /* Added opacity for disabled state */
+}
+
+/* Translation Options Styling */
+.translation-options {
+  display: flex;
+  /* flex-direction: column; Stack options vertically */
+  flex-direction: row; /* Display options horizontally */
+  flex-wrap: wrap; /* Allow items to wrap to the next line */
+  gap: 0.75rem; /* Space between options, adjusted for horizontal layout */
+}
+.translation-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem; /* Space between checkbox and label, slightly reduced */
+  padding: 0.25rem 0.5rem; /* Add some horizontal padding for better spacing when wrapped */
+  background-color: rgba(255, 255, 255, 0.05); /* Subtle background for each item */
+  border-radius: 6px; /* Rounded corners for each item */
+  border: 1px solid rgba(224, 201, 127, 0.2); /* Subtle border */
+}
+
+/* Checkbox styling (reusable for translations and apply-all) */
+.atp-checkbox {
+  min-width: 18px; /* Ensure consistent size */
+  height: 18px;
+  cursor: pointer;
+  accent-color: #e0c97f; /* Style checkbox color */
+  margin-right: 0.25rem; /* Small space if label is directly next */
+}
+
+
+/* Error, Loading, No Results, Success Messages */
+.add-tags-error, .search-error { /* Consolidate error styling */
+  color: #e74c3c;
+  text-align: center;
+  margin: 15px 0;
+  font-weight: 600;
+  text-shadow: 0 1px 2px #000;
+  padding: 10px 15px;
+  border-radius: 6px;
+  background-color: rgba(231, 76, 60, 0.15); /* Slightly less opaque */
+  border: 1px solid #e74c3c;
+}
+.add-tags-success {
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin: 15px 0; /* Consistent margin */
+  text-align: center;
+  font-weight: 500;
+  background-color: rgba(46, 204, 113, 0.15); /* Slightly less opaque */
+  color: #2ecc71;
+  border: 1px solid #2ecc71;
+}
+.loading-indicator, .no-results-message {
+  text-align: center;
+  color: #e0c97f;
+  font-weight: 600;
+  text-shadow: 0 1px 2px #000;
+  margin: 20px 0; /* Increased margin for better spacing */
+  padding: 10px;
+}
+
+/* Results Section */
+.results-section-tags {
+  margin-top: 1.5rem;
+  padding: 1.5rem; 
+  background: rgba(0,0,0,0.1); 
+  border: 1px solid #3a2e13; 
+  border-radius: 8px;
+}
+.results-section-tags h2 { /* This is the specific override for "Search Results" title */
+  font-family: 'Trajan Pro', serif;
+  color: #e0c97f;
+  font-size: 1.5rem; 
+  margin-top: 0; 
+  margin-bottom: 1rem;
+  text-shadow: 1px 1px 1px #333; 
+  border-bottom: 1px solid rgba(224, 201, 127, 0.2); 
+  padding-bottom: 0.75rem; 
+  font-weight: 700;
+  /* No cursor: pointer here, which is correct */
+}
+
+.results-list-tags { 
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  /* Removed scrollbar styling from here, will be on individual cards if needed or page */
+}
+
+.result-item-tags { 
+  /* Revert to card-like appearance from UniversalSearchPage.search-result-item */
+  background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%); 
+  border: 1px solid #4B3A1A; 
+  border-left: 5px solid #e0c97f; 
+  border-radius: 12px;
+  padding: 20px; 
+  margin-bottom: 20px; 
+  box-shadow: 
+    0 5px 15px rgba(0,0,0,0.5), 
+    inset 0 1px 0px rgba(255,255,255,0.02), 
+    inset 0 0 10px rgba(0,0,0,0.2); 
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  display: flex; /* Keep flex for checkbox and info alignment */
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.result-item-tags:last-child {
+  /* No specific style needed if margin-bottom handles spacing */
+  border-bottom: 1px solid #4B3A1A; /* Ensure consistent border if it was removed */
+}
+.result-item-tags:hover {
+  transform: translateY(-3px); 
+  box-shadow: 
+    0 8px 25px rgba(0,0,0,0.6), 
+    0 0 15px rgba(224, 201, 127, 0.15), 
+    inset 0 1px 0px rgba(255,255,255,0.03),
+    inset 0 0 10px rgba(0,0,0,0.25);
+  /* color and background-color changes are not typical for card hover, text inside might change */
+}
+.result-item-tags.selected-item { 
+  background: linear-gradient(135deg, #3a3a3a 0%, #2e2e2e 100%); /* Darker selected background */
+  border-left-color: #ffd700; /* Brighter gold for selected */
+  box-shadow: 
+    0 5px 15px rgba(0,0,0,0.6), 
+    inset 0 1px 0px rgba(255,255,255,0.04), 
+    inset 0 0 10px rgba(0,0,0,0.3),
+    0 0 10px rgba(255, 215, 0, 0.4); /* Gold glow for selected */
+}
+
+/* Verse Info within Result Item */
+.verse-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem; /* Space between reference, text, and tags */
+  flex-grow: 1; /* Allow text content to take available space */
+  cursor: pointer; /* Make the whole label area clickable */
+}
+
+.verse-reference-tags {
+  font-weight: bold;
+  color: #f0e68c; /* Brighter gold for reference */
+  font-size: 1.1rem;
+}
+
+.verse-text-preview-tags {
+  font-size: 0.9rem;
+  color: #ccc; /* Lighter color for text preview */
+  line-height: 1.4;
+  /* max-height: 4.2em; */ /* Limit to about 3 lines */
+  /* overflow: hidden; */
+  /* text-overflow: ellipsis; */
+  /* display: -webkit-box; */
+  /* -webkit-line-clamp: 3; */
+  /* -webkit-box-orient: vertical; */
+}
+
+.current-tags-preview {
+  font-size: 0.85rem;
+  color: #a09376; /* Subdued color for existing tags */
+}
+.current-tags-preview strong {
+  color: #b8a988; /* Slightly brighter for "Tags:" label */
+}
+
+/* Batch Tag Inputs Section - Styles for the unified section */
+.batch-tag-controls-section { /* New name for the unified section */
+  padding: 1.5rem;
+  background: rgba(10, 10, 10, 0.2); /* Slightly darker than other sections */
+  border: 1px solid #403315; /* Darker gold border */
+  border-radius: 8px;
+  margin-top: 1.5rem; /* Keep consistent top margin */
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem; /* Increased gap between elements in this section */
+}
+
+.batch-tag-controls-section h2 {
+  /* Uses existing .search-controls-section h2 styles, which is fine */
+  /* If specific styling is needed, it can be added here */
+  text-align: center; /* Center the "Batch Tagging" title */
+  margin-bottom: 1rem; /* Adjust bottom margin if needed */
+}
+
+.tag-inputs-container { /* Container for the two input groups */
+  display: flex;
+  flex-direction: column; /* Stack input groups */
+  gap: 1rem; /* Space between add and remove input groups */
+}
+
+/* .tag-input-group, .batch-tags-add, .batch-tags-remove, .batch-tag-inputs-container label */
+/* These should largely retain their existing styles from .batch-tag-inputs-container and its children */
+/* Ensure they are correctly applied if class names were changed or hierarchy adjusted */
+
+.apply-all-checkbox-container { /* Styles for the "Apply to all translations" checkbox area */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; 
+  /* margin-top: 0.5rem; */ /* Gap from .batch-tag-controls-section handles this */
+}
+.apply-all-checkbox-container label {
+  color: #e0c97f;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem; 
+}
+.apply-all-checkbox-container label:hover {
+  color: #fffbe6;
+}
+
+.select-all-container { /* Styles for the "Select all X results" checkbox area */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.select-all-container label {
+  color: #e0c97f;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.select-all-container label:hover {
+  color: #fffbe6;
+}
+
+.batch-action-btn { /* Specific styling for the main "Apply Tags to Selected" button */
+  /* Inherits .atp-button */
+  align-self: center; /* Center the button */
+  /* margin-top: 1rem; */ /* Gap from .batch-tag-controls-section handles this */
+  padding: 12px 25px;
+  font-size: 1.05rem;
+  background: linear-gradient(to bottom, #c8a450, #e0c97f); 
+  color: #211a07;
+  border: 1px solid #b08d4a;
+  text-shadow: 1px 1px 0px rgba(255,255,255,0.2);
+}
+.batch-action-btn:hover {
+  background: linear-gradient(to bottom, #d8b460, #f0d98f);
+  color: #211a07;
+  border-color: #c8a450;
+}
+.batch-action-btn:disabled {
+  background: #7d6c46;
+  color: #423823;
+  border-color: #5a4a2e;
+}
+
+/* User Tag Picker Section - Styles for user-defined tags */
+.user-tag-picker-section {
+  margin-bottom: 1rem;
+  position: relative; /* Ensure relative positioning for dropdown */
+}
+.user-tag-picker-label {
+  font-size: 1.05rem;
+  color: #e0c97f;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.user-tag-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.user-tag-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: #e0e7ff;
+  color: #222;
+  font-size: 0.98rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #b3b3b3;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.user-tag-chip:hover, .user-tag-chip:focus {
+  background: #c7d2fe;
+  color: #1e293b;
+  border: 1.5px solid #4B3A1A;
+}
+.user-tag-chip.remove {
+  background: #ffe0e0;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+.user-tag-chip.remove:hover, .user-tag-chip.remove:focus {
+  background: #fecaca;
+  color: #991b1b;
+  border: 1.5px solid #b91c1c;
+}
+
+/* User tag filter input styles */
+.user-tag-filter-input {
+  margin-bottom: 0.5rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #b3b3b3;
+  font-size: 1rem;
+  width: 100%;
+  background: #18181b;
+  color: #e0c97f;
+  transition: border 0.2s, background 0.2s;
+}
+.user-tag-filter-input:focus {
+  border: 1.5px solid #4B3A1A;
+  background: #23232a;
+  outline: none;
+}
+
+/* User tag suggestion dropdown styles */
+.user-tag-suggestion-list {
+  position: absolute;
+  z-index: 10;
+  background: #23232a;
+  border: 1.5px solid #4B3A1A;
+  border-radius: 8px;
+  margin-top: 2px;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  padding: 0;
+  list-style: none;
+}
+.user-tag-suggestion-item {
+  padding: 8px 14px;
+  color: #e0c97f;
+  font-size: 1rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+  transition: background 0.18s, color 0.18s;
+}
+.user-tag-suggestion-item:hover,
+.user-tag-suggestion-item.highlighted {
+  background: #3a2e13;
+  color: #fffbe6;
+}
+
+/* REMOVE OLD BATCH SECTION STYLES IF THEY ARE NO LONGER USED */
+/* .batch-tag-inputs-container (old one, if different from .batch-tag-controls-section) */
+/* .batch-tag-inputs-form */
+/* .apply-translations-checkbox-container */
+/* .batch-update-button (old one, if different from .batch-action-btn) */
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .add-tags-layout {
+    padding: 10px;
+  }
+  .add-tags-container {
+    padding: 15px;
+    gap: 1rem;
+  }
+  .add-tags-title {
+    font-size: 2rem;
+  }
+  .search-controls-section {
+    padding: 0.75rem;
+  }
+  .search-controls-section h2 {
+    font-size: 1.2rem;
+  }
+  .search-bar-and-button {
+    flex-direction: column; /* Stack search input and button */
+    gap: 0.5rem;
+  }
+  .search-bar-tags {
+    width: 100%; /* Full width when stacked */
+  }
+  .atp-button.search-action-btn {
+    width: 100%; /* Full width button when stacked */
+  }
+
+  .results-section-tags {
+    padding: 1rem;
+  }
+  .results-section-tags h2 {
+    font-size: 1.3rem;
+  }
+  .result-item-tags {
+    padding: 10px;
+    gap: 0.5rem;
+    /* flex-direction: column; */ /* Already flex-start, should be fine */
+    /* align-items: stretch; */
+  }
+  .verse-select-checkbox {
+    margin-top: 0.1rem; /* Adjust alignment */
+  }
+  .verse-info strong.verse-reference-tags {
+    font-size: 1rem;
+  }
+  .verse-text-preview-tags {
+    font-size: 0.85rem;
+  }
+  .batch-tag-inputs-container {
+    padding: 1rem;
+  }
+  .batch-tag-inputs-container h3 {
+    font-size: 1.2rem;
+  }
+  .atp-button, .batch-update-button, .translation-btn-tags { /* .translation-btn-tags is not used anymore */
+    font-size: 0.9rem; 
+    padding: 10px 18px;
+  }
+  .batch-update-button {
+    padding: 10px 20px; 
+    font-size: 1rem; /* Keep batch update button slightly larger */
+  }
+  .pagination-tags {
+    flex-direction: column; /* Stack pagination on small screens */
+    gap: 0.5rem;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

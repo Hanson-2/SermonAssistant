@@ -1,0 +1,439 @@
+body {
+  background: url('/Blue Wall Background.png') center center fixed no-repeat;
+  background-size: cover;
+}
+
+.universal-search-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.22; /* less transparent */
+  background: url('/Texas_Logo_Wallpaper.png') left center no-repeat;
+  background-size: cover;
+  filter: grayscale(0.2) brightness(0.8) contrast(1.1);
+}
+
+.universal-search-page {
+  background: none;
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: #e0c97f;
+  position: relative;
+  z-index: 1;
+}
+
+.universal-search-content {
+  position: relative;
+  z-index: 1;
+}
+
+.universal-search-title {
+  text-align: center;
+  color: #e0c97f; /* Existing gold */
+  font-size: 2.8rem; /* Slightly larger for impact */
+  margin-bottom: 30px; /* Increased margin */
+  font-weight: 700; /* Trajan Pro often looks better bold */
+  font-family: 'Trajan Pro', serif; /* Assuming Trajan Pro is available */
+  letter-spacing: 1.5px; /* Wider spacing */
+  text-shadow: 
+    0 0 15px rgba(224, 201, 127, 0.3), /* Gold glow */
+    1px 1px 0px #4B3A1A, /* Darker gold outline for depth */
+    2px 2px 3px rgba(0, 0, 0, 0.7); /* Main shadow for engraving */
+}
+
+.search-controls-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  align-items: center;
+}
+
+.search-bar-wrapper {
+  flex-grow: 1;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 14px 18px; /* Slightly more padding */
+  font-size: 1.05rem; /* Slightly larger font */
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #1a1a1a, #242424); /* Darker gradient */
+  color: #e0c97f;
+  font-weight: 500;
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.6), /* Deeper inset shadow */
+    0 1px 2px rgba(0,0,0,0.3); /* Subtle outer shadow for edge */
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+.search-bar:focus {
+  border-color: #f0e68c; /* Brighter gold on focus */
+  background-color: #2a2a2a; /* Slightly lighter background on focus */
+  box-shadow: 
+    inset 0 2px 5px rgba(0,0,0,0.7), /* Enhanced inset shadow */
+    0 0 0 3px rgba(224, 201, 127, 0.3), /* Gold focus ring */
+    0 1px 2px rgba(0,0,0,0.3);
+  outline: none;
+}
+
+.search-button, .clear-filters-btn, .pagination-btn {
+  padding: 12px 22px; /* Adjusted padding */
+  font-size: 1rem;
+  background: linear-gradient(to bottom, #3a3a3a 0%, #282828 100%); /* Darker, more metallic gradient */
+  color: #e0c97f;
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  border-top-color: #5c4a2a; /* Slightly lighter top border for 3D effect */
+  border-radius: 8px;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7); /* Text shadow for depth */
+  box-shadow: 
+    0 4px 6px rgba(0,0,0,0.4), /* Main shadow for raised effect */
+    inset 0 1px 1px rgba(255,255,255,0.05), /* Subtle inner highlight for top edge */
+    inset 0 -1px 1px rgba(0,0,0,0.2); /* Subtle inner shadow for bottom edge */
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+.search-button:hover, .clear-filters-btn:hover, .pagination-btn:hover {
+  background: linear-gradient(to bottom, #4a4a4a 0%, #383838 100%); /* Lighter on hover */
+  color: #fffbe6;
+  border-color: #e0c97f; /* Gold border on hover */
+  box-shadow: 
+    0 6px 10px rgba(0,0,0,0.5), /* Larger shadow on hover */
+    0 2px 4px rgba(224, 201, 127, 0.2), /* Subtle gold glow */
+    inset 0 1px 1px rgba(255,255,255,0.1),
+    inset 0 -1px 1px rgba(0,0,0,0.3);
+}
+.search-button:active, .clear-filters-btn:active, .pagination-btn:active {
+  background: linear-gradient(to top, #3a3a3a 0%, #282828 100%); /* Inverted gradient for pressed look */
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.5), /* Stronger inset shadow when pressed */
+    0 1px 2px rgba(0,0,0,0.3);
+  transform: translateY(1px); /* Slight press down effect */
+}
+
+.search-error {
+  color: #e74c3c;
+  text-align: center;
+  margin: 15px 0;
+  font-weight: 600;
+  text-shadow: 0 1px 2px #000;
+}
+
+.loading-indicator, .no-results-message {
+  text-align: center;
+  color: #e0c97f;
+  font-weight: 600;
+  text-shadow: 0 1px 2px #000;
+}
+
+.search-results-container {
+  margin-top: 20px;
+}
+
+.results-title {
+  font-size: 1.5rem;
+  color: #e0c97f;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px #000;
+}
+
+.search-results-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.search-result-item {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%); /* Darker, richer gradient */
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  border-left: 5px solid #e0c97f; /* Prominent gold left border */
+  border-radius: 12px;
+  padding: 20px; /* Increased padding */
+  margin-bottom: 20px; /* Increased margin */
+  box-shadow: 
+    0 5px 15px rgba(0,0,0,0.5), /* Softer, deeper shadow */
+    inset 0 1px 0px rgba(255,255,255,0.02), /* Very subtle inner top highlight */
+    inset 0 0 10px rgba(0,0,0,0.2); /* Subtle inner shadow for depth */
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.search-result-item:hover {
+  transform: translateY(-3px); /* Slight lift on hover */
+  box-shadow: 
+    0 8px 25px rgba(0,0,0,0.6), 
+    0 0 15px rgba(224, 201, 127, 0.15), /* Gold glow on hover */
+    inset 0 1px 0px rgba(255,255,255,0.03),
+    inset 0 0 10px rgba(0,0,0,0.25);
+}
+
+.result-reference {
+  font-size: 1.3rem; /* Larger reference */
+  font-weight: 700;
+  font-family: 'Georgia', serif; /* More classic font for scripture */
+  color: #e0c97f;
+  margin: 0 0 10px 0; /* Increased bottom margin */
+  text-shadow: 1px 1px 0px #4B3A1A, 2px 2px 3px rgba(0,0,0,0.6); /* Engraved text */
+}
+.result-reference em { /* Styling for highlighted parts */
+  color: #fffbe6; /* Brighter highlight */
+  background-color: rgba(224, 201, 127, 0.2); /* Subtle gold background for highlight */
+  padding: 0.1em 0.2em;
+  border-radius: 3px;
+  font-style: normal;
+}
+
+.result-text {
+  font-size: 1.05rem; /* Slightly larger text */
+  line-height: 1.7; /* Increased line height for readability */
+  color: #f0f0f0; /* Lighter text color */
+  margin-bottom: 12px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.4); /* Softer text shadow */
+}
+.result-text em { /* Styling for highlighted parts */
+  color: #fffbe6; /* Brighter highlight */
+  background-color: rgba(224, 201, 127, 0.2);
+  padding: 0.1em 0.2em;
+  border-radius: 3px;
+  font-style: normal;
+  font-weight: bold; /* Make highlighted text bold */
+}
+
+.filter-section {
+  background: linear-gradient(135deg, rgba(35,35,35,0.95) 0%, rgba(24,24,24,0.95) 100%), url('/Blue Wall Background.png') center center fixed no-repeat; /* Added background image with overlay */
+  background-size: cover;
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 30px; /* Increased margin */
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  box-shadow: 
+    0 8px 25px rgba(0,0,0,0.5), /* Softer, larger shadow for depth */
+    inset 0 1px 2px rgba(255,255,255,0.03), /* Subtle inner highlight */
+    inset 0 -1px 2px rgba(0,0,0,0.1); /* Subtle inner bottom shadow */
+}
+
+.filter-title {
+  margin-top: 0;
+  margin-bottom: 20px; /* Increased margin */
+  font-size: 1.6rem; /* Slightly larger */
+  color: #e0c97f;
+  font-weight: 700;
+  font-family: 'Trajan Pro', serif; /* Consistent title font */
+  letter-spacing: 1px;
+  text-shadow: 
+    1px 1px 0px #4B3A1A, /* Darker gold outline */
+    2px 2px 3px rgba(0,0,0,0.6); /* Main shadow */
+  padding-bottom: 10px; /* Space for border */
+  border-bottom: 1px solid rgba(224, 201, 127, 0.2); /* Subtle gold underline */
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.filter-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 20px; /* Gap between columns and rows if content wraps */
+}
+
+.filter-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Gap between filter groups within a column */
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0,0,0,0.1); /* Slight background for visual grouping */
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #3a2e13; /* Consistent border with other elements */
+}
+
+.filter-group strong {
+  margin-bottom: 10px; /* Increased space below title */
+  color: #e0c97f;
+  font-weight: 700;
+  text-shadow: 0 1px 2px #000;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #3a2e13; /* Underline for the strong tag */
+}
+
+/* Add spacing between checkbox and its label text */
+.filter-group label input[type="checkbox"] {
+  margin-right: 8px; /* Adjust as needed */
+}
+
+.filter-scrollable-list {
+  list-style: none;
+  padding: 5px; /* Padding inside the list */
+  margin: 0;
+  max-height: 220px; /* Increased height */
+  overflow-y: auto;
+  border: 1px solid #1a1a1a; 
+  border-radius: 6px;
+  background-color: #1f1f1f; /* Darker background */
+  box-shadow: 
+    inset 0 2px 8px rgba(0,0,0,0.7), /* Stronger inset shadow for engraved look */
+    0 1px 0 rgba(255,255,255,0.03); /* Top edge highlight */
+  color: #e0e0e0;
+}
+
+.filter-scrollable-list li {
+  padding: 10px 15px; /* Increased padding */
+  cursor: pointer;
+  border-bottom: 1px solid #303030; /* Darker separator */
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5); 
+  color: #c0b08f; 
+}
+
+.filter-scrollable-list li:last-child {
+  border-bottom: none;
+}
+
+.filter-scrollable-list li:hover {
+  background-color: #3a3a3a; /* Slightly lighter on hover */
+  color: #ffffff;
+}
+
+.filter-scrollable-list li.selected {
+  background-color: #151515; /* Very dark for selected, pushed-in feel */
+  color: #ffd700; /* Brighter gold for selected text */
+  font-weight: bold;
+  box-shadow: 
+    inset 0 2px 5px rgba(0,0,0,0.6), /* Deeper inset shadow for pressed effect */
+    0 0 8px rgba(255, 215, 0, 0.3); /* Subtle gold glow for selected */
+  border-bottom-color: #101010; /* Match dark background */
+}
+
+/* Styling for translation buttons */
+.translations-filter {
+  margin-bottom: 30px; /* Increased margin */
+  padding: 20px; /* Adjusted padding */
+  background: linear-gradient(135deg, rgba(35,35,35,0.95) 0%, rgba(24,24,24,0.95) 100%), url('/Blue Wall Background.png') center center fixed no-repeat; /* Consistent with filter-section */
+  background-size: cover;
+  border-radius: 12px;
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  box-shadow: 
+    0 6px 20px rgba(0,0,0,0.45), /* Softer, larger shadow */
+    inset 0 1px 1px rgba(255,255,255,0.03),
+    inset 0 -1px 1px rgba(0,0,0,0.1);
+}
+
+.translation-buttons {
+  display: flex;
+  flex-wrap: wrap; /* Allow buttons to wrap to next line */
+  gap: 10px;
+  justify-content: center; /* Center buttons */
+}
+
+.translation-btn {
+  padding: 10px 18px; /* Adjusted padding */
+  font-size: 0.95rem; /* Slightly larger */
+  background: linear-gradient(to bottom, #333333 0%, #222222 100%); /* Darker gradient */
+  color: #c0b08f;
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  border-top-color: #5c4a2a;
+  border-radius: 6px;
+  font-weight: 600;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+  box-shadow: 
+    0 3px 5px rgba(0,0,0,0.35),
+    inset 0 1px 0px rgba(255,255,255,0.04),
+    inset 0 -1px 0px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.translation-btn:hover {
+  background: linear-gradient(to bottom, #404040 0%, #303030 100%);
+  color: #fffbe6;
+  border-color: #e0c97f;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.4),
+    0 1px 3px rgba(224, 201, 127, 0.15),
+    inset 0 1px 0px rgba(255,255,255,0.08),
+    inset 0 -1px 0px rgba(0,0,0,0.2);
+}
+
+.translation-btn.selected {
+  background: linear-gradient(to top, #c8a450, #e0c97f); /* Gold gradient for selected */
+  color: #211a07; /* Dark text on gold */
+  border-color: #b08d4a #7e6533 #7e6533 #b08d4a; /* Darker gold border for depth */
+  text-shadow: 1px 1px 0px rgba(255,255,255,0.2); /* Light text shadow for readability */
+  box-shadow: 
+    inset 0 1px 3px rgba(0,0,0,0.3), /* Inset shadow for pressed look */
+    0 1px 0 rgba(255,255,255,0.1); /* Outer top highlight */
+  font-weight: 700;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  gap: 12px;
+}
+.pagination-info {
+  font-size: 1rem;
+  color: #e0c97f;
+  font-weight: 600;
+  text-shadow: 0 1px 2px #000;
+}
+
+.hits-per-page-selector {
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.hits-per-page-selector label {
+  margin-right: 8px; /* Increased margin */
+  font-weight: 600;
+  color: #c0b08f;
+}
+
+.hits-per-page-dropdown { /* Added class for styling */
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  background-color: #282828;
+  color: #e0c97f;
+  border: 1px solid #4B3A1A;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+}
+.hits-per-page-dropdown:focus {
+  outline: none;
+  border-color: #e0c97f;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 0 2px rgba(224, 201, 127, 0.25);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+  .search-controls-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-button, .clear-filters-btn {
+    width: 100%;
+  }
+}

@@ -7,9 +7,9 @@ const AboutPage: React.FC = () => {
     name: 'Sermon Notes Assistant', // Replace with your app name
     version: '1.0.0', // Replace with your app version
     purpose: 'This application helps users create, manage, and organize sermon notes and related scripture references efficiently.', // Replace with your app's purpose
-    author: 'Your Name/Company', // Replace with author/company
+    author: 'Steven Hanson / Church of South Texas', // Replace with author/company
     license: 'MIT License', // Replace with your license
-    contact: 'https://github.com/your-repo', // Replace with your support/GitHub link
+    contact: 'https://github.com/SermonAssistant', // Replace with your support/GitHub link
   };
 
   return (

@@ -1,0 +1,499 @@
+/* Sermon Series Management Page Styles */
+.series-management-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  min-height: calc(100vh - 56px);
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  background: linear-gradient(45deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: #cbd5e1;
+  font-size: 1.1rem;
+}
+
+/* Status Messages */
+.message {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message.error {
+  background-color: #fecaca;
+  color: #991b1b;
+  border: 1px solid #f87171;
+}
+
+.message.success {
+  background-color: #bbf7d0;
+  color: #166534;
+  border: 1px solid #4ade80;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.close-btn:hover {
+  opacity: 1;
+}
+
+/* Loading Indicator */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: #fbbf24;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #374151;
+  border-top: 3px solid #fbbf24;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Section Styles */
+.section {
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid #475569;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section h2 {
+  font-size: 1.5rem;
+  color: #fbbf24;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Button Styles */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #fbbf24, #f59e0b);
+  color: #1e293b;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(45deg, #f59e0b, #d97706);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.btn-secondary {
+  background: #64748b;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #475569;
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+.btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Form Styles */
+.create-series-form {
+  background: rgba(51, 65, 85, 0.5);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #64748b;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #64748b;
+  border-radius: 0.5rem;
+  background: #374151;
+  color: white;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+  outline: none;
+  border-color: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.date-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* No Content States */
+.no-series, .no-sermons, .no-unassigned {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+  font-style: italic;
+}
+
+/* Series Grid */
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+}
+
+.series-card {
+  background: rgba(51, 65, 85, 0.6);
+  border: 1px solid #64748b;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.3s;
+}
+
+.series-card:hover {
+  border-color: #fbbf24;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.series-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.series-header h3 {
+  color: #fbbf24;
+  margin: 0;
+  font-size: 1.3rem;
+  flex: 1;
+}
+
+.series-description {
+  color: #cbd5e1;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+.series-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 0.5rem;
+}
+
+.series-date {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.sermon-count {
+  color: #fbbf24;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: rgba(251, 191, 36, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+/* Series Sermons */
+.series-sermons {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #475569;
+}
+
+.series-sermons h4, .add-sermon-section h4 {
+  color: #cbd5e1;
+  font-size: 1rem;
+  margin: 0 0 1rem 0;
+}
+
+.sermons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sermon-item, .unassigned-sermon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 0.5rem;
+  border: 1px solid #64748b;
+}
+
+.sermon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.sermon-title {
+  color: #fbbf24;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.sermon-title:hover {
+  text-decoration: underline;
+}
+
+.sermon-scripture {
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+/* Add Sermon Section */
+.add-sermon-section {
+  margin-top: 1.5rem;
+}
+
+.unassigned-sermons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Unassigned Sermons Grid */
+.unassigned-sermons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.unassigned-sermon-card {
+  background: rgba(51, 65, 85, 0.6);
+  border: 1px solid #64748b;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.3s;
+}
+
+.unassigned-sermon-card:hover {
+  border-color: #fbbf24;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.unassigned-sermon-card .sermon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.unassigned-sermon-card .sermon-title {
+  color: #fbbf24;
+  text-decoration: none;
+  font-weight: 500;
+  flex: 1;
+}
+
+.unassigned-sermon-card .sermon-title:hover {
+  text-decoration: underline;
+}
+
+.sermon-date {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  margin-left: 1rem;
+}
+
+.unassigned-sermon-card .sermon-scripture {
+  color: #a7f3d0;
+  margin-bottom: 1rem;
+}
+
+.assign-to-series {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.assign-to-series label {
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.assign-to-series select {
+  padding: 0.5rem;
+  border: 1px solid #64748b;
+  border-radius: 0.5rem;
+  background: #374151;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.assign-to-series select:focus {
+  outline: none;
+  border-color: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .series-management-page {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .section {
+    padding: 1.5rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .series-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .date-group {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .series-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .sermon-item, .unassigned-sermon {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .unassigned-sermons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .unassigned-sermon-card .sermon-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .sermon-date {
+    margin-left: 0;
+  }
+
+  .series-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -20,10 +20,25 @@
   padding: 1rem;
   border: 2px solid;
   border-image: linear-gradient(90deg, #910000, #ff9800) 1;
+  /* Remove background properties from base class - let inline styles handle it */
+  overflow: hidden;
+}
+
+/* Ensure inline styles override any global styles */
+.sermon-card[style*="background-image"] {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+.sermon-card.with-image {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  overflow: hidden;
+}
+
+.sermon-card.with-gradient {
+  background: linear-gradient(90deg, #1e293b 0%, #374151 100%);
 }
 
 .sermon-card-gradient-overlay {
@@ -128,7 +143,20 @@
   background: linear-gradient(90deg, #1e293b 0%, #374151 100%);
 }
 
-/* Dynamically set background image using data attribute */
-.with-image[data-bg-url] {
-  background-image: var(--sermon-bg-url);
+/* Sermon Folder Select Styles */
+.sermon-folder-select {
+  margin-right: 8px;
+  background: #23232b;
+  color: #ffd700;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  min-width: 120px;
+  margin-bottom: 0.5rem;
+}
+
+.sermon-folder-select:focus {
+  outline: 2px solid #ffd700;
 }

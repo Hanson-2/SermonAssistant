@@ -24,14 +24,14 @@
 }
 
 .navbar a {
-  color: #ffffff;
-  margin-left: 1rem;
+  color: #f0f0f0; /* Lighter cream color */
+  padding: 0 0.75rem; /* Add padding to links and buttons for spacing around separator */
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
 .navbar a:hover {
-  color: #facc15;
+  color: #ffd700; /* Gold on hover */
 }
 
 .navbar .flex {
@@ -121,9 +121,9 @@
 /* ========== DROPDOWN BUTTON ========== */
 .navbar-dropdown-btn {
   background-color: transparent; /* Removed blue background */
-  color: #ffd700;
+  color: #f0f0f0; /* Changed to Lighter cream color */
   font-weight: 600;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem; /* Add padding to links and buttons for spacing around separator */
   border: none;
   border-radius: 0.375rem;
   cursor: pointer;
@@ -134,7 +134,7 @@
 .navbar-dropdown-btn:hover,
 .navbar-dropdown-btn:focus {
   background-color: transparent; /* Removed hover background */
-  color: #ffffff;
+  color: #ffd700; /* Gold on hover */
   outline: none;
 }
 
@@ -188,12 +188,20 @@
 }
 
 .navbar-dropdown-btn::after {
-  content: " ▼";
+  content: '';
   display: inline-block;
-  transition: transform 0.3s;
+  width: 0.4em;
+  height: 0.4em;
+  margin-left: 0.6em;
+  border-right: 0.12em solid currentColor;
+  border-bottom: 0.12em solid currentColor; /* Changed from border-top to border-bottom */
+  transform: rotate(45deg) translateY(-0.15em); /* Adjusted for downward arrow */
+  transition: transform 0.2s ease-in-out;
 }
+
+.navbar-dropdown-btn:hover::after, /* Keep this for hover on button itself */
 .navbar-dropdown-group:hover .navbar-dropdown-btn::after {
-  transform: rotate(180deg);
+  transform: rotate(225deg) translateY(0.05em); /* Rotates to upward arrow */
 }
 
 /* Removed blue and green backgrounds from ChatAI and BibleGateway buttons */
@@ -202,7 +210,7 @@
   background-color: transparent; /* Removed background color */
   color: inherit; /* Ensure text color remains consistent */
   border: none; /* Remove any border styling */
-  padding: 0.5rem 1rem; /* Maintain padding for spacing */
+  padding: 0.5rem 0.75rem; /* Add padding to links and buttons for spacing around separator */
   border-radius: 0.375rem; /* Keep rounded corners */
   cursor: pointer;
   transition: background 0.3s, color 0.3s;
@@ -212,4 +220,31 @@
 .navbar .bible-gateway-btn:hover {
   background-color: transparent; /* Ensure no background on hover */
   color: #ffd700; /* Optional: Add hover effect for text color */
+}
+
+.navbar-separator {
+  color: #565a60; /* Color for the separator */
+  cursor: default; /* Prevent text selection cursor */
+}
+
+/* Ensure direct Link children of the main nav link container also get padding */
+.navbar > div > a {
+    padding: 0 0.75rem;
+}
+
+/* Ensure dropdown group also gets padding if it's a direct child affecting layout */
+.navbar > div > .navbar-dropdown-group {
+    padding: 0 0.75rem;
+}
+
+/* Adjust margin for the first item if needed, or rely on container padding */
+.navbar > div > a:first-child,
+.navbar > div > .navbar-dropdown-group:first-child {
+    /* padding-left: 0; */ /* Example if no space before first item */
+}
+
+/* Adjust margin for the last item if needed */
+.navbar > div > a:last-child,
+.navbar > div > .navbar-dropdown-group:last-child {
+    /* padding-right: 0; */ /* Example if no space after last item */
 }

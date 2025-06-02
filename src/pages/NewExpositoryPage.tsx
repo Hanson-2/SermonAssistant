@@ -7,7 +7,6 @@ import MiniSermonList from '../components/MiniSermonList';
 export default function NewExpositoryPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,8 +23,8 @@ export default function NewExpositoryPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title || !description || !date) {
-      alert("Please fill in all fields.");
+    if (!title || !description) {
+      alert("Please fill in title and description.");
       return;
     }
 
@@ -34,13 +33,20 @@ export default function NewExpositoryPage() {
       imageUrl = await uploadExpositoryImage(imageFile);
     }
 
+    const currentDate = new Date().toISOString().split('T')[0]; // Generate date in YYYY-MM-DD format
+
     await createSermon({
       title,
       description,
-      date,
+      date: currentDate, // Add generated date
       imageUrl,
       isArchived: false,
       imageOnly: false,
+      dateAdded: undefined,
+      bibleBook: undefined,
+      bibleChapter: undefined,
+      bibleStartVerse: undefined,
+      bibleEndVerse: undefined
     });
 
     navigate("/dashboard");

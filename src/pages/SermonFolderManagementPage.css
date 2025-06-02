@@ -1,0 +1,98 @@
+.sermon-folder-management-page {
+  max-width: 600px;
+  margin: 2rem auto;
+  background: #18181b;
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 2rem 2.5rem 2.5rem 2.5rem;
+}
+.sermon-folder-management-page h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+.add-folder-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.add-folder-row input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #23232b;
+  color: #fff;
+  font-size: 1rem;
+}
+.add-folder-row button {
+  background: #ffd700;
+  color: #18181b;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-folder-row button:disabled {
+  background: #888;
+  cursor: not-allowed;
+}
+.folder-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.folder-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #23232b;
+}
+.folder-list-item:last-child {
+  border-bottom: none;
+}
+.folder-list-item input[type="text"] {
+  flex: 1;
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #23232b;
+  color: #fff;
+  font-size: 1rem;
+}
+.folder-list-item button {
+  background: #23232b;
+  color: #ffd700;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.9rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.folder-list-item button:hover:not(:disabled) {
+  background: #ffd700;
+  color: #18181b;
+}
+.folder-list-item button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.error-message {
+  color: #ff4d4f;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+.loading-message {
+  color: #ffd700;
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  text-align: center;
+}

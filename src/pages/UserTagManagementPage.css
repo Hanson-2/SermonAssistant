@@ -1,0 +1,116 @@
+.user-tag-management-layout {
+  min-height: 100vh;
+  background: #f7f7fa;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 40px;
+}
+
+.user-tag-management-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 32px 28px 28px 28px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.add-tag-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.tag-input {
+  flex: 2;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.color-input {
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.add-tag-btn {
+  background: #2d6cdf;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-tag-btn:disabled {
+  background: #b3c7f7;
+  cursor: not-allowed;
+}
+
+.tag-error {
+  color: #c0392b;
+  margin-bottom: 10px;
+}
+.tag-success {
+  color: #27ae60;
+  margin-bottom: 10px;
+}
+
+.tag-list-section {
+  margin-top: 18px;
+}
+
+.tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tag-list-item {
+  display: flex;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Tag color dot: use CSS variable for color */
+.tag-color-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  margin-right: 12px;
+  border: 1px solid #ccc;
+  display: inline-block;
+  background-color: var(--tag-dot-color, #888);
+}
+
+/* Dynamically set color for each tag dot using a unique class */
+/* This will be set via a style tag in the page for each tag */
+
+.edit-btn, .delete-btn, .edit-save-btn, .edit-cancel-btn {
+  margin-left: 8px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.edit-btn { background: #e0e7ff; color: #222; }
+.edit-btn:hover { background: #c7d2fe; }
+.delete-btn { background: #ffe0e0; color: #b91c1c; }
+.delete-btn:hover { background: #fecaca; }
+.edit-save-btn { background: #d1fae5; color: #065f46; }
+.edit-save-btn:hover { background: #a7f3d0; }
+.edit-cancel-btn { background: #f3f4f6; color: #374151; }
+.edit-cancel-btn:hover { background: #e5e7eb; }
+
+.edit-input, .edit-color-input {
+  margin-left: 8px;
+}

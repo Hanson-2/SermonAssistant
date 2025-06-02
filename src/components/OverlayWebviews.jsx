@@ -38,12 +38,13 @@ const OverlayWebviews = () => {
       <div
         className={`fixed left-0 top-0 w-full z-50 transition-transform duration-300 ${
           overlay ? "translate-y-0" : "-translate-y-full"
-        }`}
+        } ${overlay === "bible" ? "visible" : "invisible"}`} // Control base visibility for transition
         style={{ height: "88vh" }}
         aria-modal={overlay ? "true" : undefined}
         role="dialog"
       >
-        {overlay && (
+        {/* Container for the Bible iframe, always rendered but visibility controlled by parent */}
+        <div className={`w-full h-full ${overlay === "bible" ? "block" : "hidden"}`}>
           <div className="bg-black bg-opacity-80 w-full h-full flex flex-col relative shadow-2xl">
             {/* Close button */}
             <button
@@ -55,18 +56,16 @@ const OverlayWebviews = () => {
               ×
             </button>
 
-            {/* Render the requested iframe */}
-            {overlay === "bible" && (
-              <iframe
-                ref={bibleIframeRef}
-                title="BibleGateway"
-                src={BIBLE_URL}
-                className="w-full h-full rounded-b-lg border-0 bg-white"
-                sandbox="allow-scripts allow-same-origin allow-forms"
-              />
-            )}
+            {/* Render the requested iframe - always in DOM, visibility controlled by parent div */}
+            <iframe
+              ref={bibleIframeRef}
+              title="BibleGateway"
+              src={BIBLE_URL}
+              className="w-full h-full rounded-b-lg border-0 bg-white"
+              sandbox="allow-scripts allow-same-origin allow-forms"
+            />
           </div>
-        )}
+        </div>
       </div>
     </>
   );

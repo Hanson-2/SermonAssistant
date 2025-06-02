@@ -1,256 +1,391 @@
 /* Layout */
 .add-scripture-layout {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0f172a, #000d1a);
-  color: #fff;
-  padding: 4rem 1rem;
+  background: linear-gradient(rgba(17, 24, 39, 0.92), rgba(10, 15, 25, 0.95)), url('/Blue Wall Background.png') center center fixed no-repeat; /* Darker overlay, Blue Wall BG */
+  background-size: cover;
+  color: #e0c97f; /* Default text color to gold */
+  padding: 2rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   animation: fadeIn 0.5s ease-in-out;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; /* Fallback font */
+}
+
+/* Container for form elements */
+.add-scripture-container {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem; /* Increased gap */
+  background: linear-gradient(135deg, rgba(35,35,35,0.9) 0%, rgba(24,24,24,0.93) 100%); /* Similar to search page filter box */
+  padding: 25px;
+  border-radius: 16px;
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  box-shadow: 
+    0 8px 25px rgba(0,0,0,0.6), /* Deeper shadow */
+    inset 0 1px 2px rgba(255,255,255,0.03);
 }
 
 /* Title */
 .add-scripture-title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
-  text-shadow: 2px 2px 4px rgba(129, 128, 128, 0.7);
+  font-family: 'Trajan Pro', serif;
+  color: #e0c97f; /* Gold */
+  font-size: 2.8rem;
+  font-weight: 700; /* Trajan Pro often looks better bold */
+  text-align: center;
+  margin-bottom: 1.5rem; /* Adjusted margin */
+  letter-spacing: 1.5px;
+  text-shadow: 
+    0 0 15px rgba(224, 201, 127, 0.3), /* Gold glow */
+    1px 1px 0px #4B3A1A, /* Darker gold outline for depth */
+    2px 2px 3px rgba(0, 0, 0, 0.7); /* Main shadow for engraving */
 }
 
-/* Textarea */
+/* Translation Selector Group */
+.translation-selection-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 450px; /* Slightly wider */
+  margin: 0 auto 1.8rem auto;
+}
+
+.add-scripture-translation-label {
+  font-weight: 600;
+  font-size: 1.15rem; /* Slightly larger */
+  color: #e0c97f; /* Gold label */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.add-scripture-translation-dropdown {
+  padding: 10px 15px; /* Increased padding */
+  font-size: 1rem;
+  background: linear-gradient(to bottom, #1a1a1a, #242424); /* Darker gradient */
+  color: #e0c97f;
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  border-radius: 8px;
+  width: 100%;
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.6), /* Deeper inset shadow */
+    0 1px 2px rgba(0,0,0,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+
+.add-scripture-translation-dropdown:focus {
+  outline: none;
+  border-color: #f0e68c; /* Brighter gold on focus */
+  background-color: #2a2a2a;
+  box-shadow: 
+    inset 0 2px 5px rgba(0,0,0,0.7),
+    0 0 0 3px rgba(224, 201, 127, 0.3),
+    0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Text Input for scripture paste */
 .add-scripture-textarea {
   width: 100%;
-  max-width: 800px;
   padding: 1rem;
-  border-radius: 0.2rem;
-  background: #232b3e;
-  color: #fff;
-    border: 5px solid transparent;
-  background:
-    linear-gradient(#232b3e, #232b3e) padding-box,
-    linear-gradient(180deg, #ffffffc4, #030303cc, #030303) border-box;
-  margin-bottom: 1rem;
-  font-size: 1rem;
+  border-radius: 8px; /* Consistent with dropdown */
+  font-size: 1.05rem;
+  line-height: 1.6;
   resize: vertical;
-  transition: border 0.3s, box-shadow 0.3s;
+  min-height: 180px; /* Increased height */
+  background: linear-gradient(to bottom, #1a1a1a, #242424); /* Darker gradient */
+  color: #f0f0f0; /* Lighter text for readability */
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  box-shadow: 
+    inset 0 2px 6px rgba(0,0,0,0.65), /* Deeper inset shadow */
+    0 1px 2px rgba(0,0,0,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+.add-scripture-textarea::placeholder {
+  color: #8a7a58; /* Muted gold placeholder */
 }
 .add-scripture-textarea:focus {
   outline: none;
-  border: 2px solid #2563eb;
-  box-shadow: 0 0 15px 2px #2563eb;
+  border-color: #f0e68c; /* Brighter gold on focus */
+  background-color: #2a2a2a;
+  box-shadow: 
+    inset 0 2px 7px rgba(0,0,0,0.75),
+    0 0 0 3px rgba(224, 201, 127, 0.3),
+    0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Verse Textarea in preview cards */
+.add-scripture-verse-textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  font-size: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px; /* Slightly smaller radius */
+  background: linear-gradient(to bottom, #202020, #282828); /* Slightly lighter than main textarea */
+  color: #e0e0e0;
+  border: 1px solid #403015; /* Darker bronze border */
+  margin-bottom: 0.75rem;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+.add-scripture-verse-textarea:focus {
+  outline: none;
+  border-color: #e0c97f; /* Gold focus */
+  background-color: #2f2f2f;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 0 0 2px rgba(224, 201, 127, 0.2);
 }
 
 /* Error Message */
 .add-scripture-error {
-  color: #f87171;
+  color: #ff9e9e; /* Brighter red */
+  background-color: rgba(139, 0, 0, 0.4); /* Darker red, more opaque */
+  border: 1px solid #b22222; /* Firebrick red border */
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
   margin-bottom: 1rem;
-  font-weight: bold;
+  text-align: center;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
 }
 
 /* Buttons */
+.add-scripture-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem; /* Increased gap */
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
 .add-scripture-parse-btn,
 .add-scripture-submit-btn {
-  padding: 0.5rem 8.5rem;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
+  padding: 12px 25px; /* Adjusted padding */
+  font-size: 1.05rem; /* Consistent font size */
+  background: linear-gradient(to bottom, #3a3a3a 0%, #282828 100%); /* Darker, metallic */
+  color: #e0c97f;
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  border-top-color: #5c4a2a;
+  border-radius: 8px;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+  box-shadow: 
+    0 4px 6px rgba(0,0,0,0.4),
+    inset 0 1px 1px rgba(255,255,255,0.05),
+    inset 0 -1px 1px rgba(0,0,0,0.2);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease-out;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.add-scripture-parse-btn:hover,
+.add-scripture-submit-btn:hover {
+  background: linear-gradient(to bottom, #4a4a4a 0%, #383838 100%);
+  color: #fffbe6;
+  border-color: #e0c97f;
+  box-shadow: 
+    0 6px 10px rgba(0,0,0,0.5),
+    0 2px 4px rgba(224, 201, 127, 0.2),
+    inset 0 1px 1px rgba(255,255,255,0.1),
+    inset 0 -1px 1px rgba(0,0,0,0.3);
 }
 
 .add-scripture-parse-btn:active,
 .add-scripture-submit-btn:active {
-  transform: scale(0.98);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(to top, #3a3a3a 0%, #282828 100%);
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.5),
+    0 1px 2px rgba(0,0,0,0.3);
+  transform: translateY(1px);
 }
 
-/* Parse Button */
-.add-scripture-parse-btn {
-  background: linear-gradient(90deg, #232b3e 0%, #fffffff3 50%, #232b3e 100%);
-  color: #232b3e;
-  border: 2px solid #767777;
-  margin-bottom: 1rem;
-  font-weight: bold;
-  letter-spacing: 0.03em;
-  box-shadow: 0 2px 8px rgba(36, 36, 36, 0.08);
-}
-.add-scripture-parse-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 12px #767777;
-  filter: brightness(0.95);
+.add-scripture-parse-btn:disabled,
+.add-scripture-submit-btn:disabled {
+  background: #2b2b2b; /* Darker disabled */
+  color: #776a4b; /* Muted gold */
+  border-color: #3a2e13;
+  cursor: not-allowed;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  transform: none;
+  text-shadow: none;
 }
 
-/* Submit Button */
-.add-scripture-submit-btn {
-  background: linear-gradient(90deg, #16a34a, #15803d);
-  color: #fff;
-  margin-top: 1rem;
-}
-.add-scripture-submit-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 12px #16a34a;
-}
-
-/* Preview Panel */
-.add-scripture-preview {
-  margin-bottom: 1.5rem;
-  width: 100%;
-  max-width: 600px;
-  background: rgba(255, 255, 255, 0.05);
-  border-left: 4px solid #16a34a;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  animation: slideIn 0.5s ease-in-out;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.685);
-}
-
-/* Preview Title & List */
+/* Preview Section */
 .add-scripture-preview-title {
-  font-size: 1.25rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-.add-scripture-preview-list {
-  list-style: disc inside;
-  padding-left: .5rem;
-  margin: 0;
+  font-family: 'Trajan Pro', serif;
+  color: #e0c97f; /* Gold */
+  font-size: 1.8rem;
+  text-align: center;
+  margin-top: 2.5rem; /* Increased margin */
+  margin-bottom: 1.5rem;
+  text-shadow: 
+    1px 1px 0px #4B3A1A,
+    2px 2px 3px rgba(0,0,0,0.6);
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(224, 201, 127, 0.2);
 }
 
-/* Modern Preview List & Items */
-.add-scripture-preview-list-modern {
+.add-scripture-preview-list {
   list-style: none;
   padding: 0;
-  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.5rem;
+  width: 100%;
 }
+
+/* Preview Item (SortableVerseItem) */
 .add-scripture-preview-item-modern {
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(90deg, #1e293b 60%, #232b3e 100%);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  box-shadow: 0 2px 8px rgba(36,36,36,0.10);
-  border-left: 4px solid #2563eb;
-  transition: box-shadow 0.2s;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%); /* Darker than main container */
+  padding: 1.2rem 1.5rem; /* Increased padding */
+  border-radius: 12px; /* Consistent with search results */
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  border-left: 5px solid #e0c97f; /* Prominent gold left border */
+  box-shadow: 
+    0 5px 15px rgba(0,0,0,0.5),
+    inset 0 1px 0px rgba(255,255,255,0.02),
+    inset 0 0 10px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 .add-scripture-preview-item-modern:hover {
-  box-shadow: 0 4px 16px #2563eb33;
-}
-.add-scripture-ref-modern {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #60a5fa;
-  margin-bottom: 0.2em;
-}
-.add-scripture-text-modern {
-  font-size: 1.05rem;
-  color: #fff;
-  margin-bottom: 0.15em;
-  line-height: 1.5;
-}
-.add-scripture-translation-modern {
-  font-size: 0.95rem;
-  color: #a3a3a3;
-  align-self: flex-end;
-  font-style: italic;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 7px 20px rgba(0,0,0,0.55), 
+    0 0 10px rgba(224, 201, 127, 0.1),
+    inset 0 1px 0px rgba(255,255,255,0.03),
+    inset 0 0 10px rgba(0,0,0,0.25);
 }
 
-/* Translation Label */
-.add-scripture-translation-label {
-  margin-bottom: 1rem;
-  font-weight: 600;
-  display: block;
-}
-
-/* Translation Dropdown */
-.add-scripture-translation-dropdown {
-  margin-left: 8px;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 1rem;
-  border: 1px solid #767777;
-  background: #232b3e;
-  color: #fff;
-  /* Remove bullets from dropdown */
-  list-style: none;
-}
-.add-scripture-translation-dropdown option,
-.add-scripture-translation-dropdown optgroup {
-  background: #232b3e;
-  color: #fff;
-  font-weight: normal;
-  list-style: none;
-}
-.add-scripture-translation-dropdown optgroup {
-  font-weight: bold;
-  color: #b3b3b3;
-  pointer-events: none;
-}
-.add-scripture-translation-dropdown:focus {
-  outline: none;
-  border-color: #2563eb;
-}
-
-/* Translation */
-.add-scripture-translation {
-  color: #aaa;
-  font-size: 0.95em;
-  margin-left: 0.25em;
+/* Styles for dnd-kit sortable items */
+.sortable-item {
+  /* transform and transition will be applied by dnd-kit dynamically */
+  /* Add any other base styling for sortable items if needed */
+  touch-action: manipulation; /* Recommended for better touch interaction */
 }
 
 /* Progress Bar */
-.add-scripture-progress-bar-wrapper {
+.progress-bar-container {
   width: 100%;
-  background: #232b3e;
+  max-width: 600px;
+  background-color: #181818; /* Darker background */
   border-radius: 6px;
-  margin: 1rem 0 0.5rem 0;
-  height: 18px;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(36,36,36,0.08);
+  margin: 1.5rem auto;
+  padding: 4px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+  border: 1px solid #3a2e13;
 }
-.add-scripture-progress-bar {
-  background: linear-gradient(90deg, #16a34a, #15803d);
-  height: 100%;
-  border-radius: 6px;
+
+.progress-bar {
+  height: 20px; /* Slightly taller */
+  background: linear-gradient(to right, #b8860b, #e0c97f); /* Gold gradient */
+  border-radius: 3px;
+  transition: width 0.3s ease-in-out; /* Keep transition for width changes */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #281f0a; /* Dark text on gold */
+  font-weight: bold;
+  text-shadow: 1px 1px 0px rgba(255,255,255,0.15);
+  --progress-width: 0%;
+  width: var(--progress-width);
   transition: width 0.3s;
 }
-.add-scripture-progress-label {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  font-size: 0.95rem;
+
+/* Submit Status Message */
+.submit-status-message {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
   font-weight: 600;
-  line-height: 18px;
-  text-shadow: 0 1px 4px #000a;
+  text-align: center;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
 }
 
-/* Responsive */
-@media (max-width: 700px) {
-  .add-scripture-textarea,
-  .add-scripture-preview {
-    max-width: 100%;
-  }
-  .add-scripture-preview-item-modern {
-    padding: 0.6rem 0.7rem;
-  }
-  .add-scripture-ref-modern, .add-scripture-text-modern {
-    font-size: 0.98rem;
-  }
+.submit-status-message.success {
+  background-color: rgba(34, 139, 34, 0.3); /* Darker green, more opaque */
+  color: #90ee90; /* LightGreen */
+  border: 1px solid #2e8b57; /* SeaGreen border */
 }
 
-/* Animations */
+.submit-status-message.error {
+  background-color: rgba(139, 0, 0, 0.4);
+  color: #ff9e9e;
+  border: 1px solid #b22222;
+}
+
+/* New Styles from Code Change */
+.verse-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem; /* Increased margin-bottom */
+}
+
+.verse-item-delete-btn {
+  color: #ff6961; /* Brighter, clearer red */
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.8rem; /* Slightly larger for better visibility */
+  padding: 0 0.3rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+  margin-left: auto; /* Pushes it to the far right */
+}
+
+.verse-item-delete-btn:hover {
+  color: #ff4040; /* Even brighter red on hover */
+  transform: scale(1.1);
+}
+
+.add-scripture-ref-modern {
+  font-weight: 700;
+  color: #e0c97f; /* Gold */
+  font-size: 1.2rem; /* Increased size for emphasis */
+  margin-bottom: 0.5rem;
+  display: block;
+  text-align: left; /* Align to left */
+}
+
+.add-scripture-translation-modern {
+  font-size: 0.9rem;
+  color: #b0a078; /* Muted gold */
+  margin-top: 1rem; /* Increased margin-top for spacing */
+  display: block;
+  text-align: right; /* Align to right */
+}
+
+/* Tag input within preview item */
+.add-scripture-preview-item-modern input[type="text"] {
+  width: 100%;
+  padding: 0.75rem 1rem; /* Increased padding */
+  font-size: 1rem; /* Increased font size */
+  background: linear-gradient(to bottom, #222222, #282828); /* Slightly darker, more distinct background */
+  color: #e0c97f; /* Gold text for consistency */
+  border: 1px solid #4B3A1A; /* Dark gold border */
+  border-radius: 6px; /* Consistent rounded corners */
+  margin-top: 0.75rem;
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.6), /* Deeper inset shadow */
+    0 1px 2px rgba(0,0,0,0.2);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+.add-scripture-preview-item-modern input[type="text"]::placeholder {
+  color: #8a7a58; /* Muted gold placeholder */
+}
+.add-scripture-preview-item-modern input[type="text"]:focus {
+  outline: none;
+  border-color: #f0e68c; /* Brighter gold on focus */
+  background-color: #303030; /* Slightly lighter focus background */
+  box-shadow: 
+    inset 0 2px 5px rgba(0,0,0,0.7),
+    0 0 0 3px rgba(224, 201, 127, 0.3),
+    0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(50px); }
-  to { opacity: 1; transform: translateX(0); }
 }

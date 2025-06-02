@@ -1,15 +1,26 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { archiveSermon, deleteSermon, createSermon } from "../../services/firebaseService";
+import { archiveSermon, deleteSermon, createSermon, assignSermonToFolder, getSermonFolders } from "../../services/firebaseService";
 import "./sermonCard.css";
 
+// Add SermonFolder type
+export type SermonFolder = {
+  id?: string;
+  userId: string;
+  name: string;
+  createdAt?: any;
+  updatedAt?: any;
+};
+
+// Add folderId to Sermon type
 export type Sermon = {
   id: string | number;
   title: string;
   description: string;
   date: string;
   imageUrl?: string;
-  notes?: Record<string, string>; // Add notes field for multi-slide support
+  notes?: Record<string, string>;
+  folderId?: string;
 };
 
 type SermonCardProps = {
@@ -20,6 +31,9 @@ type SermonCardProps = {
 
 const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions }) => {
   const [showOverlay, setShowOverlay] = useState(false);
+  const [folders, setFolders] = useState<SermonFolder[]>([]);
+  const [folderLoading, setFolderLoading] = useState(false);
+  const [folderError, setFolderError] = useState("");
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -33,6 +47,14 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setFolderLoading(true);
+    getSermonFolders()
+      .then(setFolders)
+      .catch(e => setFolderError(e.message || "Failed to load folders"))
+      .finally(() => setFolderLoading(false));
+  }, []);
+
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button') {
       setShowOverlay(!showOverlay);
@@ -43,7 +65,15 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions 
   const handleEdit = () => navigate(`/edit-expository/${sermon.id}`);
   const handleDuplicate = async () => {
     const { id, ...copyData } = sermon;
-    await createSermon(copyData);
+    // Ensure required fields for NewSermonData are present
+    await createSermon({
+      ...copyData,
+      bibleBook: (sermon as any).bibleBook || "",
+      bibleChapter: (sermon as any).bibleChapter || "",
+      bibleStartVerse: (sermon as any).bibleStartVerse || "",
+      bibleEndVerse: (sermon as any).bibleEndVerse || "",
+      dateAdded: undefined
+    });
     alert("Duplicated successfully.");
   };
   const handleArchive = async () => {
@@ -55,9 +85,7 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions 
       await deleteSermon(sermon.id.toString());
       alert("Deleted successfully.");
     }
-  };
-
-  const actionButtons = [
+  };  const actionButtons = [
     { label: "View", action: handleView },
     { label: "Edit", action: handleEdit },
     { label: "Duplicate", action: handleDuplicate },
@@ -66,15 +94,16 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions 
   ];
 
   return (
-    <div className="sermon-card-wrapper">
-      <div
+    <div className="sermon-card-wrapper">      <div
         ref={cardRef}
-        onClick={handleCardClick}
-        className={`sermon-card relative ${className || ''}`}
+        onClick={handleCardClick}        className={`sermon-card relative ${className || ''}`}
         style={{
           backgroundImage: sermon.imageUrl
-            ? `url(${sermon.imageUrl})`
+            ? `url("${sermon.imageUrl}")`
             : 'linear-gradient(90deg, #1e293b 0%, #374151 100%)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
         <div className="sermon-card-gradient-overlay"></div>
@@ -104,6 +133,26 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions 
                   {label}
                 </button>
               ))}
+
+              {/* Folder assignment dropdown */}
+              {!folderLoading && folders.length > 0 && (
+                <select
+                  value={sermon.folderId || ""}
+                  onChange={async (e) => {
+                    const newFolderId = e.target.value === "__unassigned__" ? null : e.target.value;
+                    await assignSermonToFolder(sermon.id.toString(), newFolderId);
+                    window.location.reload(); // Quick way to refresh, or trigger a prop/state update if possible
+                  }}
+                  className="sermon-folder-select"
+                  aria-label="Move to folder"
+                >
+                  <option value="">All Folders</option>
+                  <option value="__unassigned__">Unassigned</option>
+                  {folders.map(folder => (
+                    <option key={folder.id} value={folder.id}>{folder.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         )}

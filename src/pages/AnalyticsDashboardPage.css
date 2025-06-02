@@ -1,0 +1,497 @@
+/* Analytics Dashboard Page Styles */
+.analytics-dashboard-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  min-height: calc(100vh - 56px);
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  background: linear-gradient(45deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: #cbd5e1;
+  font-size: 1.1rem;
+}
+
+/* Status Messages */
+.message {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message.error {
+  background-color: #fecaca;
+  color: #991b1b;
+  border: 1px solid #f87171;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.close-btn:hover {
+  opacity: 1;
+}
+
+/* Loading Indicator */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: #fbbf24;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #374151;
+  border-top: 4px solid #fbbf24;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Timeframe Selector */
+.timeframe-selector {
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #475569;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.timeframe-selector h3 {
+  color: #fbbf24;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.timeframe-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Button Styles */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #fbbf24, #f59e0b);
+  color: #1e293b;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(45deg, #f59e0b, #d97706);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.btn-secondary {
+  background: #64748b;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #475569;
+  transform: translateY(-1px);
+}
+
+/* Stats Overview */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #475569;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  border-color: #fbbf24;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.stat-content h3 {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-number {
+  color: #fbbf24;
+  font-size: 2.5rem;
+  font-weight: bold;
+  display: block;
+}
+
+/* Analytics Grid */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.analytics-card {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #475569;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s;
+}
+
+.analytics-card:hover {
+  border-color: #fbbf24;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-card h3 {
+  color: #fbbf24;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.2rem;
+}
+
+.chart-container {
+  min-height: 200px;
+}
+
+.no-data {
+  color: #94a3b8;
+  text-align: center;
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* Bar Chart */
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bar-label {
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.bar-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.bar {
+  height: 24px;
+  border-radius: 12px;
+  min-width: 8px;
+  transition: width 0.5s ease;
+  background: linear-gradient(90deg, currentColor 0%, rgba(255,255,255,0.1) 100%);
+}
+
+.bar-value {
+  color: #fbbf24;
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 20px;
+}
+
+/* Tag Cloud */
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.tag-item {
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: default;
+}
+
+.tag-item:hover {
+  transform: scale(1.1);
+}
+
+/* Recent Activity */
+.recent-activity {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #475569;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.recent-activity h3 {
+  color: #fbbf24;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.2rem;
+}
+
+.recent-sermons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.recent-sermon-card {
+  background: rgba(51, 65, 85, 0.6);
+  border: 1px solid #64748b;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  transition: all 0.3s;
+}
+
+.recent-sermon-card:hover {
+  border-color: #fbbf24;
+  transform: translateY(-2px);
+}
+
+.sermon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.sermon-title {
+  color: #fbbf24;
+  text-decoration: none;
+  font-weight: 500;
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.sermon-title:hover {
+  text-decoration: underline;
+}
+
+.sermon-date {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.sermon-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scripture-ref {
+  color: #a7f3d0;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.category-tag {
+  background: #059669;
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  align-self: flex-start;
+}
+
+/* Insights Section */
+.insights-section {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #475569;
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.insights-section h3 {
+  color: #fbbf24;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.2rem;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.insight-card {
+  background: rgba(51, 65, 85, 0.6);
+  border: 1px solid #64748b;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.3s;
+}
+
+.insight-card:hover {
+  border-color: #fbbf24;
+  transform: translateY(-2px);
+}
+
+.insight-card h4 {
+  color: #fbbf24;
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+}
+
+.insight-card p {
+  color: #cbd5e1;
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.insight-data {
+  color: #fbbf24;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .analytics-dashboard-page {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .timeframe-selector {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .stats-overview {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .analytics-card, .recent-activity, .insights-section {
+    padding: 1rem;
+  }
+
+  .recent-sermons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sermon-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .timeframe-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-overview {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .analytics-grid {
+    gap: 1rem;
+  }
+
+  .bar-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .tag-cloud {
+    gap: 0.5rem;
+  }
+}
