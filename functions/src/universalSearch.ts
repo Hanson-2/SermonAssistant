@@ -62,9 +62,10 @@ export interface SearchParams {
 }
 
 // Ensure context is typed with functions.https.CallableContext
-export const getAllUniqueTagsHandler = async (data: any, context: functions.https.CallableContext): Promise<{ uniqueTags: Tag[] }> => {
-  functions.logger.info("getAllUniqueTags called", { data, auth: context.auth });
-  if (!context.auth) {
+export const getAllUniqueTagsHandler = async (params: { data: any; auth: functions.https.CallableContext["auth"] }): Promise<{ uniqueTags: Tag[] }> => {
+  const { data, auth } = params;
+  functions.logger.info("getAllUniqueTags called", { data, auth });
+  if (!auth) {
     throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
   }
   try {
@@ -97,9 +98,10 @@ export const getAllUniqueTagsHandler = async (data: any, context: functions.http
   }
 };
 
-export const getAllUniqueTranslationsHandler = async (data: any, context: functions.https.CallableContext): Promise<{ uniqueTranslations: Translation[] }> => {
-  functions.logger.info("getAllUniqueTranslations called", { data, auth: context.auth });
-  if (!context.auth) {
+export const getAllUniqueTranslationsHandler = async (params: { data: any; auth: functions.https.CallableContext["auth"] }): Promise<{ uniqueTranslations: Translation[] }> => {
+  const { data, auth } = params;
+  functions.logger.info("getAllUniqueTranslations called", { data, auth });
+  if (!auth) {
     throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
   }
   try {
@@ -129,10 +131,10 @@ export const getAllUniqueTranslationsHandler = async (data: any, context: functi
   }
 };
 
-export const universalScriptureSearchHandler = async (data: SearchParams, context: functions.https.CallableContext): Promise<{ results: AlgoliaVerse[]; nbHits: number; page: number; nbPages: number; hitsPerPage: number; }> => {
-  functions.logger.info("universalScriptureSearch called with data:", { data, auth: context.auth });
-
-  if (!context.auth) {
+export const universalScriptureSearchHandler = async (params: { data: SearchParams; auth: functions.https.CallableContext["auth"] }): Promise<{ results: AlgoliaVerse[]; nbHits: number; page: number; nbPages: number; hitsPerPage: number; }> => {
+  const { data, auth } = params;
+  functions.logger.info("universalScriptureSearch called with data:", { data, auth });
+  if (!auth) {
     throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
   }
 
@@ -220,10 +222,10 @@ interface BatchUpdateTagsByCriteriaData {
   applyToAllTranslationsInCriteria?: boolean;
 }
 
-export const batchUpdateTagsByCriteriaHandler = async (data: BatchUpdateTagsByCriteriaData, context: functions.https.CallableContext): Promise<{ success: boolean; updatedCount: number; message?: string }> => {
-  functions.logger.info("batchUpdateTagsByCriteria called with data:", { data, auth: context.auth });
-
-  if (!context.auth) {
+export const batchUpdateTagsByCriteriaHandler = async (params: { data: BatchUpdateTagsByCriteriaData; auth: functions.https.CallableContext["auth"] }): Promise<{ success: boolean; updatedCount: number; message?: string }> => {
+  const { data, auth } = params;
+  functions.logger.info("batchUpdateTagsByCriteria called with data:", { data, auth });
+  if (!auth) {
     throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
   }
 

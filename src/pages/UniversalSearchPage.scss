@@ -1,0 +1,323 @@
+// UniversalSearchPage styles using modular SCSS architecture
+// Import variables first to ensure they're available
+@import '../styles/scss/variables';
+@import '../styles/scss/mixins';
+@import '../styles/scss/main';
+
+// Import the unified theme patch for consistency
+@import '../styles/theme_patch_all_pages.css';
+
+body {
+  background: url('/Blue Wall Background.png') center center fixed no-repeat;
+  background-size: cover;
+}
+
+// Page-specific styles for Universal Search
+.universal-search-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background: url('/Texas_Logo_Wallpaper.png') left center no-repeat;
+  background-size: cover;
+  filter: grayscale(0.2) brightness(0.8) contrast(1.1);
+}
+
+.universal-search-page {
+  @extend .page-container;
+  background: none;
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: 'Trajan Pro', 'Georgia', serif;
+  color: #ffe082;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 32px 0 rgba(0,0,0,0.18), 0 1.5px 0 #4B3A1A;
+}
+
+.universal-search-content {
+  @extend .page-content;
+  position: relative;
+  z-index: 1;
+}
+
+.universal-search-title {
+  // Fallback: use large, gold, bold font for title
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffe082;
+  font-family: 'Trajan Pro', 'Georgia', serif;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.18), 0 0 15px #e0c97f99, 1px 1px 0px #4B3A1A, 2px 2px 3px rgba(0,0,0,0.7);
+  text-align: center;
+  color: #ffe082;
+  font-size: 2.8rem;
+  margin-bottom: 30px;
+  font-weight: 700;
+  font-family: 'Trajan Pro', 'Georgia', serif;
+  letter-spacing: 1.5px;
+}
+
+// Search controls using components
+.search-controls-container {
+  @extend .controls-container;
+}
+
+.search-bar-wrapper {
+  @extend .search-controls__input-wrapper;
+}
+
+.search-bar {
+  @extend .search-bar;
+}
+
+// Buttons using component styles
+.search-button, .clear-filters-btn, .pagination-btn {
+  @extend .btn;
+  @extend .btn--primary;
+  position: relative;
+  overflow: hidden;
+}
+
+// Error and loading states using message components
+.search-error {
+  @extend .message;
+  @extend .message--error;
+  text-align: center;
+  margin: $space-4 0;
+}
+
+.loading-indicator, .no-results-message {
+  @extend .loading-indicator;
+}
+
+// Search results
+.search-results-container {
+  margin-top: $space-5;
+}
+
+.results-title {
+  font-size: $font-xl;
+  color: $primary-gold;
+  margin-bottom: $space-4;
+  border-bottom: 2px solid $dark-border;
+  padding-bottom: $space-2;
+  font-weight: $font-bold;
+  text-shadow: $text-shadow-gold;
+}
+
+.search-results-list {
+  @extend .results-list;
+}
+
+.search-result-item {
+  @extend .result-item;
+}
+
+.result-reference {
+  @extend .result-item__reference;
+}
+
+.result-text {
+  @extend .result-item__text;
+}
+
+// Filter section using components
+.filter-section {
+  @extend .filter-section;
+  background: linear-gradient(135deg, rgba(35,35,35,0.92) 0%, rgba(24,24,24,0.97) 100%);
+  border-radius: 1.1rem;
+  border: 2px solid #e0c97f;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.45), 0 0 10px #e0c97f22;
+  padding: 2.2rem 2.5rem 2.5rem 2.5rem;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.translations-filter {
+  @extend .filter-section;
+  background: linear-gradient(135deg, rgba(35,35,35,0.92) 0%, rgba(24,24,24,0.97) 100%);
+  border-radius: 1.1rem;
+  border: 2px solid #e0c97f;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.45), 0 0 10px #e0c97f22;
+  padding: 2.2rem 2.5rem 2.5rem 2.5rem;
+  margin-bottom: 2.2rem;
+  position: relative;
+}
+
+.filter-title {
+  @extend .filter-section__title;
+  font-size: 1.4rem;
+  color: #ffe082;
+  font-weight: 700;
+  font-family: 'Trajan Pro', 'Georgia', serif;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0px #4B3A1A, 2px 2px 3px rgba(0,0,0,0.6);
+  padding-bottom: 0.7rem;
+  border-bottom: 1.5px solid #e0c97f44;
+  margin-bottom: 1.2rem;
+}
+
+.filter-grid {
+  @extend .filter-grid;
+}
+
+.filter-grid-layout {
+  @extend .two-column-layout;
+}
+
+.filter-column {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.filter-group {
+  @extend .filter-group;
+  background: rgba(24,24,24,0.85);
+  border-radius: 0.7rem;
+  border: 1.5px solid #e0c97f33;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  padding: 1.1rem 1.3rem;
+  
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    color: #e0c97f;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 0.2rem;
+    transition: color 0.18s;
+    
+    &:hover {
+      color: #fffbe6;
+    }
+    
+    input[type="checkbox"] {
+      margin-right: 8px;
+      accent-color: #e0c97f;
+      min-width: 18px;
+      height: 18px;
+      cursor: pointer;
+      vertical-align: middle;
+      box-shadow: 0 1px 2px #0004;
+      border-radius: 4px;
+      border: 1.5px solid #b08d4a;
+      background: #23232b;
+      transition: box-shadow 0.18s, border-color 0.18s;
+    }
+  }
+}
+
+// Ensure filter-group checkboxes and labels are vertically aligned and spaced
+.filter-group label + label {
+  margin-top: 0.2rem;
+}
+
+.filter-scrollable-list {
+  @extend .scrollable-list;
+  background-color: #18181b;
+  color: #ffe082;
+  border: 1.5px solid #e0c97f33;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+.filter-scrollable-list li {
+  @extend .scrollable-list__item;
+  color: #ffe082;
+  font-size: 1rem;
+  border-bottom: 1px solid #e0c97f22;
+  background: transparent;
+  transition: background 0.18s, color 0.18s;
+}
+
+.filter-scrollable-list li.selected {
+  background-color: #23232b;
+  color: #ffe082;
+  font-weight: bold;
+  box-shadow: 0 0 8px #ffe08244;
+  border-bottom-color: #e0c97f44;
+}
+
+.filter-scrollable-list li:hover {
+  background: #2a2a2a;
+  color: #fffbe6;
+}
+
+// Translation filter section
+.translations-filter {
+  @extend .filter-section;
+}
+
+.translation-buttons {
+  @extend .translation-buttons;
+}
+
+.translation-btn {
+  @extend .translation-btn;
+  background: #23232b;
+  color: #ffd700;
+  border: 1.5px solid #e0c97f;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  padding: 0.7rem 1.5rem;
+  margin: 0 0.3rem 0.7rem 0;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+.translation-btn.selected {
+  background: linear-gradient(to top, #ffe082 60%, #e0c97f 100%);
+  color: #23232b;
+  border-color: #ffe082;
+  font-weight: 700;
+  box-shadow: 0 2px 12px #ffe08244, 0 1px 0 #fffbe6;
+}
+
+// Responsive adjustments
+@include breakpoint-down(md) {
+  .universal-search-page {
+    padding: $space-lg;
+  }
+  
+  .search-controls-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-grid-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .translation-buttons {
+    justify-content: flex-start;
+  }
+}
+
+@include breakpoint-down(sm) {
+  .universal-search-title {
+    font-size: $font-size-2xl;
+  }
+  
+  .search-result-item {
+    padding: $space-lg;
+    margin-bottom: $space-lg;
+  }
+  
+  .result-reference {
+    font-size: $font-size-lg;
+  }
+  
+  .result-text {
+    font-size: $font-size-base;
+  }
+}

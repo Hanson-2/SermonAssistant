@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import "./UniversalSearchPage.css";
+import "./UniversalSearchPage.scss";
 
 // REMOVE OLD STATIC TRANSLATION DATA
 // const ADD_SCRIPTURE_TRANSLATION_GROUPS = [...];

@@ -41,6 +41,19 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+
+  position: relative;
+  overflow: visible !important;
+}
+
+.app {
+  position: relative;
+  overflow: visible !important;
+}
+
+main {
+  position: relative;
+  overflow: visible !important;
 }
 
 h1 {

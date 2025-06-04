@@ -1,0 +1,25 @@
+// Main SCSS entry point
+// This file imports all other SCSS partials in the correct order
+
+// 1. Variables and configuration (must be first)
+@import 'variables';
+
+// 2. Mixins and functions (must come after variables)
+@import 'mixins';
+
+// 3. Base styles and reset
+@import 'base';
+
+// 4. Layout patterns
+@import 'layouts';
+
+// 5. Reusable components
+@import 'components';
+@import 'sermon-card';
+
+// 6. Page-specific styles
+@import 'dashboard';
+@import 'filters';
+
+// 7. Utilities (last to override anything if needed)
+// Add utility imports here as needed

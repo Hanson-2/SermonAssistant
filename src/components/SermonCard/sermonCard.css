@@ -1,6 +1,5 @@
 .sermon-card-wrapper {
   position: relative;
-  overflow: hidden;
   border-radius: 8px;
 }
 
@@ -20,8 +19,8 @@
   padding: 1rem;
   border: 2px solid;
   border-image: linear-gradient(90deg, #910000, #ff9800) 1;
+  overflow: hidden; /* Ensure nothing breaks out of the card boundaries */
   /* Remove background properties from base class - let inline styles handle it */
-  overflow: hidden;
 }
 
 /* Ensure inline styles override any global styles */
@@ -142,6 +141,8 @@
 .with-gradient {
   background: linear-gradient(90deg, #1e293b 0%, #374151 100%);
 }
+
+/* Flyout actions are used for sermon card buttons instead of card-actions-tray */
 
 /* Sermon Folder Select Styles */
 .sermon-folder-select {

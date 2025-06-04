@@ -17,49 +17,90 @@ const AnalyticsDashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'month' | 'quarter' | 'year' | 'all'>('year');
+  // --- Enhancement: Tag Filter State ---
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
+  // --- Enhancement: Category Filter State ---
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
+  // --- Enhancement: Series Filter State ---
+  const [selectedSeriesFilter, setSelectedSeriesFilter] = useState<string>('');
 
+  // Fetch sermons, categories, and series ONCE on mount
   useEffect(() => {
-    loadAnalyticsData();
+    const loadInitialData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [sermonsData, categoriesData, seriesData] = await Promise.all([
+          fetchSermons(),
+          getSermonCategoriesFunc(),
+          getSermonSeriesFunc()
+        ]);
+        setSermons(sermonsData);
+        setCategories(categoriesData);
+        setSeries(seriesData);
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        setError('Failed to load initial data. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadInitialData();
+    // eslint-disable-next-line
+  }, []);
+
+  // Fetch analytics ONLY when timeframe changes
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const analyticsData = await getSermonAnalyticsFunc(selectedTimeframe);
+        setAnalytics(analyticsData);
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+        setError('Failed to load analytics. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadAnalytics();
+    // eslint-disable-next-line
   }, [selectedTimeframe]);
 
-  const loadAnalyticsData = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const [analyticsData, sermonsData, categoriesData, seriesData] = await Promise.all([
-        getSermonAnalyticsFunc(selectedTimeframe),
-        fetchSermons(),
-        getSermonCategoriesFunc(),
-        getSermonSeriesFunc()
-      ]);
-      
-      setAnalytics(analyticsData);
-      setSermons(sermonsData);
-      setCategories(categoriesData);
-      setSeries(seriesData);
-    } catch (error) {
-      console.error('Error loading analytics data:', error);
-      setError('Failed to load analytics data. Please try again.');
-    } finally {
-      setIsLoading(false);
+  // --- Enhancement: Filtered Sermons Helper (with series) ---
+  const getFilteredSermons = () => {
+    let filtered = Array.isArray(sermons) ? sermons : [];
+    if (selectedTagFilter) {
+      filtered = filtered.filter(s => Array.isArray(s.tags) && s.tags.includes(selectedTagFilter));
     }
+    if (selectedCategoryFilter) {
+      filtered = filtered.filter(s => s.category === selectedCategoryFilter);
+    }
+    if (selectedSeriesFilter) {
+      filtered = filtered.filter(s => s.seriesId === selectedSeriesFilter);
+    }
+    return filtered.filter(s => !!s && typeof s === 'object');
   };
 
   const getRecentSermons = (count: number = 5) => {
-    return [...sermons]
-      .sort((a, b) => b.dateAdded.seconds - a.dateAdded.seconds)
+    return [...getFilteredSermons()]
+      .filter(s => s && s.dateAdded && typeof s.dateAdded === 'object' && 'seconds' in s.dateAdded)
+      .sort((a, b) => {
+        const aSec = a && a.dateAdded && typeof a.dateAdded === 'object' && 'seconds' in a.dateAdded ? a.dateAdded.seconds : 0;
+        const bSec = b && b.dateAdded && typeof b.dateAdded === 'object' && 'seconds' in b.dateAdded ? b.dateAdded.seconds : 0;
+        return bSec - aSec;
+      })
       .slice(0, count);
   };
 
   const getCategoryStats = () => {
     const categoryCount: { [key: string]: number } = {};
-    sermons.forEach(sermon => {
-      if (sermon.category) {
+    getFilteredSermons().forEach(sermon => {
+      if (sermon && sermon.category) {
         categoryCount[sermon.category] = (categoryCount[sermon.category] || 0) + 1;
       }
     });
-    
     return Object.entries(categoryCount)
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count);
@@ -67,7 +108,7 @@ const AnalyticsDashboardPage: React.FC = () => {
 
   const getSeriesStats = () => {
     const seriesCount: { [key: string]: number } = {};
-    sermons.forEach(sermon => {
+    getFilteredSermons().forEach(sermon => {
       if (sermon.seriesId) {
         const seriesTitle = series.find(s => s.id === sermon.seriesId)?.name || 'Unknown Series';
         seriesCount[seriesTitle] = (seriesCount[seriesTitle] || 0) + 1;
@@ -81,7 +122,7 @@ const AnalyticsDashboardPage: React.FC = () => {
 
   const getTagStats = () => {
     const tagCount: { [key: string]: number } = {};
-    sermons.forEach(sermon => {
+    getFilteredSermons().forEach(sermon => {
       if (sermon.tags) {
         sermon.tags.forEach(tag => {
           tagCount[tag] = (tagCount[tag] || 0) + 1;
@@ -97,17 +138,21 @@ const AnalyticsDashboardPage: React.FC = () => {
 
   const getBooksStats = () => {
     const bookCount: { [key: string]: number } = {};
-    sermons.forEach(sermon => {
+    getFilteredSermons().forEach(sermon => {
+      let bookKey = '';
       if (sermon.bibleBook) {
-        const bookKey = typeof sermon.bibleBook === 'string'
-          ? sermon.bibleBook
-          : (React.isValidElement(sermon.bibleBook) && sermon.bibleBook.props && typeof sermon.bibleBook.props === 'object' && sermon.bibleBook.props !== null && 'children' in sermon.bibleBook.props)
-            ? String((sermon.bibleBook.props as { children?: React.ReactNode }).children)
-            : String(sermon.bibleBook);
-        bookCount[bookKey] = (bookCount[bookKey] || 0) + 1;
+        if (typeof sermon.bibleBook === 'string') {
+          bookKey = sermon.bibleBook;
+        } else if (React.isValidElement(sermon.bibleBook) && sermon.bibleBook.props && typeof sermon.bibleBook.props === 'object' && sermon.bibleBook.props !== null && 'children' in sermon.bibleBook.props) {
+          bookKey = String((sermon.bibleBook.props as { children?: React.ReactNode }).children);
+        } else {
+          bookKey = String(sermon.bibleBook);
+        }
+        if (bookKey) {
+          bookCount[bookKey] = (bookCount[bookKey] || 0) + 1;
+        }
       }
     });
-    
     return Object.entries(bookCount)
       .map(([book, count]) => ({ book, count }))
       .sort((a, b) => b.count - a.count);
@@ -130,6 +175,43 @@ const AnalyticsDashboardPage: React.FC = () => {
     }
   };
 
+  // --- Enhancement: Export Analytics to CSV ---
+  const exportAnalyticsToCSV = () => {
+    const rows = [
+      ['Total Sermons', analytics?.totalSermons || sermons.length],
+      ['Categories', categories.length],
+      ['Series', series.length],
+      ['Bible Books', getBooksStats().length],
+      ['Unique Tags', getTagStats().length],
+      ['Avg per Month', analytics?.averageSermonLength || (sermons.length / 12).toFixed(1)],
+    ];
+    const csvContent = 'data:text/csv;charset=utf-8,' +
+      rows.map(e => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'sermon_analytics.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // --- Enhancement: Sermons Over Time Data ---
+  const getSermonsPerMonth = () => {
+    const months: { [key: string]: number } = {};
+    getFilteredSermons().forEach(sermon => {
+      if (sermon.dateAdded && typeof sermon.dateAdded === 'object' && 'seconds' in sermon.dateAdded) {
+        const d = new Date(sermon.dateAdded.seconds * 1000);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        months[key] = (months[key] || 0) + 1;
+      }
+    });
+    // Sort by date ascending
+    return Object.entries(months)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, count]) => ({ month, count }));
+  };
+
   if (isLoading) {
     return (
       <div className="analytics-dashboard-page">
@@ -143,9 +225,38 @@ const AnalyticsDashboardPage: React.FC = () => {
 
   return (
     <div className="analytics-dashboard-page">
+      {/* Background overlay for theme consistency */}
+      <div className="analytics-dashboard-bg" aria-hidden="true" />
       <div className="page-header">
-        <h1>Analytics Dashboard</h1>
-        <p>Insights and statistics about your sermon collection</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 
+            className="analytics-dashboard-title"
+            style={{
+              color: '#ffe082', // Brighter gold for maximum contrast
+              background: 'rgba(20,20,20,0.82)',
+              borderRadius: '16px',
+              border: '2.5px solid #ffe082',
+              padding: '0.5em 1.5em',
+              display: 'inline-block',
+              textShadow: '0 2px 8px #000, 0 1px 0 #000', // Strong black shadow for pop
+              boxShadow: '0 4px 18px 0 rgba(0,0,0,0.32)',
+              fontSize: '2.8rem',
+              fontFamily: 'Trajan Pro, Georgia, serif',
+              fontWeight: 700,
+              letterSpacing: '1.5px',
+              marginBottom: '18px',
+              position: 'relative',
+              zIndex: 99999,
+              isolation: 'isolate',
+            }}
+          >
+            Analytics Dashboard
+          </h1>
+          <p>Insights and statistics about your sermon collection</p>
+        </div>
+        <button className="btn export-btn" onClick={exportAnalyticsToCSV} title="Export analytics as CSV">
+          Export CSV
+        </button>
       </div>
 
       {/* Error Message */}
@@ -156,34 +267,115 @@ const AnalyticsDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Timeframe Selector */}
-      <div className="timeframe-selector">
-        <h3>Viewing data for: {getTimeframePeriod()}</h3>
-        <div className="timeframe-buttons">
-          <button 
-            className={`btn ${selectedTimeframe === 'month' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setSelectedTimeframe('month')}
-          >
-            This Month
-          </button>
-          <button 
-            className={`btn ${selectedTimeframe === 'quarter' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setSelectedTimeframe('quarter')}
-          >
-            This Quarter
-          </button>
-          <button 
-            className={`btn ${selectedTimeframe === 'year' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setSelectedTimeframe('year')}
-          >
-            This Year
-          </button>
-          <button 
-            className={`btn ${selectedTimeframe === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setSelectedTimeframe('all')}
-          >
-            All Time
-          </button>
+      {/* Timeframe & Filters Grouped (Styled, Theme-Matched) */}
+      <div className="analytics-filters-panel">
+        <div className="analytics-filters-header">
+          <span className="analytics-filters-title">Filters <span className="analytics-filters-dash">—</span></span>
+        </div>
+        <div className="analytics-filters-row">
+          <div className="analytics-filter-group">
+            <label htmlFor="tagFilter" className="analytics-filter-label">Tag:</label>
+            <select
+              id="tagFilter"
+              value={selectedTagFilter}
+              onChange={e => setSelectedTagFilter(e.target.value)}
+              className="analytics-filter-select"
+            >
+              <option value="">All Tags</option>
+              {Array.from(new Set(sermons.flatMap(s => s.tags || []))).sort().map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+          </div>
+          <div className="analytics-filter-group">
+            <label htmlFor="categoryFilter" className="analytics-filter-label">Category:</label>
+            <select
+              id="categoryFilter"
+              value={selectedCategoryFilter}
+              onChange={e => setSelectedCategoryFilter(e.target.value)}
+              className="analytics-filter-select"
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.name}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="analytics-filter-group">
+            <label htmlFor="seriesFilter" className="analytics-filter-label">Series:</label>
+            <select
+              id="seriesFilter"
+              value={selectedSeriesFilter}
+              onChange={e => setSelectedSeriesFilter(e.target.value)}
+              className="analytics-filter-select"
+            >
+              <option value="">All Series</option>
+              {series.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="analytics-filter-group timeframe-group">
+            <label className="analytics-filter-label">Timeframe:</label>
+            <div className="analytics-timeframe-btns">
+              <button 
+                className={`btn analytics-btn ${selectedTimeframe === 'month' ? 'analytics-btn-primary' : 'analytics-btn-secondary'}`}
+                onClick={() => setSelectedTimeframe('month')}
+              >
+                This Month
+              </button>
+              <button 
+                className={`btn analytics-btn ${selectedTimeframe === 'quarter' ? 'analytics-btn-primary' : 'analytics-btn-secondary'}`}
+                onClick={() => setSelectedTimeframe('quarter')}
+              >
+                This Quarter
+              </button>
+              <button 
+                className={`btn analytics-btn ${selectedTimeframe === 'year' ? 'analytics-btn-primary' : 'analytics-btn-secondary'}`}
+                onClick={() => setSelectedTimeframe('year')}
+              >
+                This Year
+              </button>
+              <button 
+                className={`btn analytics-btn ${selectedTimeframe === 'all' ? 'analytics-btn-primary' : 'analytics-btn-secondary'}`}
+                onClick={() => setSelectedTimeframe('all')}
+              >
+                All Time
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity - moved to top */}
+      <div className="recent-activity">
+        <h3>Recent Sermons</h3>
+        <div className="recent-sermons-grid">
+          {getRecentSermons().map((sermon) => (
+            <div key={sermon.id} className="recent-sermon-card">
+              <div className="sermon-header">
+                <Link to={`/expository/${sermon.id}`} className="sermon-title">
+                  {sermon.title || 'Untitled'}
+                </Link>
+                <span className="sermon-date">
+                  {sermon.dateAdded && typeof sermon.dateAdded === 'object' && 'seconds' in sermon.dateAdded
+                    ? new Date(sermon.dateAdded.seconds * 1000).toLocaleDateString()
+                    : 'No date'}
+                </span>
+              </div>
+              <div className="sermon-details">
+                <p className="scripture-ref">
+                  {sermon.bibleBook ? String(sermon.bibleBook) : ''}
+                  {sermon.bibleChapter ? ` ${sermon.bibleChapter}` : ''}
+                  {sermon.bibleStartVerse ? `:${sermon.bibleStartVerse}` : ''}
+                  {sermon.bibleEndVerse ? `-${sermon.bibleEndVerse}` : ''}
+                </p>
+                {sermon.category && (
+                  <span className="category-tag">{sermon.category}</span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -242,9 +434,62 @@ const AnalyticsDashboardPage: React.FC = () => {
 
       {/* Charts and Analytics */}
       <div className="analytics-grid">
+        {/* Top Tags */}
+        <div className="analytics-card">
+          <h3>Most Used Tags <span title="Shows the top 10 tags used across all sermons.">ℹ️</span></h3>
+          <div className="chart-container">
+            {getTagStats().length === 0 ? (
+              <p className="no-data">No tags assigned to sermons yet.</p>
+            ) : (
+              <div className="tag-cloud">
+                {getTagStats().map(({ tag, count }, index) => (
+                  <span 
+                    key={tag} 
+                    className="tag-item"
+                    style={{
+                      fontSize: `${Math.max(0.8, count / 5)}rem`,
+                      color: `hsl(${index * 30}, 70%, 65%)`,
+                      cursor: 'pointer',
+                      margin: '0 6px',
+                    }}
+                    title={`Used in ${count} sermon${count !== 1 ? 's' : ''}`}
+                  >
+                    {tag} ({count})
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bible Books */}
+        <div className="analytics-card">
+          <h3>Most Preached Books <span title="Shows the top 10 Bible books referenced in your sermons.">ℹ️</span></h3>
+          <div className="chart-container">
+            <div className="bar-chart">
+              {getBooksStats().slice(0, 10).map(({ book, count }, index) => (
+                <div key={book} className="bar-item">
+                  <div className="bar-label" title={`Book: ${book}`}>{book}</div>
+                  <div className="bar-container">
+                    <div 
+                      className="bar"
+                      style={{ 
+                        width: `${(count / Math.max(...getBooksStats().map(s => s.count))) * 100}%`,
+                        backgroundColor: `hsl(${index * 36}, 60%, 50%)`
+                      }}
+                      title={`Referenced in ${count} sermon${count !== 1 ? 's' : ''}`}
+                    ></div>
+                    <span className="bar-value">{count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Category Distribution */}
         <div className="analytics-card">
-          <h3>Sermons by Category</h3>
+          <h3>Sermons by Category <span title="Distribution of sermons by category.">ℹ️</span></h3>
           <div className="chart-container">
             {getCategoryStats().length === 0 ? (
               <p className="no-data">No categories assigned to sermons yet.</p>
@@ -252,7 +497,7 @@ const AnalyticsDashboardPage: React.FC = () => {
               <div className="bar-chart">
                 {getCategoryStats().map(({ category, count }, index) => (
                   <div key={category} className="bar-item">
-                    <div className="bar-label">{category}</div>
+                    <div className="bar-label" title={`Category: ${category}`}>{category}</div>
                     <div className="bar-container">
                       <div 
                         className="bar"
@@ -260,6 +505,7 @@ const AnalyticsDashboardPage: React.FC = () => {
                           width: `${(count / Math.max(...getCategoryStats().map(s => s.count))) * 100}%`,
                           backgroundColor: `hsl(${index * 45}, 70%, 60%)`
                         }}
+                        title={`${count} sermon${count !== 1 ? 's' : ''} in this category`}
                       ></div>
                       <span className="bar-value">{count}</span>
                     </div>
@@ -272,7 +518,7 @@ const AnalyticsDashboardPage: React.FC = () => {
 
         {/* Series Distribution */}
         <div className="analytics-card">
-          <h3>Sermons by Series</h3>
+          <h3>Sermons by Series <span title="Distribution of sermons by series.">ℹ️</span></h3>
           <div className="chart-container">
             {getSeriesStats().length === 0 ? (
               <p className="no-data">No series created yet.</p>
@@ -280,7 +526,7 @@ const AnalyticsDashboardPage: React.FC = () => {
               <div className="bar-chart">
                 {getSeriesStats().map(({ seriesTitle, count }, index) => (
                   <div key={seriesTitle} className="bar-item">
-                    <div className="bar-label">{seriesTitle}</div>
+                    <div className="bar-label" title={`Series: ${seriesTitle}`}>{seriesTitle}</div>
                     <div className="bar-container">
                       <div 
                         className="bar"
@@ -288,6 +534,7 @@ const AnalyticsDashboardPage: React.FC = () => {
                           width: `${(count / Math.max(...getSeriesStats().map(s => s.count))) * 100}%`,
                           backgroundColor: `hsl(${index * 60}, 65%, 55%)`
                         }}
+                        title={`${count} sermon${count !== 1 ? 's' : ''} in this series`}
                       ></div>
                       <span className="bar-value">{count}</span>
                     </div>
@@ -298,100 +545,97 @@ const AnalyticsDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Top Tags */}
+        {/* --- Enhancement: Sermons Over Time Chart --- */}
         <div className="analytics-card">
-          <h3>Most Used Tags</h3>
+          <h3>Sermons Added Per Month</h3>
           <div className="chart-container">
-            {getTagStats().length === 0 ? (
-              <p className="no-data">No tags assigned to sermons yet.</p>
+            {getSermonsPerMonth().length === 0 ? (
+              <p className="no-data">No sermon data available.</p>
             ) : (
-              <div className="tag-cloud">
-                {getTagStats().map(({ tag, count }, index) => (
-                  <span 
-                    key={tag} 
-                    className="tag-item"
-                    style={{
-                      fontSize: `${Math.max(0.8, count / 5)}rem`,
-                      color: `hsl(${index * 30}, 70%, 65%)`
-                    }}
-                  >
-                    {tag} ({count})
-                  </span>
-                ))}
-              </div>
+              <svg width="100%" height="120" viewBox="0 0 400 120" style={{ background: '#f8f8fa', borderRadius: 8, marginBottom: 8 }}>
+                {(() => {
+                  const data = getSermonsPerMonth();
+                  const max = Math.max(...data.map(d => d.count), 1);
+                  const stepX = 400 / Math.max(data.length - 1, 1);
+                  const points = data.map((d, i) => `${i * stepX},${120 - (d.count / max) * 100}`).join(' ');
+                  return (
+                    <>
+                      <polyline
+                        fill="none"
+                        stroke="#4a90e2"
+                        strokeWidth="3"
+                        points={points}
+                      />
+                      {data.map((d, i) => (
+                        <circle key={d.month} cx={i * stepX} cy={120 - (d.count / max) * 100} r="4" fill="#4a90e2">
+                          <title>{`${d.month}: ${d.count}`}</title>
+                        </circle>
+                      ))}
+                    </>
+                  );
+                })()}
+              </svg>
             )}
-          </div>
-        </div>
-
-        {/* Bible Books */}
-        <div className="analytics-card">
-          <h3>Most Preached Books</h3>
-          <div className="chart-container">
-            <div className="bar-chart">
-              {getBooksStats().slice(0, 10).map(({ book, count }, index) => (
-                <div key={book} className="bar-item">
-                  <div className="bar-label">{book}</div>
-                  <div className="bar-container">
-                    <div 
-                      className="bar"
-                      style={{ 
-                        width: `${(count / Math.max(...getBooksStats().map(s => s.count))) * 100}%`,
-                        backgroundColor: `hsl(${index * 36}, 60%, 50%)`
-                      }}
-                    ></div>
-                    <span className="bar-value">{count}</span>
-                  </div>
-                </div>
+            <div className="sermon-month-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              {getSermonsPerMonth().map(d => (
+                <span key={d.month}>{d.month}</span>
               ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="recent-activity">
-        <h3>Recent Sermons</h3>
-        <div className="recent-sermons-grid">
-          {getRecentSermons().map((sermon) => (
-            <div key={sermon.id} className="recent-sermon-card">
-              <div className="sermon-header">
-                <Link to={`/expository/${sermon.id}`} className="sermon-title">
-                  {sermon.title}
-                </Link>
-                <span className="sermon-date">
-                  {new Date(sermon.dateAdded.seconds * 1000).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="sermon-details">
-                <p className="scripture-ref">
-                  {sermon.bibleBook} {sermon.bibleChapter}:{sermon.bibleStartVerse}-{sermon.bibleEndVerse}
-                </p>
-                {sermon.category && (
-                  <span className="category-tag">{sermon.category}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Insights */}
-      {analytics && (
+      {analytics && analytics.insights && Array.isArray(analytics.insights) && (
         <div className="insights-section">
           <h3>📊 Insights</h3>
           <div className="insights-grid">
-            {analytics.insights?.map((insight, index) => (
+            {analytics.insights.map((insight, index) => (
               <div key={index} className="insight-card">
-                <h4>{insight.title}</h4>
-                <p>{insight.description}</p>
+                <h4>{insight.title || 'Insight'}</h4>
+                <p>{insight.description || ''}</p>
                 <div className="insight-data">
-                  <strong>{insight.value}</strong>
+                  <strong>{insight.value !== undefined ? insight.value : ''}</strong>
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* --- Enhancement: Responsive Styles --- */}
+      {/*
+      @media (max-width: 900px) {
+        .analytics-dashboard-page .stats-overview, .analytics-dashboard-page .analytics-grid {
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        .analytics-dashboard-page .stat-card, .analytics-dashboard-page .analytics-card {
+          min-width: 0;
+          width: 100%;
+          margin-bottom: 1rem;
+        }
+        .analytics-dashboard-page .recent-sermons-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .analytics-dashboard-page .page-header, .analytics-dashboard-page .timeframe-selector {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .analytics-dashboard-page .stat-content h3, .analytics-dashboard-page .stat-number {
+          font-size: 1rem;
+        }
+        .analytics-dashboard-page .bar-label, .analytics-dashboard-page .bar-value {
+          font-size: 0.9rem;
+        }
+        .analytics-dashboard-page .sermon-month-labels {
+          font-size: 10px;
+        }
+      }
+      */}
     </div>
   );
 };

@@ -1,3 +1,7 @@
+/* Import unified theme patch for all settings pages */
+@import '../styles/theme_patch_all_pages.css';
+
+/* filepath: c:\Users\steve\Custom-Apps\Sermon Notes Assistant\src\pages\SmartCategorizationPage.css */
 /* Smart Categorization Page Styles */
 .smart-categorization-page {
   padding: 2rem;

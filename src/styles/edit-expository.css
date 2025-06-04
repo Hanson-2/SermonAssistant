@@ -19,7 +19,6 @@
   background: #111827 url('/Blue Wall Background.png') no-repeat center center;
   background-size: cover;
   opacity: 0.25;
-  overflow: hidden;
   display: block;
 }
 
@@ -39,7 +38,6 @@
   box-shadow: 0 4px 24px rgba(0,0,0,0.25);
   margin-right: 3.5rem;
   margin-left: 0; /* Fix: do not shift left, keep flush with container */
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }

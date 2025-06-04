@@ -1,3 +1,7 @@
+/* Import unified theme patch for all settings pages */
+@import '../styles/theme_patch_all_pages.css';
+
+/* filepath: c:\Users\steve\Custom-Apps\Sermon Notes Assistant\src\pages\AdvancedSearchPage.css */
 /* Advanced Search Page Styles */
 .advanced-search-page {
   padding: 2rem;

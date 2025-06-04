@@ -1,0 +1,328 @@
+// Reusable component styles
+// This file contains styling for common UI components
+
+@import 'variables';
+@import 'mixins';
+
+// Button components
+.btn {
+  @include button-base;
+  
+  &--primary {
+    @include button-primary;
+  }
+  
+  &--secondary {
+    @include button-secondary;
+  }
+  
+  &--small {
+    padding: $space-xs $space-sm;
+    font-size: $font-size-sm;
+  }
+  
+  &--large {
+    padding: $space-md $space-xl;
+    font-size: $font-size-lg;
+  }
+}
+
+// Card components
+.card {
+  @include glass-card;
+  
+  &--elevated {
+    @include card-elevated;
+  }
+  
+  &--bordered {
+    border: 1px solid $dark-border;
+  }
+  
+  &__header {
+    padding: $space-lg;
+    border-bottom: 1px solid $dark-border;
+    
+    h1, h2, h3, h4, h5, h6 {
+      margin-bottom: 0;
+    }
+  }
+  
+  &__body {
+    padding: $space-lg;
+  }
+  
+  &__footer {
+    padding: $space-lg;
+    border-top: 1px solid $dark-border;
+    background-color: rgba($dark-bg-secondary, 0.5);
+  }
+}
+
+// Form components
+.form-group {
+  margin-bottom: $space-lg;
+  
+  label {
+    display: block;
+    margin-bottom: $space-xs;
+    font-weight: $font-weight-semibold;
+    color: $primary-gold;
+  }
+}
+
+.form-control {
+  @include input-base;
+  
+  &--large {
+    padding: $space-md $space-lg;
+    font-size: $font-size-lg;
+  }
+  
+  &--small {
+    padding: $space-xs $space-sm;
+    font-size: $font-size-sm;
+  }
+  
+  &--error {
+    border-color: $danger-color;
+    background-color: rgba($danger-color, 0.1);
+  }
+  
+  &--success {
+    border-color: $success-color;
+    background-color: rgba($success-color, 0.1);
+  }
+}
+
+// Search components
+.search-bar {
+  @include input-base;  width: 100%;
+  padding: $space-md $space-lg;
+  font-size: $font-size-lg;
+  border-radius: $radius-md;
+  
+  &::placeholder {
+    color: rgba($text-color-secondary, 0.7);
+  }
+}
+
+// Filter components
+.filter-section {
+  @include glass-card;
+  padding: $space-xl;
+  margin-bottom: $space-xl;
+  
+  &__title {
+    @include page-title;
+    font-size: $font-size-xl;
+    margin-bottom: $space-lg;
+    padding-bottom: $space-sm;
+    border-bottom: 1px solid rgba($primary-gold, 0.2);
+  }
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: $space-lg;
+}
+
+.filter-group {  background: rgba($dark-bg-primary, 0.3);
+  padding: $space-lg;
+  border-radius: $radius-md;
+  border: 1px solid $dark-border;
+  
+  &__title {
+    font-weight: $font-weight-bold;
+    color: $primary-gold;
+    margin-bottom: $space-md;
+    padding-bottom: $space-xs;
+    border-bottom: 1px solid $dark-border;
+  }
+}
+
+// List components
+.scrollable-list {
+  list-style: none;
+  padding: $space-xs;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid $dark-border;
+  border-radius: $radius-sm;
+  background-color: $dark-bg-secondary;
+  @include inset-shadow;
+  
+  &__item {
+    padding: $space-md $space-lg;
+    cursor: pointer;
+    border-bottom: 1px solid lighten($dark-bg-secondary, 5%);
+    transition: all 0.2s ease;
+    color: $text-color-secondary;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &:hover {
+      background-color: lighten($dark-bg-secondary, 10%);
+      color: $text-color-primary;
+    }
+    
+    &--selected {
+      background-color: $dark-bg-primary;
+      color: $primary-gold;
+      font-weight: $font-weight-semibold;
+      @include inset-shadow-deep;
+      border-bottom-color: $dark-bg-primary;
+    }
+  }
+}
+
+// Message components
+.message {
+  @include message-base;
+  
+  &--success {
+    @include message-success;
+  }
+  
+  &--error {
+    @include message-error;
+  }
+  
+  &--warning {
+    // Fallback: use error style for warning until a warning mixin is defined
+    @include message-error;
+    // Optionally, override background and color for a yellow/gold warning look
+    background: #fffbe6;
+    color: #bfa100;
+    border-left: 4px solid #ffe066;
+  }
+  
+  &--info {
+    // Fallback: use success style for info until a proper info mixin is defined
+    @include message-success;
+    // Optionally, override background and color for a blue info look
+    background: #e6f0ff;
+    color: #1a4d80;
+    border-left: 4px solid #3399ff;
+  }
+}
+
+// Loading components
+.loading-indicator {
+  text-align: center;
+  color: $primary-gold;
+  font-weight: $font-weight-semibold;
+  @include text-glow($primary-gold);
+  
+  &::after {
+    content: '...';
+    animation: ellipsis 1.5s infinite;
+  }
+}
+
+@keyframes ellipsis {
+  0%, 33% { content: '...'; }
+  34%, 66% { content: '....'; }
+  67%, 100% { content: '.....'; }
+}
+
+// Pagination components
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: $space-sm;
+  margin-top: $space-xl;
+  
+  &__btn {
+    @include button-base;
+    min-width: 40px;
+    height: 40px;
+    
+    &--active {
+      @include button-primary;
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Translation buttons
+.translation-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-sm;
+  justify-content: center;
+  
+  .translation-btn {
+    @include button-base;
+    padding: $space-sm $space-lg;
+    font-size: $font-size-sm;
+    
+    &--active {
+      @include button-primary;
+    }
+  }
+}
+
+// Results components
+.results-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.result-item {
+  @include glass-card;
+  padding: $space-xl;
+  margin-bottom: $space-xl;
+  border-left: 4px solid $primary-gold;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    // Fallback: add a simple box-shadow and gold border for hover effect
+    box-shadow: 0 8px 25px rgba(224, 201, 127, 0.15), 0 2px 8px rgba(0,0,0,0.18);
+    border-left: 4px solid #ffd700;
+  }
+  
+  &__reference {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    font-family: $font-serif;
+    color: $primary-gold;
+    margin-bottom: $space-md;
+    // Fallback: add a subtle text-shadow for engrave effect
+    text-shadow: 0 1px 0 #fff2, 0 2px 2px #0003;
+      em {
+      color: lighten($primary-gold, 15%);
+      background-color: rgba($primary-gold, 0.2);
+      padding: 0.1em 0.2em;
+      border-radius: $radius-xs;
+      font-style: normal;
+    }
+  }
+  
+  &__text {
+    font-size: $font-size-lg;
+    line-height: 1.6;
+    color: $text-color-primary;
+    margin-bottom: $space-md;
+    text-shadow: 0 1px 2px #0002;
+      em {
+      color: lighten($text-color-primary, 15%);
+      background-color: rgba($primary-gold, 0.2);
+      padding: 0.1em 0.2em;
+      border-radius: $radius-xs;
+      font-style: normal;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}

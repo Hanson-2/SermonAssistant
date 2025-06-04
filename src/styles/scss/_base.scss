@@ -1,0 +1,205 @@
+// Base styles and CSS reset
+// This file contains foundational styles that apply globally
+
+// Import variables first
+@import 'variables';
+
+// CSS Reset and Base Styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: $font-primary;
+  font-size: $font-base;
+  line-height: 1.6;
+  color: $primary-gold;
+  background: url('/Blue Wall Background.png') center center fixed no-repeat;
+  background-size: cover;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Base typography
+h1, h2, h3, h4, h5, h6 {
+  font-family: $font-title;
+  font-weight: $font-bold;
+  line-height: 1.2;
+  margin-bottom: $space-4;
+  color: $primary-gold;
+}
+
+h1 {
+  font-size: $font-3xl;
+  text-shadow: $text-shadow-gold;
+}
+
+h2 {
+  font-size: $font-2xl;
+}
+
+h3 {
+  font-size: $font-xl;
+}
+
+p {
+  margin-bottom: $space-4;
+  line-height: 1.7;
+}
+
+// Links
+a {
+  color: $primary-gold;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  
+  &:hover {
+    color: lighten($primary-gold, 10%);
+  }
+}
+
+// Lists
+ul, ol {
+  margin-bottom: $space-4;
+  padding-left: $space-5;
+}
+
+li {
+  margin-bottom: $space-1;
+}
+
+// Code elements
+code, pre {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  background-color: $dark-bg-secondary;
+  border-radius: $radius-sm;
+}
+
+code {
+  padding: 2px 4px;
+  font-size: 0.9em;
+}
+
+pre {
+  padding: $space-4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+// Form elements base
+input, textarea, select, button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+// Focus styles
+:focus {
+  outline: 2px solid $primary-gold;
+  outline-offset: 2px;
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $dark-bg-primary;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $dark-border;
+  border-radius: 4px;
+  
+  &:hover {
+    background: lighten($dark-border, 10%);
+  }
+}
+
+// Selection styling
+::selection {
+  background-color: rgba($primary-gold, 0.3);
+  color: $primary-gold;
+}
+
+::-moz-selection {
+  background-color: rgba($primary-gold, 0.3);
+  color: $primary-gold;
+}
+
+// Utility classes
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.hidden {
+  display: none;
+}
+
+.visible {
+  display: block;
+}
+
+.folder-filter-label {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: $primary-gold;
+    letter-spacing: 0.01em;
+    margin-right: $space-2;
+    margin-bottom: $space-2;
+    text-shadow: 0 1px 6px #000, 0 0 2px #e0c97f55;
+    display: inline-block;
+    vertical-align: middle;
+    // Mobile responsiveness
+    @media (max-width: 600px) {
+      font-size: 0.98rem;
+      margin-right: $space-1;
+      margin-bottom: $space-1;
+      white-space: normal;
+      text-align: left;
+      width: 100%;
+      display: block;
+    }
+}
+
+// Utility classes: mobile tweaks
+@media (max-width: 600px) {
+  .text-left, .text-right, .text-center {
+    font-size: 0.98rem;
+  }
+  .visible {
+    display: block;
+  }
+  .hidden {
+    display: none;
+  }
+}

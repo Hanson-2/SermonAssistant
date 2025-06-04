@@ -1,0 +1,364 @@
+// SCSS Mixins - Reusable Patterns
+@import 'variables';
+
+// Background Patterns
+@mixin universal-background {
+  body {
+    background: $bg-wall center center fixed no-repeat;
+    background-size: cover;
+  }
+}
+
+@mixin overlay-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: $z-background;
+  pointer-events: none;
+  opacity: 0.22;
+  background: $bg-logo left center no-repeat;
+  background-size: cover;
+  filter: grayscale(0.2) brightness(0.8) contrast(1.1);
+}
+
+// Page Layout
+@mixin page-container {
+  background: none;
+  min-height: 100vh;
+  padding: $space-5;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: $font-primary;
+  color: $primary-gold;
+  position: relative;
+  z-index: $z-base;
+}
+
+// Page Title (Analytics Dashboard Style)
+@mixin page-title {
+  text-align: center;
+  color: $primary-gold;
+  font-size: $font-5xl;
+  margin-bottom: $space-8;
+  font-weight: $font-bold;
+  font-family: $font-title;
+  letter-spacing: 1.5px;
+  text-shadow: $text-shadow-gold;
+}
+
+// Text Effects
+@mixin text-glow($color: $primary-gold) {
+  text-shadow: 0 0 6px rgba($color, 0.4);
+}
+
+// Card/Panel Styling
+@mixin glass-card {
+  background: linear-gradient(135deg, $dark-bg-tertiary 0%, $dark-bg-card 100%);
+  border: 1px solid $dark-gold;
+  border-left: 5px solid $primary-gold;
+  border-radius: $radius-lg;
+  padding: $space-5;
+  margin-bottom: $space-5;
+  box-shadow: 
+    $shadow-lg,
+    inset 0 1px 0px rgba(255,255,255,0.02),
+    inset 0 0 10px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+      $shadow-xl,
+      0 0 15px $gold-shadow,
+      inset 0 1px 0px rgba(255,255,255,0.03),
+      inset 0 0 10px rgba(0,0,0,0.25);  }
+}
+
+@mixin card-elevated {
+  box-shadow: 
+    $shadow-xl,
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 15px $gold-shadow;  transform: translateY(-2px);
+}
+
+@mixin inset-shadow {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+@mixin inset-shadow-deep {
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+// Button Styling
+@mixin button-base {
+  padding: $space-3 $space-5;
+  font-size: $font-base;
+  background: linear-gradient(to bottom, #3a3a3a 0%, #282828 100%);
+  color: $primary-gold;
+  border: 1px solid $dark-gold;
+  border-top-color: #5c4a2a;
+  border-radius: $radius-md;
+  font-weight: $font-bold;
+  text-shadow: $text-shadow-md;
+  box-shadow: 
+    $shadow-md,
+    inset 0 1px 1px rgba(255,255,255,0.05),
+    inset 0 -1px 1px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: $transition-normal;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    background: linear-gradient(to bottom, #4a4a4a 0%, #383838 100%);
+    color: $bright-gold;
+    border-color: $primary-gold;
+    box-shadow: 
+      0 6px 10px rgba(0,0,0,0.5),
+      0 2px 4px $gold-shadow,
+      inset 0 1px 1px rgba(255,255,255,0.1),
+      inset 0 -1px 1px rgba(0,0,0,0.3);
+  }
+
+  &:active {
+    background: linear-gradient(to top, #3a3a3a 0%, #282828 100%);
+    box-shadow: 
+      $shadow-inset-md,
+      $shadow-sm;
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: $primary-gold;
+  color: $dark-bg-primary;
+
+  &:hover {
+    background: darken($primary-gold, 5%);
+    color: $dark-bg-primary;
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background: $dark-border-light;
+  color: $text-light;
+
+  &:hover {
+    background: lighten($dark-border-light, 10%);
+  }
+}
+
+@mixin button-danger {
+  @include button-base;
+  background: #dc3545;
+  color: white;
+
+  &:hover {
+    background: #c82333;
+  }
+}
+
+// Form Controls
+@mixin input-base {
+  width: 100%;
+  padding: $space-3 $space-4;
+  font-size: $font-base;
+  border: 1px solid $dark-gold;
+  border-radius: $radius-md;
+  background: linear-gradient(to bottom, $dark-bg-primary, $dark-bg-secondary);
+  color: $primary-gold;
+  font-weight: $font-medium;
+  box-shadow: $shadow-inset-md, $shadow-sm;
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+
+  &:focus {
+    border-color: $focus-gold;
+    background-color: $dark-bg-tertiary;
+    box-shadow: 
+      $shadow-inset-lg,
+      0 0 0 3px $gold-shadow,
+      $shadow-sm;
+    outline: none;
+  }
+
+  &::placeholder {
+    color: $text-secondary;
+  }
+}
+
+// Message/Alert Styling
+@mixin message-base {
+  padding: $space-4;
+  border-radius: $radius-md;
+  margin-bottom: $space-6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@mixin message-error {
+  @include message-base;
+  background: $error-bg;
+  color: $error-text;
+  border-left: 4px solid $error-border;
+}
+
+@mixin message-success {
+  @include message-base;
+  background: $success-bg;
+  color: $success-text;
+  border-left: 4px solid $success-border;
+}
+
+// Loading States
+@mixin loading-spinner {
+  text-align: center;
+  padding: $space-8;
+  color: $primary-gold;
+  font-weight: $font-semibold;
+  text-shadow: $text-shadow-sm;
+}
+
+// Typography Helpers
+@mixin heading-large {
+  font-size: $font-2xl;
+  color: $primary-gold;
+  margin-bottom: $space-4;
+  font-weight: $font-bold;
+  text-shadow: $text-shadow-sm;
+}
+
+@mixin text-muted {
+  color: $text-muted;
+  font-size: $font-sm;
+}
+
+// Responsive Helpers
+// Breakpoint mixins for flexible responsive design
+@mixin breakpoint-up($breakpoint) {
+  @if $breakpoint == xs {
+    @media (min-width: $breakpoint-xs) {
+      @content;
+    }
+  }
+  @else if $breakpoint == sm {
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
+  }
+  @else if $breakpoint == md {
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
+  }
+  @else if $breakpoint == lg {
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
+  }
+  @else if $breakpoint == xl {
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
+  }
+}
+
+@mixin breakpoint-down($breakpoint) {
+  @if $breakpoint == xs {
+    @media (max-width: #{$breakpoint-xs - 1px}) {
+      @content;
+    }
+  }
+  @else if $breakpoint == sm {
+    @media (max-width: #{$breakpoint-sm - 1px}) {
+      @content;
+    }
+  }
+  @else if $breakpoint == md {
+    @media (max-width: #{$breakpoint-md - 1px}) {
+      @content;
+    }
+  }
+  @else if $breakpoint == lg {
+    @media (max-width: #{$breakpoint-lg - 1px}) {
+      @content;
+    }
+  }
+  @else if $breakpoint == xl {
+    @media (max-width: #{$breakpoint-xl - 1px}) {
+      @content;
+    }
+  }
+}
+
+@mixin breakpoint-between($lower, $upper) {
+  @if $lower == xs and $upper == sm {
+    @media (min-width: $breakpoint-xs) and (max-width: #{$breakpoint-sm - 1px}) {
+      @content;
+    }
+  }
+  @else if $lower == xs and $upper == md {
+    @media (min-width: $breakpoint-xs) and (max-width: #{$breakpoint-md - 1px}) {
+      @content;
+    }
+  }
+  @else if $lower == xs and $upper == lg {
+    @media (min-width: $breakpoint-xs) and (max-width: #{$breakpoint-lg - 1px}) {
+      @content;
+    }
+  }
+  @else if $lower == sm and $upper == md {
+    @media (min-width: $breakpoint-sm) and (max-width: #{$breakpoint-md - 1px}) {
+      @content;
+    }
+  }
+  @else if $lower == sm and $upper == lg {
+    @media (min-width: $breakpoint-sm) and (max-width: #{$breakpoint-lg - 1px}) {
+      @content;
+    }
+  }
+  @else if $lower == md and $upper == lg {
+    @media (min-width: $breakpoint-md) and (max-width: #{$breakpoint-lg - 1px}) {
+      @content;
+    }
+  }
+  @else if $lower == md and $upper == xl {
+    @media (min-width: $breakpoint-md) and (max-width: #{$breakpoint-xl - 1px}) {
+      @content;
+    }
+  }
+  @else if $lower == lg and $upper == xl {
+    @media (min-width: $breakpoint-lg) and (max-width: #{$breakpoint-xl - 1px}) {
+      @content;
+    }
+  }
+}
+
+// Legacy responsive helpers (kept for backwards compatibility)
+@mixin mobile {
+  @media (max-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $breakpoint-lg) {
+    @content;
+  }
+}

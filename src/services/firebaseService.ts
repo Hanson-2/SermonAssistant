@@ -222,11 +222,18 @@ export async function listScriptureBooks(): Promise<string[]> {
 
 let cachedBooks: string[] | null = null;
 
+// List all books from the 'books' collection in Firestore (not from verses)
 export async function listCachedScriptureBooks(): Promise<string[]> {
   if (cachedBooks) return cachedBooks;
-  const fetchedBooks = await listScriptureBooks();
-  cachedBooks = fetchedBooks;
-  return fetchedBooks;
+  const booksCol = collection(db, 'books');
+  const snapshot = await getDocs(booksCol);
+  const books: string[] = [];
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if (data.name) books.push(data.name);
+  });
+  cachedBooks = books.sort();
+  return cachedBooks;
 }
 
 // List all chapters for a given book

@@ -1,0 +1,117 @@
+// UserTagManagementPage.scss - Modular SCSS Architecture
+@import '../styles/scss/main';
+
+.user-tag-management-layout {
+  @extend .page-layout;
+}
+
+.user-tag-management-container {
+  @extend .card;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: $space-xl $space-lg $space-lg $space-lg;
+}
+
+// Form Styles
+.add-tag-form {
+  grid-template-columns: 2fr auto auto;
+  gap: $space-sm;
+  margin-bottom: $space-md;
+}
+
+.add-tag-btn {
+  @extend .btn;
+  @extend .btn--primary;
+
+  &:disabled {
+    // No .btn-disabled exists, so fallback to opacity
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// Status Messages
+.tag-error {
+  @extend .message;
+  @extend .message--error;
+  margin-bottom: $space-sm;
+}
+
+.tag-success {
+  @extend .message;
+  @extend .message--success;
+  margin-bottom: $space-sm;
+}
+
+// Tag List Styles
+.tag-list-section {
+  margin-top: $space-md;
+}
+
+.tag-list {
+  // .list-clean does not exist, fallback to list-style: none
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tag-list-item {
+  // .list-item does not exist, fallback to intended styles
+  display: flex;
+  align-items: center;
+  padding: $space-xs 0;
+  border-bottom: 1px solid $dark-border-light;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+// Button Group Styles
+.edit-btn,
+.delete-btn,
+.edit-save-btn,
+.edit-cancel-btn {
+  @extend .btn;
+  @extend .btn--small;
+  margin-left: $space-xs;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.edit-btn {
+  @extend .btn--secondary;
+}
+
+.delete-btn {
+  // .btn-danger does not exist, fallback to red background
+  background: $danger-color;
+  color: #fff;
+}
+
+.edit-save-btn {
+  // .btn-success does not exist, fallback to green background
+  background: $success-color;
+  color: #fff;
+}
+
+.edit-cancel-btn {
+  // .btn-outline does not exist, fallback to border only
+  background: transparent;
+  border: 1px solid $primary-gold;
+  color: $primary-gold;
+}
+
+// Edit Input Styles
+.edit-input {
+  margin-left: $space-xs;
+  font-size: $font-sm;
+}
+
+// Loading State
+.tag-loading {
+  @extend .loading-indicator;
+}

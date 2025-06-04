@@ -1,0 +1,1 @@
+If you want to fully style a dropdown's open panel, you must use a custom React dropdown component (not native <select>). Native <select> dropdowns cannot be fully styled cross-browser. Patch CSS files were removed to allow SCSS to take effect.

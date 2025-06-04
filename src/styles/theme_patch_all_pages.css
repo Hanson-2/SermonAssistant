@@ -1,0 +1,60 @@
+/* === GLOBAL PATCH FOR SETTINGS PAGES === */
+
+/* 1. Universal Background Theme */
+body,
+.smart-categorization-page,
+.sermon-folder-management-page,
+.user-scripture-page,
+.user-tag-management-layout {
+  background: url('/Blue Wall Background.png') center center fixed no-repeat;
+  background-size: cover;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* 2. Optional Branded Overlay Background */
+.universal-search-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background: url('/Texas_Logo_Wallpaper.png') center center no-repeat;
+  background-size: cover;
+}
+
+/* 3. Standard Title Styling */
+.analytics-dashboard-title {
+  font-size: 2.8rem !important;
+  font-family: 'Georgia', 'Trajan Pro', serif !important;
+  font-weight: 700 !important;
+  color: #e0c97f !important;
+  letter-spacing: 1.5px !important;
+  margin-bottom: 30px !important;
+  text-align: center !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.18);
+}
+
+/* 4. Optional Page Header Wrapper */
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+@media (min-width: 600px) {
+  .page-header {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+}

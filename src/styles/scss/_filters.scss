@@ -1,0 +1,291 @@
+// Dashboard Filter Styles
+@import 'variables';
+
+.dashboard-filter {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  
+  @media (min-width: $breakpoint-md) {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  // Label styling
+  label {
+    color: $gold;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    margin-right: $space-2;
+    margin-bottom: $space-2;
+    text-shadow: $text-shadow-sm;
+    
+    @media (min-width: $breakpoint-md) {
+      margin-bottom: 0;
+    }
+  }
+
+  label.folder-filter-label {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: $primary-gold;
+    letter-spacing: 0.01em;
+    margin-right: $space-2;
+    margin-bottom: $space-2;
+    text-shadow: 0 1px 6px #000, 0 0 2px #e0c97f55;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  // Select container styling
+  .select-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    
+    @media (min-width: $breakpoint-md) {
+      width: auto;
+    }
+  }
+  // Select styling
+  select {
+    appearance: none;
+    background: linear-gradient(135deg, $dark-bg-tertiary 0%, $dark-bg-card 100%);
+    border: 1px solid $border-gold;
+    color: $primary-gold;
+    padding: $space-2 $space-6 $space-2 $space-3;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: $shadow-md, 
+                inset 0 1px 1px rgba(255, 255, 255, 0.05),
+                0 0 5px rgba($gold, 0.2);
+    transition: all 0.2s ease-out;
+    
+    @media (min-width: $breakpoint-md) {
+      min-width: 180px;
+      width: auto;
+    }
+    
+    &:hover {
+      border-color: $gold;
+      box-shadow: 0 0 8px rgba($gold, 0.3),
+                  inset 0 1px 3px rgba(255, 255, 255, 0.1);
+      color: $light-gold;
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: $primary-gold;
+      box-shadow: 0 0 15px rgba($gold, 0.4);
+      color: $light-gold;
+    }
+
+    // Custom dropdown panel for options
+    &::-webkit-scrollbar {
+      width: 8px;
+      background: $dark-bg-primary;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $border-gold;
+      border-radius: 4px;
+    }
+
+    option {
+      background-color: $dark-bg-primary;
+      color: $text-light;
+      padding: $space-2;
+      font-size: $font-size-sm;
+      border-bottom: 1px solid $border-gold;
+      
+      &:checked {
+        background-color: rgba($gold, 0.2);
+        color: $primary-gold;
+      }
+      &:hover {
+        background-color: rgba($gold, 0.1);
+      }
+    }
+  }
+
+  // Custom arrow icon
+  .select-arrow {
+    position: absolute;
+    top: 50%;
+    right: $space-3;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid $gold;
+  }
+}
+
+// Filter button styling
+.filter-button {
+  position: relative;
+  background: linear-gradient(135deg, $dark-bg-tertiary 0%, $dark-bg-card 100%);
+  color: $gold;
+  border: 1px solid $border-gold;
+  border-radius: $radius-md;
+  padding: $space-2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: $shadow-md, inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    transform: rotate(25deg);
+    transition: transform 0.4s, opacity 0.3s;
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  &:hover {
+    box-shadow: 0 0 12px rgba($gold, 0.4), 
+                inset 0 1px 3px rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+    
+    &::before {
+      opacity: 1;
+      transform: translateX(100%) rotate(25deg);
+    }
+    
+    svg {
+      color: $light-gold;
+      filter: drop-shadow(0 0 3px rgba($gold, 0.6));
+    }
+  }
+  
+  svg {
+    color: $gold;
+    transition: all 0.2s ease;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+// Filter panel styling
+.filter-panel {
+  background: linear-gradient(180deg, rgba($dark-bg-card, 0.95) 0%, rgba($dark-bg-primary, 0.95) 100%);
+  border: 1px solid $border-gold;
+  border-radius: $radius-lg;
+  padding: $space-4;
+  box-shadow: $shadow-lg, 0 0 20px rgba($gold, 0.15);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: fadeInScale 0.2s ease-out;
+  
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  h3 {
+    color: $gold;
+    margin-bottom: $space-3;
+    font-weight: $font-weight-semibold;
+    text-shadow: $text-shadow-sm;
+    font-size: $font-size-lg;
+    border-bottom: 1px solid rgba($gold, 0.3);
+    padding-bottom: $space-2;
+  }
+  
+  label {
+    color: $text-light;
+    display: block;
+    margin-bottom: $space-1;
+    font-size: $font-size-sm;
+    
+    &.flex {
+      display: flex;
+    }
+  }
+  
+  // Override checkbox styling
+  input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background-color: $dark-bg-tertiary;
+    border: 1px solid $dark-border;
+    border-radius: 3px;
+    position: relative;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    
+    &:checked {
+      background-color: darken($gold, 20%);
+      border-color: $gold;
+      
+      &:after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 6px;
+        width: 5px;
+        height: 10px;
+        border: solid $light-gold;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+    }
+    
+    &:hover {
+      border-color: $gold;
+    }
+  }
+  
+  // Override select in the filter panel
+  select {
+    width: 100%;
+    background-color: $dark-bg-tertiary;
+    color: $text-light;
+    border: 1px solid $dark-border;
+    padding: $space-2 $space-3;
+    border-radius: $radius-sm;
+    
+    &:focus {
+      border-color: $gold;
+      outline: none;
+    }
+    
+    option {
+      background-color: $dark-bg-tertiary;
+    }
+  }
+  
+  // Close button
+  button.close {
+    background: none;
+    border: none;
+    color: $text-muted;
+    font-size: $font-size-xl;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s ease;
+    
+    &:hover {
+      color: $text-light;
+    }
+  }
+}

@@ -1,0 +1,353 @@
+// Layout patterns and page structures
+// This file contains reusable layout patterns
+
+@import 'variables';
+@import 'mixins';
+
+// Page layouts
+.page-layout {
+  min-height: 100vh;
+  position: relative;
+  
+  &--centered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  &--with-sidebar {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: $space-xl;
+    
+    @include breakpoint-down(md) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Background patterns
+.bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background: url('/Texas_Logo_Wallpaper.png') left center no-repeat;
+  background-size: cover;
+  filter: grayscale(0.2) brightness(0.8) contrast(1.1);
+}
+
+// Page containers
+.page-container {
+  position: relative;
+  z-index: 1;
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: $space-xl;
+  
+  &--narrow {
+    max-width: $container-narrow;
+  }
+  
+  &--wide {
+    max-width: $container-wide;
+  }
+  
+  &--full {
+    max-width: none;
+    padding: $space-lg;
+  }
+}
+
+.page-content {
+  position: relative;
+  z-index: 1;
+}
+
+// Page headers
+.page-header {
+  text-align: center;
+  margin-bottom: $space-2xl;
+  
+  &__title {
+    @include page-title;
+    margin-bottom: $space-lg;
+  }
+  
+  &__subtitle {
+    font-size: $font-size-lg;
+    color: $text-color-secondary;
+    font-weight: $font-weight-normal;
+    margin-bottom: 0;
+  }
+  
+  &__actions {
+    margin-top: $space-lg;
+    display: flex;
+    gap: $space-md;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+// Section layouts
+.section {
+  margin-bottom: $space-2xl;
+  
+  &__header {
+    margin-bottom: $space-xl;
+    
+    h2, h3, h4 {
+      margin-bottom: $space-sm;
+      color: $primary-gold;
+      @include text-glow($primary-gold);
+    }
+  }
+  
+  // &__content removed as it was an empty ruleset
+}
+
+// Grid layouts
+.grid {
+  display: grid;
+  gap: $space-lg;
+  
+  &--auto-fit {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  &--auto-fill {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  
+  &--2-col {
+    grid-template-columns: 1fr 1fr;
+    
+    @include breakpoint-down(md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  &--3-col {
+    grid-template-columns: repeat(3, 1fr);
+    
+    @include breakpoint-down(lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @include breakpoint-down(md) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  &--4-col {
+    grid-template-columns: repeat(4, 1fr);
+    
+    @include breakpoint-down(xl) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    @include breakpoint-down(lg) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @include breakpoint-down(md) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Flex layouts
+.flex {
+  display: flex;
+  
+  &--center {
+    align-items: center;
+    justify-content: center;
+  }
+  
+  &--between {
+    justify-content: space-between;
+  }
+  
+  &--around {
+    justify-content: space-around;
+  }
+  
+  &--evenly {
+    justify-content: space-evenly;
+  }
+  
+  &--start {
+    justify-content: flex-start;
+  }
+  
+  &--end {
+    justify-content: flex-end;
+  }
+  
+  &--column {
+    flex-direction: column;
+  }
+  
+  &--wrap {
+    flex-wrap: wrap;
+  }
+  
+  &--gap-sm {
+    gap: $space-sm;
+  }
+  
+  &--gap-md {
+    gap: $space-md;
+  }
+  
+  &--gap-lg {
+    gap: $space-lg;
+  }
+  
+  &--gap-xl {
+    gap: $space-xl;
+  }
+}
+
+// Control layouts
+.controls-container {
+  display: flex;
+  gap: $space-md;
+  margin-bottom: $space-xl;
+  align-items: center;
+  flex-wrap: wrap;
+  
+  &--centered {
+    justify-content: center;
+  }
+  
+  &--between {
+    justify-content: space-between;
+  }
+}
+
+.search-controls {
+  display: flex;
+  gap: $space-sm;
+  align-items: center;
+  flex: 1;
+  min-width: 0; // Allows flex items to shrink below their content size
+  
+  &__input-wrapper {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  &__actions {
+    display: flex;
+    gap: $space-sm;
+    flex-shrink: 0;
+  }
+}
+
+// Content layouts
+.content-wrapper {
+  @include glass-card;
+  padding: $space-2xl;
+  
+  &--compact {
+    padding: $space-lg;
+  }
+  
+  &--spacious {
+    padding: $space-3xl;
+  }
+}
+
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-xl;
+  
+  @include breakpoint-down(lg) {
+    grid-template-columns: 1fr;
+    gap: $space-lg;
+  }
+}
+
+.sidebar-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: $space-xl;
+  
+  @include breakpoint-down(lg) {
+    grid-template-columns: 250px 1fr;
+  }
+  
+  @include breakpoint-down(md) {
+    grid-template-columns: 1fr;
+    gap: $space-lg;
+  }
+  
+  &__sidebar {
+    @include glass-card;
+    padding: $space-lg;
+    height: fit-content;
+    position: sticky;
+    top: $space-lg;
+  }
+  
+  &__content {
+    min-width: 0; // Prevents overflow in grid
+  }
+}
+
+// Responsive utilities
+.show-mobile {
+  display: none;
+  
+  @include breakpoint-down(md) {
+    display: block;
+  }
+}
+
+.hide-mobile {
+  display: block;
+  
+  @include breakpoint-down(md) {
+    display: none;
+  }
+}
+
+.show-tablet {
+  display: none;
+  
+  @include breakpoint-between(md, lg) {
+    display: block;
+  }
+}
+
+.hide-tablet {
+  display: block;
+  
+  @include breakpoint-between(md, lg) {
+    display: none;
+  }
+}
+
+.show-desktop {
+  display: none;
+  
+  @include breakpoint-up(lg) {
+    display: block;
+  }
+}
+
+.hide-desktop {
+  display: block;
+  
+  @include breakpoint-up(lg) {
+    display: none;
+  }
+}

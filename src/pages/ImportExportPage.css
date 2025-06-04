@@ -1,3 +1,7 @@
+/* Import unified theme patch for all settings pages */
+@import '../styles/theme_patch_all_pages.css';
+
+/* filepath: c:\Users\steve\Custom-Apps\Sermon Notes Assistant\src\pages\ImportExportPage.css */
 .import-export-page {
   max-width: 1200px;
   margin: 0 auto;
@@ -344,8 +348,7 @@
     margin-right: 0;
     margin-bottom: 0.5rem;
   }
-  
-  .preview-stats {
+    .preview-stats {
     grid-template-columns: 1fr;
   }
 }

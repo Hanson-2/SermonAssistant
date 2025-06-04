@@ -1,0 +1,196 @@
+// =========================
+// Variables
+// =========================
+$gold: #e0c97f;
+$gold-soft: #ffe9b6;
+$gold-hover: #fff9cc;
+$bg-dark: #1e1e1e;
+$bg-deep: #1a1a1a;
+$bg-card: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
+$border-gold: #4B3A1A;
+$text-shadow-gold: 1px 1px 0 $border-gold, 2px 2px 3px rgba(0, 0, 0, 0.6);
+$box-shadow-inset: inset 0 0 0 1px $border-gold;
+
+// =========================
+// Title Styling
+// =========================
+.sermon-series-title {
+  font-size: 2.5rem;
+  font-family: 'Georgia', 'Trajan Pro', serif;
+  font-weight: 700;
+  color: $gold;
+  text-align: center;
+  text-shadow: $text-shadow-gold;
+  margin-bottom: 0.5rem;
+}
+
+// =========================
+// Series Card
+// =========================
+.series-card {
+  margin-bottom: 1.5rem;
+  background: $bg-card;
+  border: 1px solid $border-gold;
+  border-left: 5px solid $gold;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5),
+              inset 0 1px 0px rgba(255, 255, 255, 0.02),
+              inset 0 0 10px rgba(0, 0, 0, 0.2);  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  position: relative;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6),
+                0 0 15px rgba(224, 201, 127, 0.15),
+                inset 0 1px 0px rgba(255, 255, 255, 0.03),
+                inset 0 0 10px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* Removed card-actions-tray in favor of flyout buttons */
+
+// =========================
+// Shine Button Effect
+// =========================
+.shine-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-button::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.2), transparent, rgba(255, 255, 255, 0.2));
+  transform: rotate(25deg);
+  transition: opacity 0.4s, transform 0.4s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shine-button:hover::before,
+.shine-button:focus::before {
+  opacity: 1;
+  transform: translateX(100%) rotate(25deg);
+}
+
+// =========================
+// Series Header & Sermons
+// =========================
+.series-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.sermon-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: $gold-soft;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    color: $gold-hover;
+  }
+}
+
+.sermon-scripture {
+  font-size: 0.95rem;
+  color: #c9ba8b;
+  display: block;
+  margin-top: 4px;
+}
+
+%series-sermons-h4 {
+  margin-bottom: 0.5rem;
+  color: $gold;
+  font-size: 1.2rem;
+}
+
+.series-sermons {
+  margin-top: 1rem;
+
+  h4 {
+    @extend %series-sermons-h4;
+  }
+}
+
+.add-sermon-section h4 {
+  @extend %series-sermons-h4;
+}
+
+.sermon-item,
+.unassigned-sermon {
+  background: $bg-dark;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: $box-shadow-inset;
+}
+
+.sermon-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.unassigned-sermons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.unassigned-sermon-card {
+  background: $bg-card;
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid $border-gold;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sermon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.sermon-date {
+  font-size: 0.85rem;
+  color: #cfcaa8;
+  text-align: right;
+}
+
+.assign-to-series {
+  margin-top: 0.75rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    color: $gold;
+  }
+}
+
+.no-unassigned,
+.no-sermons,
+.no-series {
+  font-style: italic;
+  color: #ccc5a3;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 1rem;
+}

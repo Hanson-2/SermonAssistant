@@ -4,6 +4,7 @@ import { listCachedScriptureBooks } from "../services/firebaseService";
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "../utils/bookOrder";
 import { getDisplayBookFull, normalizeBookName } from "../utils/getDisplayBookAbbrev";
 import "./CurrentlyAddedScripturePage.css";
+import "../styles/shared-buttons.scss";
 
 const CurrentlyAddedScripturePage: React.FC = () => {  const [availableBooks, setAvailableBooks] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -73,11 +74,8 @@ const CurrentlyAddedScripturePage: React.FC = () => {  const [availableBooks, se
     navigate(`/scripture/${encodeURIComponent(book)}`);
   };  const renderBookCard = (book: string): JSX.Element | null => {
     const isAvailable = availableBooks.includes(book);
-    if (showOnlyAvailable && !isAvailable) return null;
-
-    // Adjusted class names: removed 'scripture-mini-card' and 'not-allowed' as new CSS handles disabled state differently.
-    // 'pointer' class is also not strictly necessary as cursor is defined in .book-card.
-    const cardClass = isAvailable ? "book-card" : "book-card disabled";
+    if (showOnlyAvailable && !isAvailable) return null;    // Use shared button classes for consistency with Dashboard
+    const cardClass = isAvailable ? "add-expository-button-shared" : "add-expository-button-shared disabled";
     
     const handleClick = (): void => {
       if (isAvailable) handleMiniCardClick(book); // Navigate to book page
@@ -91,10 +89,9 @@ const CurrentlyAddedScripturePage: React.FC = () => {  const [availableBooks, se
         key={book}
         className={cardClass}
         onClick={handleClick}
-        ref={el => { bookCardRefs.current[book] = el; }}
-      >
-        {/* Removed 'scripture-mini-card-title' class */}
-        <span className="book-card-title">{fullBookName}</span>
+        ref={el => { bookCardRefs.current[book] = el; }}      >
+        {/* Use shared button text class for consistency */}
+        <span className="add-expository-button-shared-text">{fullBookName}</span>
       </div>
     );
   };

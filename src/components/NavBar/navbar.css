@@ -7,109 +7,108 @@
   right: 0;
   width: 100%;
   height: 56px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex !important;
   padding: 0 2rem;
-  background: linear-gradient(to right, #1f2937, #111827);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(90deg, #23262e 0%, #181b22 100%);
+  color: #ffd700;
+  box-shadow: 0 2px 8px #0002;
+  border-bottom: 1.5px solid #4b3a1a;
   z-index: 9999;
-}
-
-.navbar h1 {
-  color: #ffffff;
-  font-size: 1.25rem;
-  font-weight: bold;
-  line-height: 56px;
-}
-
-.navbar a {
-  color: #f0f0f0; /* Lighter cream color */
-  padding: 0 0.75rem; /* Add padding to links and buttons for spacing around separator */
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.navbar a:hover {
-  color: #ffd700; /* Gold on hover */
-}
-
-.navbar .flex {
-  display: flex;
   align-items: center;
+  font-family: 'YourFontTitle', sans-serif; /* Replace with your actual font stack */
 }
 
-/* ========== LOGO ========== */
+.navbar-left {
+  display: flex !important;
+  align-items: center !important;
+  flex-grow: 0;
+  justify-content: flex-start;
+  margin-right: 2rem;
+}
+
 .navbar-logo {
-  height: 72px;
+  height: 80px; /* Larger logo */
   width: auto;
   margin-right: 1rem;
   position: relative;
-  top: 12px;
+  top: 0;
   flex-shrink: 0;
+  /* Overhang: let bottom 1/5th hang below navbar */
+  margin-bottom: -16px; /* 80px * 1/5 = 16px overhang */
+  z-index: 10;
 }
 
-/* New Expository Link Gradient */
-.new-expository-link {
-  background: linear-gradient(to right, #ffd700, #ff8c00); /* Gold to DarkOrange gradient */
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-weight: bold; /* Optional: make it bold */
-  transition: filter 0.3s ease;
-}
-
-.new-expository-link:hover {
-  filter: brightness(1.2); /* Slightly brighten on hover */
-  color: transparent; /* Keep text transparent to show gradient */
-}
-
-/* For mobile view, ensure the gradient is also applied if needed, or adjust styling */
-.new-expository-link-mobile {
-  /* Basic styling for mobile if different, otherwise it can inherit or be combined */
-  /* If you want the same gradient: */
-  background: linear-gradient(to right, #ffd700, #ff8c00);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-weight: bold;
-}
-
-.new-expository-link-mobile:hover {
-  filter: brightness(1.2);
-  color: transparent;
-}
-
-/* ========== TITLE ========== */
 .navbar-title {
-  font-size: clamp(0.85rem, 4vw, 2rem);
+  font-size: 1.25rem;
   font-weight: bold;
-  line-height: 1.1;
+  line-height: 56px;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: calc(100vw - 180px);
-  transition: font-size 0.2s;
+  position: relative;
+  top: 4px; /* Lowered for better vertical alignment */
 }
 
-@media (max-width: 900px) {
-  .navbar-title {
-    font-size: 1.1rem;
-    max-width: calc(100vw - 140px);
-  }
+.navbar-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-grow: 1;
+  gap: 1rem;
 }
-@media (max-width: 640px) {
-  .navbar-title {
-    font-size: 0.95rem;
-    text-align: left;
-    max-width: calc(100vw - 110px);
-  }
+
+.navbar-right {
+  display: flex !important;
+  align-items: center !important;
+  flex-grow: 0;
+  justify-content: flex-end;
+  margin-left: 2rem;
 }
-@media (max-width: 400px) {
-  .navbar-title {
-    font-size: 0.75rem;
-    max-width: calc(100vw - 90px);
-  }
+
+.navbar a, .navbar .navbar-dropdown-btn {
+  color: #fff;
+  font-weight: 600;
+  transition: color 0.18s, background 0.18s;
+  background: none;
+  box-shadow: none;
+}
+
+.navbar a:hover, .navbar .navbar-dropdown-btn:hover, .navbar .navbar-dropdown-btn:focus {
+  color: #ffe082;
+  background: none;
+}
+
+/* 1. Restore and animate the dropdown caret */
+.navbar-dropdown-btn .custom-folder-dropdown-arrow {
+  display: inline-block;
+  margin-left: 0.4em;
+  font-size: 1.1em;
+  color: #e0c97f;
+  transition: transform 0.2s;
+  vertical-align: middle;
+  transform: rotate(0deg); /* Default: no rotation */
+  position: static;
+}
+.navbar-dropdown-group.open .custom-folder-dropdown-arrow {
+  transform: rotate(180deg); /* Rotate in place */
+}
+
+/* 2. Dashboard/About links: white, not gold */
+.navbar a,
+.navbar .navbar-dropdown-btn {
+  color: #fff;
+}
+.navbar .new-expository-link {
+  color: #e0c97f;
+}
+
+/* 3. Remove faint box around dropdown triggers */
+.navbar-dropdown-btn {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0.5rem 0.75rem;
 }
 
 /* ========== DROPDOWN CONTAINER ========== */
@@ -120,10 +119,10 @@
 
 /* ========== DROPDOWN BUTTON ========== */
 .navbar-dropdown-btn {
-  background-color: transparent; /* Removed blue background */
-  color: #f0f0f0; /* Changed to Lighter cream color */
+  background-color: transparent !important;
+  color: #f0f0f0 !important;
   font-weight: 600;
-  padding: 0.5rem 0.75rem; /* Add padding to links and buttons for spacing around separator */
+  padding: 0.5rem 0.75rem;
   border: none;
   border-radius: 0.375rem;
   cursor: pointer;
@@ -133,8 +132,8 @@
 }
 .navbar-dropdown-btn:hover,
 .navbar-dropdown-btn:focus {
-  background-color: transparent; /* Removed hover background */
-  color: #ffd700; /* Gold on hover */
+  background-color: transparent !important;
+  color: #ffd700 !important;
   outline: none;
 }
 
@@ -156,6 +155,19 @@
   pointer-events: none;
   transition: all 0.25s ease-in-out;
   z-index: 50;
+}
+
+.DropdownMenuContent {
+  position: absolute !important;
+  z-index: 10000 !important;
+  background: #1a1a1a;
+  color: #ffe9b6;
+  border: 1px solid #4b3a1a;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  padding: 0.5rem 0;
+  min-width: 160px;
+  overflow: visible !important;
 }
 
 .navbar-dropdown-group:hover .navbar-dropdown,
@@ -187,23 +199,6 @@
   flex-direction: column;
 }
 
-.navbar-dropdown-btn::after {
-  content: '';
-  display: inline-block;
-  width: 0.4em;
-  height: 0.4em;
-  margin-left: 0.6em;
-  border-right: 0.12em solid currentColor;
-  border-bottom: 0.12em solid currentColor; /* Changed from border-top to border-bottom */
-  transform: rotate(45deg) translateY(-0.15em); /* Adjusted for downward arrow */
-  transition: transform 0.2s ease-in-out;
-}
-
-.navbar-dropdown-btn:hover::after, /* Keep this for hover on button itself */
-.navbar-dropdown-group:hover .navbar-dropdown-btn::after {
-  transform: rotate(225deg) translateY(0.05em); /* Rotates to upward arrow */
-}
-
 /* Removed blue and green backgrounds from ChatAI and BibleGateway buttons */
 .navbar .chat-ai-btn,
 .navbar .bible-gateway-btn {
@@ -223,8 +218,9 @@
 }
 
 .navbar-separator {
-  color: #565a60; /* Color for the separator */
-  cursor: default; /* Prevent text selection cursor */
+  color: #565a60;
+  cursor: default;
+  padding: 0 0.5rem;
 }
 
 /* Ensure direct Link children of the main nav link container also get padding */
@@ -244,7 +240,30 @@
 }
 
 /* Adjust margin for the last item if needed */
-.navbar > div > a:last-child,
-.navbar > div > .navbar-dropdown-group:last-child {
-    /* padding-right: 0; */ /* Example if no space after last item */
+/* Removed empty ruleset for last-child nav items */
+
+/* Ensure navbar dropdown menu items match folder dropdown */
+.navbar-dropdown a,
+.custom-folder-dropdown-option {
+  display: block;
+  color: #e0c97f;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.97rem;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.navbar-dropdown a.selected,
+.navbar-dropdown a:focus,
+.navbar-dropdown a:hover,
+.custom-folder-dropdown-option.selected,
+.custom-folder-dropdown-option:focus,
+.custom-folder-dropdown-option:hover {
+  background: #181b22;
+  color: #fffbe6;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.15);
+  border-radius: 0.375rem;
 }
