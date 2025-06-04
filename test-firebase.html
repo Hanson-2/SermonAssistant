@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Test</title>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase config (using environment variables from .env)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWH6KZnxrRZfnmCA8116qbj_8uGjGliaU",
+            authDomain: "sermon-notes-assistant.firebaseapp.com",
+            projectId: "sermon-notes-assistant",
+            storageBucket: "sermon-notes-assistant.firebasestorage.app",
+            messagingSenderId: "741896945073",
+            appId: "1:741896945073:web:00c666850aead6b4d89190",
+            measurementId: "G-59CREPD9PF"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        console.log('Firebase initialized successfully');
+        console.log('Auth:', auth);
+        console.log('Firestore:', db);
+
+        // Check auth state
+        onAuthStateChanged(auth, (user) => {
+            console.log('Auth state changed:', user);
+            document.getElementById('auth-status').textContent = 
+                user ? `Logged in as: ${user.email}` : 'Not logged in';
+        });
+    </script>
+</head>
+<body>
+    <h1>Firebase Connection Test</h1>
+    <p id="auth-status">Checking authentication...</p>
+    <p>Check browser console for Firebase initialization status.</p>
+</body>
+</html>

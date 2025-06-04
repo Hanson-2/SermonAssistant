@@ -1,102 +1,284 @@
 /* Import unified theme patch for all settings pages */
 @import '../styles/theme_patch_all_pages.css';
 
+/* Background overlay for consistent theming with dashboard/analytics pages */
+.universal-search-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.15;
+  background: url('/Texas_Logo_Wallpaper.png') left center no-repeat;
+  background-size: cover;
+  filter: grayscale(0.2) brightness(0.8) contrast(1.1);
+}
+
 /* filepath: c:\Users\steve\Custom-Apps\Sermon Notes Assistant\src\pages\SermonFolderManagementPage.css */
 .sermon-folder-management-page {
-  max-width: 600px;
-  margin: 2rem auto;
-  background: #18181b;
-  color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-  padding: 2rem 2.5rem 2.5rem 2.5rem;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 2rem 2rem 2rem;
+  min-height: 100vh;
+  
+  /* Content container */
+  .folder-management-container {
+    max-width: 600px;
+    width: 100%;
+    background: rgba(24, 24, 27, 0.85);
+    color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    padding: 2rem 2.5rem 2.5rem 2.5rem;    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
+
 .sermon-folder-management-page h1 {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
+  font-size: 2.8rem;
+  font-family: 'Trajan Pro', Georgia, serif;
   font-weight: 700;
-  color: #ffd700;
+  color: #ffe082;
+  letter-spacing: 1.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.18), 0 0 15px #e0c97f99, 1px 1px 0px #4B3A1A, 2px 2px 3px rgba(0,0,0,0.7);
+  margin-bottom: 3rem;
+  text-align: center;
 }
 .add-folder-row {
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  align-items: center;
 }
+
 .add-folder-row input {
   flex: 1;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background: #23232b;
-  color: #fff;
+  max-width: 300px;
+  padding: 12px 15px;
   font-size: 1rem;
+  border: 1px solid #4B3A1A;
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #1a1a1a, #242424);
+  color: #e0c97f;
+  font-weight: 500;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
 }
+
+.add-folder-row input:focus {
+  border-color: #f0e68c;
+  background-color: #2a2a2a;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), 0 0 0 3px rgba(224, 201, 127, 0.3), 0 1px 2px rgba(0,0,0,0.3);
+  outline: none;
+}
+
+/* Add Folder button - identical to Export CSV button styling */
 .add-folder-row button {
-  background: #ffd700;
-  color: #18181b;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1.25rem;
-  font-weight: 600;
   font-size: 1rem;
+  padding: 0.5rem 1.2rem;
+  background: #23262e;
+  color: #ffe082;
+  border: 1.5px solid #3a3d44;
+  border-radius: 7px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px #0002;
+  transition: background 0.2s, color 0.2s, border 0.2s;
   cursor: pointer;
-  transition: background 0.2s;
+  margin-left: 0.5rem;
 }
+
+.add-folder-row button:hover:not(:disabled) {
+  background: #181b22;
+  color: #ffe082;
+  border-color: #ffe082;
+}
+
 .add-folder-row button:disabled {
-  background: #888;
+  background: #1a1a1a;
+  color: #666;
+  border-color: #333;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 .folder-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 .folder-list-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #23232b;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(75, 58, 26, 0.3);
+  background: rgba(16, 16, 16, 0.4);
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: background 0.2s ease;
 }
+
+.folder-list-item:hover {
+  background: rgba(24, 24, 24, 0.6);
+}
+
 .folder-list-item:last-child {
   border-bottom: none;
 }
+
+.folder-list-item span {
+  flex: 1;
+  color: #e0c97f;
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
 .folder-list-item input[type="text"] {
   flex: 1;
-  padding: 0.4rem 0.7rem;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background: #23232b;
-  color: #fff;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid #4B3A1A;
+  background: linear-gradient(to bottom, #1a1a1a, #242424);
+  color: #e0c97f;
   font-size: 1rem;
-}
-.folder-list-item button {
-  background: #23232b;
-  color: #ffd700;
-  border: none;
-  border-radius: 6px;
-  padding: 0.3rem 0.9rem;
   font-weight: 500;
-  font-size: 0.95rem;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+
+.folder-list-item input[type="text"]:focus {
+  border-color: #f0e68c;
+  background-color: #2a2a2a;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), 0 0 0 3px rgba(224, 201, 127, 0.3), 0 1px 2px rgba(0,0,0,0.3);
+  outline: none;
+}
+
+.folder-list-item button {
+  background: #23262e;
+  color: #ffe082;
+  border: 1.5px solid #3a3d44;
+  border-radius: 7px;
+  padding: 0.4rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
+
 .folder-list-item button:hover:not(:disabled) {
-  background: #ffd700;
-  color: #18181b;
+  background: #181b22;
+  color: #ffe082;
+  border-color: #ffe082;
 }
+
 .folder-list-item button:disabled {
+  background: #1a1a1a;
+  color: #666;
+  border-color: #333;
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .error-message {
-  color: #ff4d4f;
-  margin-bottom: 1rem;
-  font-weight: 500;
-}
-.loading-message {
-  color: #ffd700;
-  margin-top: 1rem;
-  font-size: 1.1rem;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem auto;
+  max-width: 500px;
   text-align: center;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.loading-message {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid #22c55e;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem auto;
+  max-width: 500px;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
+/* Section divider for clean separation */
+.section-divider {
+  width: 80%;
+  max-width: 400px;
+  height: 1px;
+  background: linear-gradient(to right, transparent 0%, #e0c97f44 20%, #e0c97f 50%, #e0c97f44 80%, transparent 100%);
+  margin: 2.5rem auto;
+  opacity: 0.6;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sermon-folder-management-page {
+    padding: 2rem 1rem;
+  }
+  
+  .sermon-folder-management-page .folder-management-container {
+    padding: 1.5rem;
+  }
+  
+  .sermon-folder-management-page h1 {
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .add-folder-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .add-folder-row input {
+    max-width: 100%;
+  }
+  
+  .add-folder-row button {
+    margin-left: 0;
+    align-self: center;
+    min-width: 120px;
+  }
+  
+  .folder-list-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .folder-list-item span {
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .folder-list-item button {
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sermon-folder-management-page h1 {
+    font-size: 1.8rem;
+  }
+  
+  .sermon-folder-management-page .folder-management-container {
+    padding: 1rem;
+  }
 }

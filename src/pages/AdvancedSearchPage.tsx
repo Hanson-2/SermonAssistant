@@ -6,8 +6,16 @@ import {
   fetchSermons 
 } from '../services/firebaseService';
 import { AdvancedSearchCriteria, Sermon, SermonCategory, SermonSeries } from '../services/firebaseService';
-import { Link } from 'react-router-dom';
-import './AdvancedSearchPage.css';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import SermonCard from '../components/SermonCard/SermonCard';
+import './AdvancedSearchPage.scss';
+
+// Tag interface to match Firebase function response
+interface Tag {
+  id: string;
+  name: string;
+  displayName: string;
+}
 
 const AdvancedSearchPage: React.FC = () => {
   const [searchCriteria, setSearchCriteria] = useState<AdvancedSearchCriteria>({
@@ -15,16 +23,16 @@ const AdvancedSearchPage: React.FC = () => {
     tags: [],
     books: []
   });
-  
-  const [searchResults, setSearchResults] = useState<{
+    const [searchResults, setSearchResults] = useState<{
     sermons: Sermon[];
     total: number;
     hasMore: boolean;
   }>({ sermons: [], total: 0, hasMore: false });
   const [categories, setCategories] = useState<SermonCategory[]>([]);
   const [series, setSeries] = useState<SermonSeries[]>([]);
-  const [allSermons, setAllSermons] = useState<Sermon[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingTags, setIsLoadingTags] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -34,9 +42,7 @@ const AdvancedSearchPage: React.FC = () => {
   const [selectedBooks, setSelectedBooks] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [newTag, setNewTag] = useState('');
+  const [startDate, setStartDate] = useState('');  const [endDate, setEndDate] = useState('');
   const [newBook, setNewBook] = useState('');
 
   // Available options
@@ -49,25 +55,39 @@ const AdvancedSearchPage: React.FC = () => {
     'Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians',
     'Galatians', 'Ephesians', 'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians',
     '1 Timothy', '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter',
-    '1 John', '2 John', '3 John', 'Jude', 'Revelation'
-  ];
-
-  const availableTags = [...new Set(allSermons.flatMap(s => s.tags || []))];
+    '1 John', '2 John', '3 John', 'Jude', 'Revelation'  ];
 
   useEffect(() => {
     loadInitialData();
+    fetchTagsFromFirestore();
   }, []);
-  const loadInitialData = async () => {
+
+  const fetchTagsFromFirestore = async () => {
+    setIsLoadingTags(true);
+    try {
+      const functions = getFunctions();
+      const getAllUniqueTagsCallable = httpsCallable<void, { uniqueTags: Tag[] }>(
+        functions, 
+        'getAllUniqueTags'
+      );
+      const result = await getAllUniqueTagsCallable();
+      const fetchedTags = result.data.uniqueTags || [];
+      setAvailableTags(fetchedTags);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      setError('Failed to load tags. Please try again.');
+    } finally {
+      setIsLoadingTags(false);
+    }
+  };  const loadInitialData = async () => {
     setIsLoading(true);
     try {
-      const [categoriesData, seriesData, sermonsData] = await Promise.all([
+      const [categoriesData, seriesData] = await Promise.all([
         getSermonCategoriesFunc(),
-        getSermonSeriesFunc(),
-        fetchSermons()
+        getSermonSeriesFunc()
       ]);
       setCategories(categoriesData);
       setSeries(seriesData);
-      setAllSermons(sermonsData);
     } catch (error) {
       console.error('Error loading initial data:', error);
       setError('Failed to load data. Please try again.');
@@ -115,12 +135,9 @@ const AdvancedSearchPage: React.FC = () => {
     setSearchResults({ sermons: [], total: 0, hasMore: false });
     setHasSearched(false);
     setError(null);
-  };
-
-  const addTag = () => {
-    if (newTag.trim() && !selectedTags.includes(newTag.trim())) {
-      setSelectedTags([...selectedTags, newTag.trim()]);
-      setNewTag('');
+  };  const addTagFromDropdown = (tagDisplayName: string) => {
+    if (tagDisplayName && !selectedTags.includes(tagDisplayName)) {
+      setSelectedTags([...selectedTags, tagDisplayName]);
     }
   };
 
@@ -148,19 +165,27 @@ const AdvancedSearchPage: React.FC = () => {
   };
 
   const toggleSeries = (seriesId: string) => {
-    setSelectedSeries(prev =>
-      prev.includes(seriesId)
+    setSelectedSeries(prev =>      prev.includes(seriesId)
         ? prev.filter(id => id !== seriesId)
         : [...prev, seriesId]
     );
   };
 
+  const openSermonInNewWindow = (sermonId: string) => {
+    const url = `/expository/${sermonId}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
   return (
-    <div className="advanced-search-page">
-      <div className="page-header">
-        <h1>Advanced Search</h1>
-        <p>Find sermons using powerful filters and search criteria</p>
-      </div>
+    <div>
+      {/* Background overlays for consistent theming */}
+      <div className="universal-search-bg"></div>
+      <div className="black-overlay"></div>
+      
+      <div className="advanced-search-page">
+        <div className="page-header">
+          <h1 className="analytics-dashboard-title">Advanced Search</h1>
+          <p>Find sermons using powerful filters and search criteria</p>
+        </div>
 
       {/* Error Message */}
       {error && (
@@ -184,31 +209,40 @@ const AdvancedSearchPage: React.FC = () => {
               placeholder="Enter keywords to search for..."
             />
           </div>
-        </div>
-
-        <div className="form-section">
+        </div>        <div className="form-section">
           <h3>Tags</h3>
           <div className="form-group">
             <div className="tag-input-group">
-              <label htmlFor="tagSelect" className="visually-hidden">Select Tag</label>
+              <label htmlFor="tagSelect">Select Tag</label>
               <select
                 id="tagSelect"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    addTagFromDropdown(e.target.value);
+                  }
+                }}
                 aria-label="Select Tag"
+                disabled={isLoadingTags}
               >
-                <option value="">Select from existing tags</option>
-                {availableTags.filter(tag => !selectedTags.includes(tag)).map(tag => (
-                  <option key={tag} value={tag}>{tag}</option>
-                ))}
+                <option value="">
+                  {isLoadingTags ? 'Loading tags...' : 'Select from existing tags'}
+                </option>
+                {availableTags
+                  .filter(tag => !selectedTags.includes(tag.displayName))
+                  .map(tag => (
+                    <option key={tag.id} value={tag.displayName}>
+                      {tag.displayName}
+                    </option>
+                  ))
+                }
               </select>
-              <input
-                type="text"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Or type a custom tag"
-              />
-              <button type="button" onClick={addTag} className="btn btn-secondary btn-sm">
+              <button type="button" onClick={() => {
+                const selectElement = document.getElementById('tagSelect') as HTMLSelectElement;
+                if (selectElement && selectElement.value) {
+                  addTagFromDropdown(selectElement.value);
+                }
+              }} className="btn export-btn">
                 Add
               </button>
             </div>
@@ -221,13 +255,11 @@ const AdvancedSearchPage: React.FC = () => {
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="form-section">
+        </div>        <div className="form-section">
           <h3>Bible Books</h3>
           <div className="form-group">
             <div className="book-input-group">
-              <label htmlFor="bibleBookSelect" className="visually-hidden">Select Bible Book</label>
+              <label htmlFor="bibleBookSelect">Select Bible Book</label>
               <select
                 id="bibleBookSelect"
                 value={newBook}
@@ -239,7 +271,7 @@ const AdvancedSearchPage: React.FC = () => {
                   <option key={book} value={book}>{book}</option>
                 ))}
               </select>
-              <button type="button" onClick={addBook} className="btn btn-secondary btn-sm">
+              <button type="button" onClick={addBook} className="btn export-btn">
                 Add
               </button>
             </div>
@@ -338,9 +370,7 @@ const AdvancedSearchPage: React.FC = () => {
             <h2>Search Results</h2>            <span className="results-count">
               {searchResults.sermons.length} sermon{searchResults.sermons.length !== 1 ? 's' : ''} found
             </span>
-          </div>
-
-          {searchResults.sermons.length === 0 ? (
+          </div>          {searchResults.sermons.length === 0 ? (
             <div className="no-results">
               <p>No sermons found matching your search criteria.</p>
               <p>Try adjusting your filters or search terms.</p>
@@ -348,66 +378,22 @@ const AdvancedSearchPage: React.FC = () => {
           ) : (
             <div className="results-grid">
               {searchResults.sermons.map(sermon => (
-                <div key={sermon.id} className="sermon-result-card">
-                  <div className="sermon-header">
-                    <h3>
-                      <Link to={`/expository/${sermon.id}`}>
-                        {sermon.title}
-                      </Link>
-                    </h3>
-                    <span className="sermon-date">
-                      {sermon.date ? new Date(sermon.date).toLocaleDateString() : ''}
-                    </span>
-                  </div>
-                  
-                  <div className="sermon-details">
-                    <p className="scripture-ref">
-                      <strong>Scripture:</strong> {sermon.bibleBook} {sermon.bibleChapter}:{sermon.bibleStartVerse}-{sermon.bibleEndVerse}
-                    </p>
-                    
-                    {sermon.category && (
-                      <p className="category">
-                        <strong>Category:</strong> <span className="category-tag">{sermon.category}</span>
-                      </p>
-                    )}
-                    
-                    {sermon.tags && sermon.tags.length > 0 && (
-                      <div className="tags">
-                        <strong>Tags:</strong>
-                        <div className="tags-list">
-                          {sermon.tags.map((tag, index) => (
-                            <span key={index} className="tag">{tag}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {sermon.seriesId && (
-                      <p className="series">
-                        <strong>Series:</strong> 
-                        <span className="series-tag">
-                          {series.find(s => s.id === sermon.seriesId)?.name || 'Unknown Series'}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                  
-                  {sermon.description && (
-                    <div className="sermon-preview">
-                      <p>
-                        {sermon.description.substring(0, 150)}
-                        {sermon.description.length > 150 ? '...' : ''}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="sermon-actions">
-                    <Link to={`/expository/${sermon.id}`} className="btn btn-primary btn-sm">
-                      View Sermon
-                    </Link>
-                    <Link to={`/edit-expository/${sermon.id}`} className="btn btn-secondary btn-sm">
-                      Edit
-                    </Link>
+                <div key={sermon.id} className="sermon-result-wrapper">                  <SermonCard
+                    sermon={{
+                      id: sermon.id,
+                      title: sermon.title,
+                      description: sermon.description || '',
+                      date: sermon.date ? new Date(sermon.date).toLocaleDateString() : '',
+                      imageUrl: sermon.imageUrl
+                    }}
+                    hideActions={true}
+                  /><div className="sermon-result-overlay">
+                    <button 
+                      onClick={() => openSermonInNewWindow(sermon.id.toString())}
+                      className="btn btn-primary btn-sm"
+                    >
+                      Open in New Window
+                    </button>
                   </div>
                 </div>
               ))}
@@ -418,11 +404,11 @@ const AdvancedSearchPage: React.FC = () => {
 
       {/* Loading Indicator */}
       {isLoading && (
-        <div className="loading-indicator">
-          <div className="spinner"></div>
+        <div className="loading-indicator">        <div className="spinner"></div>
           <span>Searching...</span>
         </div>
       )}
+      </div>
     </div>
   );
 };

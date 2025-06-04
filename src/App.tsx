@@ -25,6 +25,10 @@ import AdvancedSearchPage from "./pages/AdvancedSearchPage";
 import SermonSeriesManagementPage from "./pages/SermonSeriesManagementPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import ImportExportPage from "./pages/ImportExportPage";
+import UserProfilePage from "./pages/UserProfilePage";
+import AppPreferencesPage from "./pages/AppPreferencesPage";
+import ThemeSettingsPage from "./pages/ThemeSettingsPage";
+import CustomizeUIPage from "./pages/CustomizeUIPage";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -70,11 +74,14 @@ function App() {
           <Route path="/tag-management" element={<TagManagementPage />} />
 
           {/* Login Page */}
-          <Route path="/login" element={<LoginPage />} />
-
-          {/* About Page */}
+          <Route path="/login" element={<LoginPage />} />          {/* About Page */}
           <Route path="/about" element={<AboutPage />} />
+          
           {/* Settings Pages */}
+          <Route path="/user-profile" element={<UserProfilePage />} />
+          <Route path="/app-preferences" element={<AppPreferencesPage />} />
+          <Route path="/theme-settings" element={<ThemeSettingsPage />} />
+          <Route path="/customize-ui" element={<CustomizeUIPage />} />
           <Route path="/sermon-folder-management" element={<SermonFolderManagementPage />} />
           <Route path="/smart-categorization" element={<SmartCategorizationPage />} />
           <Route path="/advanced-search" element={<AdvancedSearchPage />} />

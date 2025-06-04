@@ -239,28 +239,41 @@ export default function TagManagementPage() {
       setIsLoading(false);
     }
   };
-
   const handleTagClick = (tagId: string) => {
     setActiveOverlayTagId(prev => (prev === tagId ? null : tagId));
   };
 
   return (
     <div className="tag-management-page">
-      <h2>Tag Management</h2>
+      {/* Background overlay for consistent theming */}
+      <div className="universal-search-bg"></div>
+      
+      <div className="page-header">
+        <h1 className="analytics-dashboard-title">Tag Management</h1>
+      </div>
       {error && <div className="tag-error">{error}</div>}
       {success && <div className="tag-success">{success}</div>}
+
       <div className="tag-crud-section">
         <h3>Add New Tag</h3>
-        <input
-          type="text"
-          aria-label="New tag name"
-          value={newTagName}
-          onChange={e => setNewTagName(e.target.value)}
-          placeholder="Tag name"
-        />
-        <button onClick={handleAddTag} disabled={loading} className="add-tag-btn">Add Tag</button>
+        <div className="add-tag-form">
+          <input
+            type="text"
+            aria-label="New tag name"
+            value={newTagName}
+            onChange={e => setNewTagName(e.target.value)}
+            placeholder="Enter tag name"
+          />
+          <button onClick={handleAddTag} disabled={loading} className="add-tag-btn">Add Tag</button>
+        </div>
       </div>
-      <div className="tag-list-section">        <h3>Existing Tags</h3>        <div className="tag-management-grid">
+
+      {/* Section divider */}
+      <div className="section-divider"></div>
+
+      <div className="tag-list-section">
+        <h3>Existing Tags</h3>
+        <div className="tag-management-grid">
           {tags.map(tag => (
             <div key={tag.id} className="tag-button-wrapper">
               <button
@@ -304,8 +317,7 @@ export default function TagManagementPage() {
                     </svg>
                   </button>
                 </div>
-              </button>
-              {editingTagId === tag.id && (
+              </button>              {editingTagId === tag.id && (
                 <div className="tag-edit-container">
                   <input
                     type="text"
@@ -315,16 +327,44 @@ export default function TagManagementPage() {
                     placeholder="Edit tag name"
                     className="tag-edit-input"
                   />
-                  <button onClick={() => handleSaveEdit(tag.id)} disabled={loading} className="save-btn">Save</button>
-                  <button onClick={() => setEditingTagId(null)} className="cancel-btn">Cancel</button>
+                  <div className="tag-edit-buttons">
+                    <button onClick={() => handleSaveEdit(tag.id)} disabled={loading} className="save-btn">Save</button>
+                    <button onClick={() => setEditingTagId(null)} className="cancel-btn">Cancel</button>
+                  </div>
                 </div>
               )}
             </div>
-          ))}
-        </div>
+          ))}        </div>
       </div>
-      <div className="batch-tag-controls-section">
+
+      {/* Section divider */}
+      <div className="section-divider"></div>      <div className="batch-tag-controls-section">
         <h3>Batch Tag Assignment/Removal</h3>
+        
+        {/* Translation Selection */}
+        <div className="translation-selection">
+          <h4>Select Bible Translations:</h4>
+          {translationLoadError && <div className="add-tags-error">{translationLoadError}</div>}
+          <div className="translation-checkboxes">
+            {availableTranslations.map(translation => (
+              <label key={translation.id} className="translation-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={selectedTranslations.includes(translation.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedTranslations(prev => [...prev, translation.id]);
+                    } else {
+                      setSelectedTranslations(prev => prev.filter(id => id !== translation.id));
+                    }
+                  }}
+                />
+                {translation.displayName || translation.name}
+              </label>
+            ))}
+          </div>
+        </div>
+
         <div className="search-bar-and-button">
           <input
             className="search-bar-tags"
@@ -358,8 +398,11 @@ export default function TagManagementPage() {
                 )}
               </label>
             </div>
-          ))}
-        </div>
+          ))}        </div>
+        
+        {/* Section divider */}
+        <div className="section-divider"></div>
+        
         <div className="tag-inputs-container">
           <div>
             <label htmlFor="tagsToAdd">Tags to Add (comma separated):</label>

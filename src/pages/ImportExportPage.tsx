@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { exportUserData } from '../services/firebaseService';
+import { exportUserData, importUserData } from '../services/firebaseService';
 import './ImportExportPage.css';
 
 interface ExportData {
   userProfile: any;
   sermons: any[];
-  scripture: any[];
-  folders: any[];
+  userScriptureVersions: any[];
+  userScriptures: any[];
+  userTags: any[];
+  sermonFolders: any[];
+  sermonCategories?: any[];
+  sermonSeries?: any[];
   exportDate: string;
   version: string;
 }
@@ -19,6 +23,7 @@ export default function ImportExportPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<ExportData | null>(null);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
 
   // Clear status messages after 5 seconds
   React.useEffect(() => {
@@ -78,13 +83,27 @@ export default function ImportExportPage() {
     }
 
     setSelectedFile(file);
-    setError(null);
-
-    // Read and preview file contents
+    setError(null);    // Read and preview file contents
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
+        
+        // Validate that this is a valid backup file
+        if (!data.exportDate || !data.version) {
+          setError('Invalid backup file format. Missing required metadata.');
+          setImportPreview(null);
+          return;
+        }
+
+        // Check if this looks like a sermon notes backup
+        const hasExpectedData = data.sermons || data.userProfile || data.userTags || data.sermonFolders;
+        if (!hasExpectedData) {
+          setError('This does not appear to be a valid Sermon Notes Assistant backup file.');
+          setImportPreview(null);
+          return;
+        }
+
         setImportPreview(data);
       } catch (err) {
         setError('Invalid JSON file format.');
@@ -92,9 +111,19 @@ export default function ImportExportPage() {
       }
     };
     reader.readAsText(file);
+  };  const handleImport = async () => {
+    if (!selectedFile || !importPreview) {
+      setError('Please select a valid backup file first.');
+      return;
+    }
+    
+    // Show confirmation dialog
+    setShowImportConfirm(true);
   };
 
-  const handleImport = async () => {
+  const confirmImport = async () => {
+    setShowImportConfirm(false);
+    
     if (!selectedFile || !importPreview) {
       setError('Please select a valid backup file first.');
       return;
@@ -105,15 +134,25 @@ export default function ImportExportPage() {
     setImportSuccess(null);
 
     try {
-      // Note: Import functionality would need to be implemented as a cloud function
-      // For now, this is a placeholder that shows how it would work
-      setError('Import functionality is not yet implemented. This feature will restore your exported data.');
+      // Extract the import data (remove metadata fields)
+      const { exportDate, version, ...importData } = importPreview;
       
-      // TODO: Implement importUserData cloud function
-      // const result = await importUserData(importPreview);
-      // setImportSuccess('Data imported successfully!');
-      // setSelectedFile(null);
-      // setImportPreview(null);
+      // Call the import function
+      const result = await importUserData(importData, true); // true = replace existing data
+      
+      if (result.success) {
+        const imported = result.imported;
+        const totalItems = Object.values(imported).reduce((sum: number, count: any) => sum + (count || 0), 0);
+        setImportSuccess(`Successfully imported ${totalItems} items: ${imported.sermons || 0} sermons, ${imported.userTags || 0} tags, ${imported.sermonFolders || 0} folders, ${imported.userScriptureVersions || 0} scripture versions, ${imported.userScriptures || 0} scriptures, ${imported.sermonCategories || 0} categories, ${imported.sermonSeries || 0} series.`);
+        setSelectedFile(null);
+        setImportPreview(null);
+        
+        // Reset the file input
+        const fileInput = document.getElementById('backup-file') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+      } else {
+        setError('Import completed but some items may not have been imported successfully.');
+      }
     } catch (err: any) {
       setError(`Import failed: ${err.message || 'Unknown error'}`);
     } finally {
@@ -214,8 +253,7 @@ export default function ImportExportPage() {
             <p className="section-description">
               Restore your data from a previous backup file.
             </p>
-            
-            <div className="file-upload-area">
+              <div className="file-upload-area">
               <input
                 type="file"
                 accept=".json"
@@ -229,9 +267,7 @@ export default function ImportExportPage() {
                   {selectedFile ? selectedFile.name : 'Choose backup file (.json)'}
                 </span>
               </label>
-            </div>
-
-            {importPreview && (
+            </div>            {importPreview && (
               <div className="import-preview">
                 <h3 className="preview-title">Backup Preview</h3>
                 <div className="preview-stats">
@@ -244,18 +280,33 @@ export default function ImportExportPage() {
                   <div className="stat-item">
                     <span className="stat-label">Version:</span>
                     <span className="stat-value">{importPreview.version}</span>
-                  </div>
-                  <div className="stat-item">
+                  </div>                  <div className="stat-item">
                     <span className="stat-label">Sermons:</span>
                     <span className="stat-value">{importPreview.sermons?.length || 0}</span>
                   </div>
                   <div className="stat-item">
                     <span className="stat-label">Scripture Verses:</span>
-                    <span className="stat-value">{importPreview.scripture?.length || 0}</span>
+                    <span className="stat-value">{importPreview.userScriptures?.length || 0}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Scripture Versions:</span>
+                    <span className="stat-value">{importPreview.userScriptureVersions?.length || 0}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Tags:</span>
+                    <span className="stat-value">{importPreview.userTags?.length || 0}</span>
                   </div>
                   <div className="stat-item">
                     <span className="stat-label">Folders:</span>
-                    <span className="stat-value">{importPreview.folders?.length || 0}</span>
+                    <span className="stat-value">{importPreview.sermonFolders?.length || 0}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Categories:</span>
+                    <span className="stat-value">{importPreview.sermonCategories?.length || 0}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Series:</span>
+                    <span className="stat-value">{importPreview.sermonSeries?.length || 0}</span>
                   </div>
                   <div className="stat-item">
                     <span className="stat-label">File Size:</span>
@@ -310,9 +361,56 @@ export default function ImportExportPage() {
             <div className="info-item">
               <h4>⚡ Quick Restore</h4>
               <p>Import process is designed to be fast and will restore all your data in just a few clicks.</p>
+            </div>          </div>
+        </div>
+
+        {/* Import Confirmation Modal */}
+        {showImportConfirm && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>⚠️ Confirm Data Import</h3>
+              <p>
+                <strong>Warning:</strong> This will replace ALL your current data with the data from the backup file. 
+                This action cannot be undone.
+              </p>
+              <p>
+                Make sure you have exported a current backup of your data before proceeding.
+              </p>
+              
+              {importPreview && (
+                <div className="import-summary">
+                  <h4>Import Summary:</h4>
+                  <ul>
+                    <li>{importPreview.sermons?.length || 0} sermons</li>
+                    <li>{importPreview.userTags?.length || 0} tags</li>
+                    <li>{importPreview.sermonFolders?.length || 0} folders</li>
+                    <li>{importPreview.userScriptureVersions?.length || 0} scripture versions</li>
+                    <li>{importPreview.userScriptures?.length || 0} scripture verses</li>
+                    <li>{importPreview.sermonCategories?.length || 0} categories</li>
+                    <li>{importPreview.sermonSeries?.length || 0} series</li>
+                  </ul>
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => setShowImportConfirm(false)}
+                  disabled={importLoading}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn-danger" 
+                  onClick={confirmImport}
+                  disabled={importLoading}
+                >
+                  {importLoading ? 'Importing...' : 'Yes, Replace My Data'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

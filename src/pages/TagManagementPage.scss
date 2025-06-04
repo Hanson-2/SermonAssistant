@@ -1,31 +1,180 @@
 // TagManagementPage.scss
+/* Import unified theme patch for all settings pages */
+@import '../styles/theme_patch_all_pages.css';
+
+// Background overlay for consistent theming with dashboard/analytics pages
+.universal-search-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background: url('/Texas_Logo_Wallpaper.png') left center no-repeat;
+  background-size: cover;
+  filter: grayscale(0.2) brightness(0.8) contrast(1.1);
+}
+
 .tag-management-page {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center; // Center page content
   padding: 2rem;
   min-height: 100vh; // Ensure it takes full viewport height
+  
+  // Page header styling to match analytics dashboard
+  .page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 2;
+    
+    h1.analytics-dashboard-title {
+      font-size: 2.8rem;
+      font-family: 'Trajan Pro', Georgia, serif;
+      font-weight: 700;
+      color: #ffe082;
+      letter-spacing: 1.5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.18), 0 0 15px #e0c97f99, 1px 1px 0px #4B3A1A, 2px 2px 3px rgba(0,0,0,0.7);
+      margin-bottom: 18px;
+    }
+  }
 }
 
-// ... existing code ...
+// Section dividers for clean separation between sections
+.section-divider {
+  width: 80%;
+  max-width: 600px;
+  height: 1px;
+  background: linear-gradient(to right, transparent 0%, #e0c97f44 20%, #e0c97f 50%, #e0c97f44 80%, transparent 100%);
+  margin: 2.5rem auto;
+  opacity: 0.6;
+}
 
-.tag-crud-section, .tag-list-section {
+.tag-crud-section {
+  margin-top: 3rem; // Add space above the "Add New Tag" section
   margin-bottom: 2rem;
+  text-align: center;
+  
+  h3 {
+    font-family: 'Trajan Pro', serif;
+    font-size: 1.5rem;
+    color: #e0c97f;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  
+  .add-tag-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  input[type="text"] {
+    flex: 1;
+    margin-right: 0;
+  }
+  
+  .add-tag-btn {
+    margin-left: 0;
+  }
+}
+
+.tag-list-section {
+  margin-bottom: 2rem;
+  text-align: center;
+  
+  h3 {
+    font-family: 'Trajan Pro', serif;
+    font-size: 1.5rem;
+    color: #e0c97f;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
 }
 
 .tag-error {
-  color: #b00;
-  margin-bottom: 1rem;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem auto;
+  max-width: 500px;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .tag-success {
-  color: #080;
-  margin-bottom: 1rem;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid #22c55e;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem auto;
+  max-width: 500px;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
 }
 
 input[type="text"] {
   margin-right: 0.5rem;
-  padding: 0.25rem 0.5rem;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 1px solid #4B3A1A;
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #1a1a1a, #242424);
+  color: #e0c97f;
+  font-weight: 500;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+
+input[type="text"]:focus {
+  border-color: #f0e68c;
+  background-color: #2a2a2a;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), 0 0 0 3px rgba(224, 201, 127, 0.3), 0 1px 2px rgba(0,0,0,0.3);
+  outline: none;
+}
+
+// Add Tag button - identical to Export CSV button
+.add-tag-btn {
+  font-size: 1rem;
+  padding: 0.5rem 1.2rem;
+  background: #23262e;
+  color: #ffe082;
+  border: 1.5px solid #3a3d44;
+  border-radius: 7px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px #0002;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.add-tag-btn:hover {
+  background: #181b22;
+  color: #ffe082;
+  border-color: #ffe082;
+}
+
+.add-tag-btn:disabled {
+  background: #1a1a1a;
+  color: #666;
+  border-color: #333;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 button {
@@ -51,6 +200,49 @@ li {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+// Translation selection styling
+.translation-selection {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 224, 130, 0.3);
+  
+  h4 {
+    color: #ffe082;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .translation-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    
+    .translation-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #f5f5f5;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+      
+      &:hover {
+        background: rgba(255, 224, 130, 0.1);
+      }
+      
+      input[type="checkbox"] {
+        accent-color: #ffe082;
+        transform: scale(1.1);
+      }
+    }
+  }
 }
 
 .search-bar-and-button {
@@ -194,6 +386,12 @@ li {
   margin-bottom: 3rem;
 }
 
+.tag-button-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
 .tag-dashboard-btn {
   position: relative;
   overflow: hidden;
@@ -313,6 +511,86 @@ li {
   color: white;
 }
 
+// Tag edit container and input styling
+.tag-edit-container {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, rgba(35,35,35,0.98) 0%, rgba(24,24,24,0.99) 100%);
+  border: 1.5px solid #4B3A1A;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tag-edit-input {
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 1px solid #4B3A1A;
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #1a1a1a, #242424);
+  color: #e0c97f;
+  font-weight: 500;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  width: 100%;
+}
+
+.tag-edit-input:focus {
+  border-color: #f0e68c;
+  background-color: #2a2a2a;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), 0 0 0 3px rgba(224, 201, 127, 0.3), 0 1px 2px rgba(0,0,0,0.3);
+  outline: none;
+}
+
+.tag-edit-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1.5px solid;
+  margin: 0;
+  flex: 1;
+}
+
+.save-btn {
+  background: #166534;
+  color: #dcfce7;
+  border-color: #15803d;
+}
+
+.save-btn:hover {
+  background: #15803d;
+  border-color: #22c55e;
+  color: white;
+}
+
+.cancel-btn {
+  background: #7f1d1d;
+  color: #fecaca;
+  border-color: #991b1b;
+}
+
+.cancel-btn:hover {
+  background: #991b1b;
+  border-color: #ef4444;
+  color: white;
+}
+
 // Responsive adjustments
 @media (max-width: 1200px) {
   .tag-management-grid {
@@ -353,12 +631,21 @@ li {
     padding: 0.5rem 1rem;
     min-height: 48px;
     border-width: 1.5px;
-  }
-  .tag-dashboard-btn .tag-overlay .icon-btn {
+  }  .tag-dashboard-btn .tag-overlay .icon-btn {
     width: 34px;
     height: 34px;
     font-size: 1.1rem;
     margin: 0 4px;
+  }
+  
+  // Mobile translation selection adjustments
+  .translation-selection .translation-checkboxes {
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    .translation-checkbox-label {
+      justify-content: flex-start;
+    }
   }
 }
 
@@ -378,34 +665,43 @@ li {
     font-size: 1rem;
     margin: 0 3px;
   }
-}
-@media (max-width: 768px) {
-  .tag-management-page {
-    padding: 10px;
-  }
-  .batch-tag-controls-section {
-    padding: 1rem;
-  }
-  .search-bar-and-button {
+  
+  // Mobile-responsive form improvements
+  .tag-crud-section .add-tag-form {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    
+    input[type="text"] {
+      width: 100%;
+    }
+    
+    .add-tag-btn {
+      width: 100%;
+    }
   }
-  .search-bar-tags {
-    width: 100%;
+  
+  .tag-edit-container {
+    padding: 0.75rem;
+    
+    .tag-edit-buttons {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
   }
-  .atp-button, .batch-action-btn {
-    width: 100%;
-    font-size: 0.9rem;
-    padding: 10px 18px;
+}
+
+@media (max-width: 600px) {
+  .tag-crud-section .add-tag-form {
+    max-width: 100%;
+    padding: 0 1rem;
   }
-  .result-item-tags {
-    padding: 10px;
-    gap: 0.5rem;
+  
+  .analytics-dashboard-title {
+    font-size: 2.2rem !important;
   }
-  .verse-reference-tags {
-    font-size: 1rem;
-  }
-  .verse-text-preview-tags {
-    font-size: 0.85rem;
+  
+  .tag-crud-section h3,
+  .tag-list-section h3 {
+    font-size: 1.3rem;
   }
 }

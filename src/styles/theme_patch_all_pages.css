@@ -58,3 +58,91 @@ body,
     text-align: center;
   }
 }
+
+/* === UNIVERSAL FORM FIELD STYLING === */
+/* Modern embossed form inputs across all pages */
+input[type="text"]:not(.tag-edit-input):not(.search-bar-tags),
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  padding: 12px 15px !important;
+  font-size: 1rem !important;
+  border: 1px solid #4B3A1A !important;
+  border-radius: 8px !important;
+  background: linear-gradient(to bottom, #1a1a1a, #242424) !important;
+  color: #e0c97f !important;
+  font-weight: 500 !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.3) !important;
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s !important;
+  min-height: 44px !important; /* Ensure minimum touch target size */
+}
+
+input[type="text"]:focus:not(.tag-edit-input):not(.search-bar-tags),
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  border-color: #f0e68c !important;
+  background-color: #2a2a2a !important;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), 0 0 0 3px rgba(224, 201, 127, 0.3), 0 1px 2px rgba(0,0,0,0.3) !important;
+  outline: none !important;
+}
+
+/* Enhanced textarea styling */
+textarea {
+  min-height: 80px !important;
+  resize: vertical !important;
+  font-family: inherit !important;
+  line-height: 1.5 !important;
+}
+
+/* Select dropdown styling */
+select {
+  cursor: pointer !important;
+  background-image: linear-gradient(45deg, transparent 50%, #e0c97f 50%), linear-gradient(135deg, #e0c97f 50%, transparent 50%) !important;
+  background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px) !important;
+  background-size: 5px 5px, 5px 5px !important;
+  background-repeat: no-repeat !important;
+  padding-right: 40px !important;
+  appearance: none !important;
+}
+
+/* Modern form labels */
+label {
+  color: #e0c97f !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.5rem !important;
+  display: block !important;
+  font-size: 0.95rem !important;
+}
+
+/* Form groups and containers */
+.form-group,
+.input-group,
+.field-group {
+  margin-bottom: 1.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Inline form elements */
+.form-inline,
+.input-inline {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.form-inline label,
+.input-inline label {
+  margin-bottom: 0 !important;
+  margin-right: 0.5rem !important;
+  white-space: nowrap !important;
+}

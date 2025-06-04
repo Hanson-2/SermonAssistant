@@ -10,6 +10,7 @@ import {
   Sermon
 } from '../services/firebaseService';
 import { Link } from 'react-router-dom';
+import SermonCard from '../components/SermonCard/SermonCard';
 import './SermonSeriesManagementPage.css';
 
 // --- Error Boundary for Debugging ---
@@ -43,16 +44,14 @@ const SermonSeriesManagementPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);  const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
+  const [selectedSermons, setSelectedSermons] = useState<Set<string>>(new Set());
   
   // Form states
   const [newSeriesTitle, setNewSeriesTitle] = useState('');
   const [newSeriesDescription, setNewSeriesDescription] = useState('');
   const [newSeriesStartDate, setNewSeriesStartDate] = useState('');
-  const [newSeriesEndDate, setNewSeriesEndDate] = useState('');
-
-  useEffect(() => {
+  const [newSeriesEndDate, setNewSeriesEndDate] = useState('');  useEffect(() => {
     loadInitialData();
   }, []);
 
@@ -178,19 +177,56 @@ const SermonSeriesManagementPage: React.FC = () => {
   const getSeriesSermons = (seriesId: string) => {
     return sermons.filter(sermon => sermon.seriesId === seriesId);
   };
-
   const getUnassignedSermons = () => {
     return sermons.filter(sermon => !sermon.seriesId);
+  };
+
+  // Selection management functions
+  const toggleSermonSelection = (sermonId: string) => {
+    const newSelected = new Set(selectedSermons);
+    if (newSelected.has(sermonId)) {
+      newSelected.delete(sermonId);
+    } else {
+      newSelected.add(sermonId);
+    }
+    setSelectedSermons(newSelected);
+  };
+  const clearSelections = () => {
+    setSelectedSermons(new Set());
+  };
+
+  const handleBulkAddToSeries = async (seriesId: string) => {
+    if (selectedSermons.size === 0) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await Promise.all(
+        Array.from(selectedSermons).map(sermonId => 
+          addSermonToSeriesFunc(sermonId, seriesId)
+        )
+      );
+      setSuccess(`${selectedSermons.size} sermon(s) added to series successfully!`);
+      
+      // Refresh sermons and clear selections
+      const updatedSermons = await fetchSermons();
+      setSermons(updatedSermons);
+      clearSelections();
+    } catch (error) {
+      console.error('Error adding sermons to series:', error);
+      setError('Failed to add sermons to series. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const clearMessages = () => {
     setError(null);
     setSuccess(null);
-  };
-
-  return (
+  };  return (
     <>
-      <div className="series-management-bg" aria-hidden="true" />
+      <div className="series-management-background" aria-hidden="true" />
       <div className="series-management-page">
         <div className="page-header">
           <h1 className="sermon-series-title">Sermon Series Management</h1>
@@ -330,52 +366,54 @@ const SermonSeriesManagementPage: React.FC = () => {
                         {seriesSermons.length} sermon{seriesSermons.length !== 1 ? 's' : ''}
                       </span>
                     </div>
-                    
-                    <div className="series-sermons">
+                      <div className="series-sermons">
                       <h4>Sermons in this series:</h4>
                       {seriesSermons.length === 0 ? (
                         <p className="no-sermons">No sermons assigned to this series yet.</p>
                       ) : (
-                        <div className="sermons-list">
+                        <div className="sermons-grid">
                           {seriesSermons.map((sermon) => (
-                            <div key={sermon.id} className="sermon-item">
-                              <div className="sermon-info">
-                                <Link to={`/expository/${sermon.id}`} className="sermon-title">
-                                  {sermon.title}
-                                </Link>
-                                <span className="sermon-scripture">
-                                  {sermon.bibleBook} {sermon.bibleChapter}:{sermon.bibleStartVerse}-{sermon.bibleEndVerse}
-                                </span>
-                              </div>
-                              <button 
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => handleRemoveSermonFromSeries(sermon.id!.toString())}
-                              >
-                                Remove
-                              </button>
+                            <div key={sermon.id} className="sermon-card-wrapper">
+                              <SermonCard 
+                                sermon={sermon}
+                                showRemoveButton={true}
+                                onRemove={() => handleRemoveSermonFromSeries(sermon.id!.toString())}
+                              />
                             </div>
                           ))}
                         </div>
                       )}
-                    </div>
-                    
-                    <div className="add-sermon-section">
-                      <h4>Add sermons to this series:</h4>
-                      <div className="unassigned-sermons">
-                        {getUnassignedSermons().map((sermon) => (
-                          <div key={sermon.id} className="unassigned-sermon">
-                            <div className="sermon-info">
-                              <span className="sermon-title">{sermon.title}</span>
-                              <span className="sermon-scripture">
-                                {sermon.bibleBook} {sermon.bibleChapter}:{sermon.bibleStartVerse}-{sermon.bibleEndVerse}
-                              </span>
-                            </div>
+                    </div>                    <div className="add-sermon-section">
+                      <div className="section-header">
+                        <h4>Add sermons to this series:</h4>
+                        {selectedSermons.size > 0 && (
+                          <div className="selection-controls">
                             <button 
                               className="btn btn-primary btn-sm"
-                              onClick={() => handleAddSermonToSeries(sermon.id!.toString(), s.id!.toString())}
+                              onClick={() => handleBulkAddToSeries(s.id!.toString())}
                             >
-                              Add
+                              Add Selected ({selectedSermons.size})
                             </button>
+                            <button 
+                              className="btn btn-secondary btn-sm"
+                              onClick={clearSelections}
+                            >
+                              Clear Selection
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="unassigned-sermons-grid">
+                        {getUnassignedSermons().map((sermon) => (
+                          <div key={sermon.id} className="sermon-card-wrapper">
+                            <SermonCard 
+                              sermon={sermon}
+                              showAddButton={selectedSermons.size === 0}
+                              onAdd={() => handleAddSermonToSeries(sermon.id!.toString(), s.id!.toString())}
+                              isSelectable={true}
+                              isSelected={selectedSermons.has(sermon.id!.toString())}
+                              onSelect={() => toggleSermonSelection(sermon.id!.toString())}
+                            />
                           </div>
                         ))}
                       </div>
@@ -388,45 +426,49 @@ const SermonSeriesManagementPage: React.FC = () => {
               })}
             </div>
           )}
-        </div>
-
-        {/* Unassigned Sermons */}
+        </div>        {/* Unassigned Sermons */}
         {getUnassignedSermons().length > 0 && (
           <div className="section">
-            <h2>Unassigned Sermons ({getUnassignedSermons().length})</h2>
+            <div className="section-header">
+              <h2>Unassigned Sermons ({getUnassignedSermons().length})</h2>
+              {selectedSermons.size > 0 && (
+                <div className="selection-controls">
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={clearSelections}
+                  >
+                    Clear All ({selectedSermons.size})
+                  </button>
+                  <select 
+                    className="series-selector"
+                    title="Add selected sermons to series"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkAddToSeries(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                  >
+                    <option value="">Add Selected to Series...</option>
+                    {series.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             <div className="unassigned-sermons-grid">
               {getUnassignedSermons().map((sermon) => (
-                <div key={sermon.id} className="unassigned-sermon-card">
-                  <div className="sermon-header">
-                    <Link to={`/expository/${sermon.id}`} className="sermon-title">
-                      {sermon.title}
-                    </Link>
-                    <span className="sermon-date">
-                      {sermon.dateAdded && typeof sermon.dateAdded === 'object' && 'seconds' in sermon.dateAdded
-                        ? new Date(sermon.dateAdded.seconds * 1000).toLocaleDateString()
-                        : 'No date'}
-                    </span>
-                  </div>
-                  <div className="sermon-scripture">
-                    {sermon.bibleBook} {sermon.bibleChapter}:{sermon.bibleStartVerse}-{sermon.bibleEndVerse}
-                  </div>
-                  <div className="assign-to-series">
-                    <label>Assign to series:</label>
-                    <select 
-                      title="Assign to series"
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          handleAddSermonToSeries(sermon.id!.toString(), e.target.value);
-                          e.target.value = '';
-                        }
-                      }}
-                    >
-                      <option value="">Select a series...</option>
-                      {series.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div key={sermon.id} className="sermon-card-wrapper">
+                  <SermonCard 
+                    sermon={sermon}
+                    showSeriesSelector={selectedSermons.size === 0}
+                    seriesList={series.filter(s => s.id).map(s => ({ id: s.id!, name: s.name }))}
+                    onSeriesSelect={(seriesId) => handleAddSermonToSeries(sermon.id!.toString(), seriesId)}
+                    isSelectable={true}
+                    isSelected={selectedSermons.has(sermon.id!.toString())}
+                    onSelect={() => toggleSermonSelection(sermon.id!.toString())}
+                  />
                 </div>
               ))}
             </div>

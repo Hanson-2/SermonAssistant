@@ -85,12 +85,68 @@ interface UserProfile {
     emailNotifications: boolean;
     autoSave: boolean;
     sermonBackupFrequency: 'never' | 'daily' | 'weekly' | 'monthly';
+    pushNotifications?: boolean;
+    showWelcomeScreen?: boolean;
+    enableKeyboardShortcuts?: boolean;
+    showPreviewPane?: boolean;
   };
+  
+  // Theme Settings (from ThemeSettingsPage)
+  themeSettings?: {
+    themeMode: 'light' | 'dark' | 'auto';
+    primaryColor?: string;
+    accentColor?: string;
+    backgroundImage?: string;
+    fontFamily?: string;
+    fontSize?: 'small' | 'medium' | 'large';
+    compactMode?: boolean;
+    highContrast?: boolean;
+    reducedMotion?: boolean;
+    customCSS?: string;
+  };
+  
+  // UI Customization (from CustomizeUIPage)
+  uiCustomization?: {
+    // Layout Settings
+    sidebarPosition: 'left' | 'right' | 'hidden';
+    navigationStyle: 'horizontal' | 'vertical' | 'compact';
+    contentWidth: 'narrow' | 'medium' | 'wide' | 'full';
+    
+    // Component Visibility
+    showWelcomeMessage: boolean;
+    showQuickActions: boolean;
+    showRecentSermons: boolean;
+    showStatistics: boolean;
+    showSearchSuggestions: boolean;
+    
+    // Grid Layout
+    dashboardColumns: 1 | 2 | 3 | 4;
+    cardSize: 'compact' | 'normal' | 'large';
+    cardSpacing: 'tight' | 'normal' | 'loose';
+    
+    // Typography & Spacing
+    interfaceScale: 80 | 90 | 100 | 110 | 120;
+    lineHeight: 'compact' | 'normal' | 'relaxed';
+    buttonSize: 'small' | 'medium' | 'large';
+    
+    // Toolbar & Actions
+    showToolbarLabels: boolean;
+    toolbarPosition: 'top' | 'bottom' | 'floating';
+    quickActionButtons: string[];
+    
+    // Advanced Options
+    enableAnimations: boolean;
+    showTooltips: boolean;
+    enableKeyboardNavigation: boolean;
+    autoCollapseSidebar: boolean;
+  };
+  
   statistics: {
     totalSermons: number;
     totalVerses: number;
     totalTags: number;
     totalFolders: number;
+    totalVersions: number;
     joinDate: string;
     lastActivity: string;
   };
@@ -1101,5 +1157,224 @@ export const deleteSermonCategoryFunc = functions.https.onCall(
     } catch (error) {
       functions.logger.error("Error deleting sermon category:", error);
       throw new functions.https.HttpsError("internal", "Failed to delete sermon category.");
+    }
+});
+
+// ============================================================================
+// DATA IMPORT/EXPORT FUNCTIONALITY
+// ============================================================================
+
+// Export all user data
+export const exportUserData = functions.https.onCall(
+  async (data: any, context: functions.https.CallableContext) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "You must be logged in to export data.");
+    }
+    const userId = context.auth.uid;
+
+    try {
+      // Get all user documents in parallel
+      const [
+        userProfileSnapshot,
+        sermonsSnapshot,
+        versionsSnapshot,
+        scripturesSnapshot,
+        tagsSnapshot,
+        foldersSnapshot,
+        categoriesSnapshot,
+        seriesSnapshot
+      ] = await Promise.all([
+        admin.firestore().collection("userProfiles").doc(userId).get(),
+        admin.firestore().collection("sermons").where("userID", "==", userId).get(),
+        admin.firestore().collection("userScriptureVersions").where("userId", "==", userId).get(),
+        admin.firestore().collection("userScriptures").where("userId", "==", userId).get(),
+        admin.firestore().collection("userTags").where("userId", "==", userId).get(),
+        admin.firestore().collection("sermonFolders").where("userId", "==", userId).get(),
+        admin.firestore().collection("sermonCategories").where("userId", "==", userId).get(),
+        admin.firestore().collection("sermonSeries").where("userId", "==", userId).get()
+      ]);
+
+      // Format the data for export
+      const exportData = {
+        userProfile: userProfileSnapshot.exists ? { id: userProfileSnapshot.id, ...userProfileSnapshot.data() } : null,
+        sermons: sermonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        userScriptureVersions: versionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        userScriptures: scripturesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        userTags: tagsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        sermonFolders: foldersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        sermonCategories: categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        sermonSeries: seriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      };
+
+      return { exportData };
+    } catch (error) {
+      functions.logger.error("Error exporting user data:", error);
+      throw new functions.https.HttpsError("internal", "Failed to export user data.");
+    }
+});
+
+// Import user data from backup
+export const importUserData = functions.https.onCall(
+  async (data: {
+    userProfile?: any;
+    sermons?: any[];
+    userScriptureVersions?: any[];
+    userScriptures?: any[];
+    userTags?: any[];
+    sermonFolders?: any[];
+    sermonCategories?: any[];
+    sermonSeries?: any[];
+    replaceExisting?: boolean;
+  }, context: functions.https.CallableContext) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "You must be logged in to import data.");
+    }
+    const userId = context.auth.uid;
+
+    try {
+      const batch = admin.firestore().batch();
+      let operationsCount = 0;
+      const maxBatchSize = 450; // Leave some buffer under Firestore's 500 limit
+
+      // If replaceExisting is true, delete all existing data first
+      if (data.replaceExisting) {
+        const [
+          existingSermonsSnapshot,
+          existingVersionsSnapshot,
+          existingScripturesSnapshot,
+          existingTagsSnapshot,
+          existingFoldersSnapshot,
+          existingCategoriesSnapshot,
+          existingSeriesSnapshot
+        ] = await Promise.all([
+          admin.firestore().collection("sermons").where("userID", "==", userId).get(),
+          admin.firestore().collection("userScriptureVersions").where("userId", "==", userId).get(),
+          admin.firestore().collection("userScriptures").where("userId", "==", userId).get(),
+          admin.firestore().collection("userTags").where("userId", "==", userId).get(),
+          admin.firestore().collection("sermonFolders").where("userId", "==", userId).get(),
+          admin.firestore().collection("sermonCategories").where("userId", "==", userId).get(),
+          admin.firestore().collection("sermonSeries").where("userId", "==", userId).get()
+        ]);
+
+        // Delete existing data
+        existingSermonsSnapshot.docs.forEach(doc => {
+          if (operationsCount < maxBatchSize) {
+            batch.delete(doc.ref);
+            operationsCount++;
+          }
+        });
+        existingVersionsSnapshot.docs.forEach(doc => {
+          if (operationsCount < maxBatchSize) {
+            batch.delete(doc.ref);
+            operationsCount++;
+          }
+        });
+        existingScripturesSnapshot.docs.forEach(doc => {
+          if (operationsCount < maxBatchSize) {
+            batch.delete(doc.ref);
+            operationsCount++;
+          }
+        });
+        existingTagsSnapshot.docs.forEach(doc => {
+          if (operationsCount < maxBatchSize) {
+            batch.delete(doc.ref);
+            operationsCount++;
+          }
+        });
+        existingFoldersSnapshot.docs.forEach(doc => {
+          if (operationsCount < maxBatchSize) {
+            batch.delete(doc.ref);
+            operationsCount++;
+          }
+        });
+        existingCategoriesSnapshot.docs.forEach(doc => {
+          if (operationsCount < maxBatchSize) {
+            batch.delete(doc.ref);
+            operationsCount++;
+          }
+        });
+        existingSeriesSnapshot.docs.forEach(doc => {
+          if (operationsCount < maxBatchSize) {
+            batch.delete(doc.ref);
+            operationsCount++;
+          }
+        });
+
+        // Commit deletion batch if we have operations
+        if (operationsCount > 0) {
+          await batch.commit();
+          // Reset for import operations
+          operationsCount = 0;
+        }
+      }
+
+      // Create a new batch for imports
+      const importBatch = admin.firestore().batch();
+
+      // Helper function to process import data and manage batch size
+      const processBatchData = async (collection: string, items: any[], userField: string = 'userId') => {
+        if (!items || items.length === 0) return;
+
+        for (const item of items) {
+          if (operationsCount >= maxBatchSize) {
+            await importBatch.commit();
+            operationsCount = 0;
+          }
+
+          const { id, ...itemData } = item;
+          // Ensure the data belongs to the current user
+          itemData[userField] = userId;
+          // Update timestamps
+          itemData.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+          if (!itemData.createdAt) {
+            itemData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+          }
+
+          const docRef = admin.firestore().collection(collection).doc();
+          importBatch.set(docRef, itemData);
+          operationsCount++;
+        }
+      };
+
+      // Import user profile
+      if (data.userProfile && operationsCount < maxBatchSize) {
+        const { id, ...profileData } = data.userProfile;
+        profileData.userId = userId;
+        profileData.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+        const userProfileRef = admin.firestore().collection("userProfiles").doc(userId);
+        importBatch.set(userProfileRef, profileData, { merge: true });
+        operationsCount++;
+      }
+
+      // Import all data collections
+      await processBatchData('sermons', data.sermons || [], 'userID');
+      await processBatchData('userScriptureVersions', data.userScriptureVersions || []);
+      await processBatchData('userScriptures', data.userScriptures || []);
+      await processBatchData('userTags', data.userTags || []);
+      await processBatchData('sermonFolders', data.sermonFolders || []);
+      await processBatchData('sermonCategories', data.sermonCategories || []);
+      await processBatchData('sermonSeries', data.sermonSeries || []);
+
+      // Commit final batch if there are pending operations
+      if (operationsCount > 0) {
+        await importBatch.commit();
+      }
+
+      return { 
+        success: true, 
+        imported: {
+          userProfile: data.userProfile ? 1 : 0,
+          sermons: data.sermons?.length || 0,
+          userScriptureVersions: data.userScriptureVersions?.length || 0,
+          userScriptures: data.userScriptures?.length || 0,
+          userTags: data.userTags?.length || 0,
+          sermonFolders: data.sermonFolders?.length || 0,
+          sermonCategories: data.sermonCategories?.length || 0,
+          sermonSeries: data.sermonSeries?.length || 0
+        }
+      };
+    } catch (error) {
+      functions.logger.error("Error importing user data:", error);
+      throw new functions.https.HttpsError("internal", "Failed to import user data.");
     }
 });

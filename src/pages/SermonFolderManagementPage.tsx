@@ -6,6 +6,7 @@ import {
   deleteSermonFolder,
   SermonFolder,
 } from "../services/firebaseService";
+import "./SermonFolderManagementPage.css";
 
 const SermonFolderManagementPage: React.FC = () => {
   const [folders, setFolders] = useState<SermonFolder[]>([]);
@@ -77,57 +78,66 @@ const SermonFolderManagementPage: React.FC = () => {
       setLoading(false);
     }
   };
-
   return (
-    <div className="sermon-folder-management-page">
-      <h1>Sermon Folders</h1>
-      <div className="add-folder-row">
-        <input
-          type="text"
-          value={newFolderName}
-          onChange={e => setNewFolderName(e.target.value)}
-          placeholder="New folder name"
-          aria-label="New folder name"
-        />
-        <button onClick={handleAdd} disabled={loading || !newFolderName.trim()}>
-          Add Folder
-        </button>
+    <>
+      {/* Background overlay */}
+      <div className="universal-search-bg"></div>
+      
+      <div className="sermon-folder-management-page">
+        <div className="folder-management-container">
+          <h1>Sermon Folders</h1>
+          <div className="add-folder-row">
+            <input
+              type="text"
+              value={newFolderName}
+              onChange={e => setNewFolderName(e.target.value)}
+              placeholder="New folder name"
+              aria-label="New folder name"
+            />
+            <button onClick={handleAdd} disabled={loading || !newFolderName.trim()}>
+              Add Folder
+            </button>          </div>
+          {error && <div className="error-message">{error}</div>}
+          
+          {/* Section divider */}
+          <div className="section-divider"></div>
+          
+          <ul className="folder-list">
+            {folders.map(folder => (
+              <li key={folder.id} className="folder-list-item">
+                {editingId === folder.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={e => setEditingName(e.target.value)}
+                      aria-label="Edit folder name"
+                    />
+                    <button onClick={() => handleUpdate(folder.id!)} disabled={loading || !editingName.trim()}>
+                      Save
+                    </button>
+                    <button onClick={() => setEditingId(null)} disabled={loading}>
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span>{folder.name}</span>
+                    <button onClick={() => handleEdit(folder.id!, folder.name)} disabled={loading}>
+                      Rename
+                    </button>
+                    <button onClick={() => handleDelete(folder.id!)} disabled={loading}>
+                      Delete
+                    </button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+          {loading && <div className="loading-message">Loading...</div>}
+        </div>
       </div>
-      {error && <div className="error-message">{error}</div>}
-      <ul className="folder-list">
-        {folders.map(folder => (
-          <li key={folder.id} className="folder-list-item">
-            {editingId === folder.id ? (
-              <>
-                <input
-                  type="text"
-                  value={editingName}
-                  onChange={e => setEditingName(e.target.value)}
-                  aria-label="Edit folder name"
-                />
-                <button onClick={() => handleUpdate(folder.id!)} disabled={loading || !editingName.trim()}>
-                  Save
-                </button>
-                <button onClick={() => setEditingId(null)} disabled={loading}>
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                <span>{folder.name}</span>
-                <button onClick={() => handleEdit(folder.id!, folder.name)} disabled={loading}>
-                  Rename
-                </button>
-                <button onClick={() => handleDelete(folder.id!)} disabled={loading}>
-                  Delete
-                </button>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
-      {loading && <div className="loading-message">Loading...</div>}
-    </div>
+    </>
   );
 };
 

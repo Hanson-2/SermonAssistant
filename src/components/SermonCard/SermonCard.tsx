@@ -23,16 +23,45 @@ export type Sermon = {
   folderId?: string;
 };
 
-// Extend SermonCardProps to include activeCardId and setActiveCardId
+// Extend SermonCardProps to include new functionality
 interface SermonCardProps {
   sermon: Sermon;
   className?: string;
   hideActions?: boolean;
   activeCardId?: string | null;
   setActiveCardId?: Dispatch<SetStateAction<string | null>>;
+  // Selection functionality
+  isSelectable?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  // Action buttons
+  showAddButton?: boolean;
+  onAdd?: () => void;
+  showRemoveButton?: boolean;
+  onRemove?: () => void;
+  // Series selector
+  showSeriesSelector?: boolean;
+  seriesList?: Array<{ id: string; name: string }>;
+  onSeriesSelect?: (seriesId: string) => void;
 }
 
-const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions, activeCardId, setActiveCardId }) => {
+const SermonCard: React.FC<SermonCardProps> = ({ 
+  sermon, 
+  className, 
+  hideActions, 
+  activeCardId, 
+  setActiveCardId,
+  isSelectable = false,
+  isSelected = false,
+  onSelect,
+  showAddButton = false,
+  onAdd,
+  showRemoveButton = false,
+  onRemove,
+  showSeriesSelector = false,
+  seriesList = [],
+  onSeriesSelect
+}) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -52,9 +81,16 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions,
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [activeCardId, sermon.id, setActiveCardId]);
-
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button') {
+    // Handle selection mode
+    if (isSelectable && onSelect) {
+      onSelect();
+      return;
+    }
+    
+    // Handle normal card interaction
+    if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button' && 
+        (e.target as HTMLElement).tagName.toLowerCase() !== 'select') {
       if (setActiveCardId) {
         setActiveCardId(prev => (prev === sermon.id.toString() ? null : sermon.id.toString()));
       }
@@ -97,7 +133,9 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions,
   return (
     <div className="sermon-card-wrapper">      <div
         ref={cardRef}
-        onClick={handleCardClick}        className={`sermon-card relative ${className || ''} ${activeCardId === sermon.id.toString() ? 'active' : ''}`}
+        onClick={handleCardClick}        className={`sermon-card relative ${className || ''} ${
+          activeCardId === sermon.id.toString() ? 'active' : ''
+        } ${isSelectable ? 'selectable' : ''} ${isSelected ? 'selected' : ''}`}
         style={{
           backgroundImage: sermon.imageUrl
             ? `url("${sermon.imageUrl}")`
@@ -107,14 +145,76 @@ const SermonCard: React.FC<SermonCardProps> = ({ sermon, className, hideActions,
           backgroundRepeat: 'no-repeat',
           backgroundBlendMode: 'overlay',
         }}
-      >
-        <div className="sermon-card-gradient-overlay"></div>
+      >        <div className="sermon-card-gradient-overlay"></div>
+        
+        {/* Selection checkbox overlay */}
+        {isSelectable && (
+          <div className="selection-overlay">            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onSelect}
+              className="selection-checkbox"
+              title="Select sermon for bulk actions"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
+        
         <div className="sermon-card-content">
           <h2 className="sermon-card-title">{sermon.title}</h2>
           <p>{sermon.description}</p>
           <p className="sermon-card-date">{sermon.date}</p>
-        </div>        {/* Slide-In Flyout - KEEP THESE BUTTONS */}
-        {!hideActions && (
+          
+          {/* Action buttons */}
+          {(showAddButton || showRemoveButton) && (
+            <div className="card-actions">
+              {showAddButton && onAdd && (
+                <button 
+                  className="btn btn-primary btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAdd();
+                  }}
+                >
+                  Add to Series
+                </button>
+              )}
+              {showRemoveButton && onRemove && (
+                <button 
+                  className="btn btn-secondary btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove();
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          )}
+          
+          {/* Series selector */}
+          {showSeriesSelector && seriesList.length > 0 && onSeriesSelect && (
+            <div className="series-selector-wrapper">              <select 
+                className="series-selector"
+                title="Assign sermon to a series"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    onSeriesSelect(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <option value="">Assign to series...</option>
+                {seriesList.map((series) => (
+                  <option key={series.id} value={series.id}>{series.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>        {/* Slide-In Flyout - Only show on dashboard/main pages, not on series management */}
+        {!hideActions && !isSelectable && !showAddButton && !showRemoveButton && !showSeriesSelector && (
           <div
             className={`absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-black/80 to-transparent flex items-center justify-end px-4 transition-transform duration-300 ${
               showOverlay ? "translate-x-0" : "translate-x-full"

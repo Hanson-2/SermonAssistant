@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Settings Pages Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-button { margin: 5px; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .test-button:hover { background: #0056b3; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>Sermon Notes Assistant - Settings Pages Test</h1>
+    
+    <div class="test-section">
+        <h2>Authentication Status</h2>
+        <div id="auth-status" class="status info">Checking authentication...</div>
+        <button class="test-button" onclick="testLogin()">Test Login</button>
+        <button class="test-button" onclick="testLogout()">Test Logout</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Settings Pages Navigation</h2>
+        <button class="test-button" onclick="testPage('/user-profile')">User Profile</button>
+        <button class="test-button" onclick="testPage('/app-preferences')">App Preferences</button>
+        <button class="test-button" onclick="testPage('/theme-settings')">Theme Settings</button>
+        <button class="test-button" onclick="testPage('/customize-ui')">Customize UI</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Firebase Functions Test</h2>
+        <div id="functions-status" class="status info">Ready to test functions...</div>
+        <button class="test-button" onclick="testGetUserProfile()">Test Get User Profile</button>
+        <button class="test-button" onclick="testUpdateUserProfile()">Test Update User Profile</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWH6KZnxrRZfnmCA8116qbj_8uGjGliaU",
+            authDomain: "sermon-notes-assistant.firebaseapp.com",
+            projectId: "sermon-notes-assistant",
+            storageBucket: "sermon-notes-assistant.firebasestorage.app",
+            messagingSenderId: "741896945073",
+            appId: "1:741896945073:web:00c666850aead6b4d89190",
+            measurementId: "G-59CREPD9PF"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app);
+        const provider = new GoogleAuthProvider();
+
+        let currentUser = null;
+
+        // Monitor auth state
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            const authStatus = document.getElementById('auth-status');
+            if (user) {
+                authStatus.textContent = `Logged in as: ${user.email}`;
+                authStatus.className = 'status success';
+            } else {
+                authStatus.textContent = 'Not logged in';
+                authStatus.className = 'status error';
+            }
+        });
+
+        // Global functions for buttons
+        window.testLogin = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+                addTestResult('Login successful', true);
+            } catch (error) {
+                addTestResult(`Login failed: ${error.message}`, false);
+            }
+        };
+
+        window.testLogout = async () => {
+            try {
+                await signOut(auth);
+                addTestResult('Logout successful', true);
+            } catch (error) {
+                addTestResult(`Logout failed: ${error.message}`, false);
+            }
+        };
+
+        window.testPage = (path) => {
+            try {
+                window.open(`http://localhost:5174${path}`, '_blank');
+                addTestResult(`Opened ${path}`, true);
+            } catch (error) {
+                addTestResult(`Failed to open ${path}: ${error.message}`, false);
+            }
+        };
+
+        window.testGetUserProfile = async () => {
+            try {
+                if (!currentUser) {
+                    addTestResult('Must be logged in to test getUserProfile', false);
+                    return;
+                }
+                
+                const getUserProfile = httpsCallable(functions, 'getUserProfile');
+                const result = await getUserProfile();
+                addTestResult(`getUserProfile successful: ${JSON.stringify(result.data, null, 2)}`, true);
+            } catch (error) {
+                addTestResult(`getUserProfile failed: ${error.message}`, false);
+            }
+        };
+
+        window.testUpdateUserProfile = async () => {
+            try {
+                if (!currentUser) {
+                    addTestResult('Must be logged in to test updateUserProfile', false);
+                    return;
+                }
+                
+                const updateUserProfile = httpsCallable(functions, 'updateUserProfile');
+                const testData = {
+                    displayName: 'Test User',
+                    preferences: {
+                        defaultBibleVersion: 'ESV',
+                        theme: 'dark'
+                    }
+                };
+                
+                const result = await updateUserProfile(testData);
+                addTestResult(`updateUserProfile successful: ${JSON.stringify(result.data, null, 2)}`, true);
+            } catch (error) {
+                addTestResult(`updateUserProfile failed: ${error.message}`, false);
+            }
+        };
+
+        function addTestResult(message, success) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `status ${success ? 'success' : 'error'}`;
+            resultDiv.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        console.log('Firebase test page initialized successfully');
+    </script>
+</body>
+</html>

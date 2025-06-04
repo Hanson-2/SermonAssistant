@@ -234,10 +234,7 @@
 }
 
 /* Adjust margin for the first item if needed, or rely on container padding */
-.navbar > div > a:first-child,
-.navbar > div > .navbar-dropdown-group:first-child {
-    /* padding-left: 0; */ /* Example if no space before first item */
-}
+/* Removed empty ruleset for first-child nav items */
 
 /* Adjust margin for the last item if needed */
 /* Removed empty ruleset for last-child nav items */

@@ -586,13 +586,74 @@ export type UserProfile = {
   email: string;
   photoURL?: string;
   preferences: {
+    // General Settings
     defaultBibleVersion: string;
     theme: 'light' | 'dark' | 'auto';
     language: string;
     emailNotifications: boolean;
     autoSave: boolean;
     sermonBackupFrequency: 'never' | 'daily' | 'weekly' | 'monthly';
+    
+    // App Preferences (from AppPreferencesPage)
+    autoSaveInterval?: number; // in minutes
+    defaultSermonTemplate?: string;
+    pageSize?: number;
+    pushNotifications?: boolean;
+    showWelcomeScreen?: boolean;
+    enableKeyboardShortcuts?: boolean;
+    showPreviewPane?: boolean;
   };
+  
+  // Theme Settings (from ThemeSettingsPage)
+  themeSettings?: {
+    themeMode: 'light' | 'dark' | 'auto';
+    primaryColor?: string;
+    accentColor?: string;
+    backgroundImage?: string;
+    fontFamily?: string;
+    fontSize?: 'small' | 'medium' | 'large';
+    compactMode?: boolean;
+    highContrast?: boolean;
+    reducedMotion?: boolean;
+    customCSS?: string;
+  };
+  
+  // UI Customization (from CustomizeUIPage)
+  uiCustomization?: {
+    // Layout Settings
+    sidebarPosition: 'left' | 'right' | 'hidden';
+    navigationStyle: 'horizontal' | 'vertical' | 'compact';
+    contentWidth: 'narrow' | 'medium' | 'wide' | 'full';
+    
+    // Component Visibility
+    showWelcomeMessage: boolean;
+    showQuickActions: boolean;
+    showRecentSermons: boolean;
+    showStatistics: boolean;
+    showSearchSuggestions: boolean;
+    
+    // Grid Layout
+    dashboardColumns: 1 | 2 | 3 | 4;
+    cardSize: 'compact' | 'normal' | 'large';
+    cardSpacing: 'tight' | 'normal' | 'loose';
+    
+    // Typography & Spacing
+    interfaceScale: 80 | 90 | 100 | 110 | 120;
+    lineHeight: 'compact' | 'normal' | 'relaxed';
+    buttonSize: 'small' | 'medium' | 'large';
+    
+    // Toolbar & Actions
+    showToolbarLabels: boolean;
+    toolbarPosition: 'top' | 'bottom' | 'floating';
+    quickActionButtons: string[];
+    
+    // Advanced Options
+    enableAnimations: boolean;
+    showTooltips: boolean;
+    enableKeyboardNavigation: boolean;
+    autoCollapseSidebar: boolean;
+  };
+  
   statistics: {
     totalSermons: number;
     totalVerses: number;
@@ -620,6 +681,8 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 export async function updateUserProfile(profileData: {
   displayName?: string;
   preferences?: Partial<UserProfile['preferences']>;
+  uiCustomization?: Partial<UserProfile['uiCustomization']>;
+  themeSettings?: Partial<UserProfile['themeSettings']>;
 }): Promise<void> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
@@ -901,5 +964,20 @@ export async function deleteSermonCategoryFunc(categoryId: string): Promise<bool
   } catch (error) {
     console.error('Error deleting sermon category:', error);
     throw new Error('Failed to delete sermon category');
+  }
+}
+
+// Import user data
+export async function importUserData(importData: any, replaceExisting: boolean = true): Promise<any> {
+  const importUserDataFn = httpsCallable(fbFunctions, "importUserData");
+  try {
+    const result = await importUserDataFn({
+      ...importData,
+      replaceExisting
+    });
+    return (result.data as any) || null;
+  } catch (error) {
+    console.error("Error importing user data:", error);
+    throw error;
   }
 }

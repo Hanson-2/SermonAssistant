@@ -8,7 +8,7 @@ import {
   fetchSermons 
 } from '../services/firebaseService';
 import { AutoTagResult, SermonCategory, Sermon } from '../services/firebaseService';
-import './SmartCategorizationPage.css';
+import './SmartCategorizationPage.scss';
 
 const SmartCategorizationPage: React.FC = () => {
   const [categories, setCategories] = useState<SermonCategory[]>([]);
@@ -158,12 +158,12 @@ const SmartCategorizationPage: React.FC = () => {
   const clearMessages = () => {
     setError(null);
     setSuccess(null);
-  };
-
-  return (
+  };  return (
     <div className="smart-categorization-page">
+      <div className="universal-search-bg"></div>
+      <div className="black-overlay"></div>
       <div className="page-header">
-        <h1>Smart Categorization</h1>
+        <h1 className="analytics-dashboard-title">Smart Categorization</h1>
         <p>Automatically categorize your sermons using AI-powered content analysis</p>
       </div>
 
@@ -255,9 +255,10 @@ const SmartCategorizationPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          ))}        </div>
       </div>
+
+      <div className="section-divider"></div>
 
       {/* Sermon Selection Section */}
       <div className="section">
@@ -302,12 +303,11 @@ const SmartCategorizationPage: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Auto-Tag Results Section */}
+        </div>      </div>      {/* Auto-Tag Results Section */}
       {autoTagResults.length > 0 && (
-        <div className="section">
+        <>
+          <div className="section-divider"></div>
+          <div className="section">
           <h2>Categorization Suggestions</h2>
           <div className="auto-tag-results">
             {autoTagResults.map((result) => {
@@ -357,13 +357,13 @@ const SmartCategorizationPage: React.FC = () => {
                       onClick={() => setAutoTagResults(prev => prev.filter(r => r.sermonId !== result.sermonId))}
                     >
                       Dismiss
-                    </button>
-                  </div>
+                    </button>                  </div>
                 </div>
               );
             })}
           </div>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

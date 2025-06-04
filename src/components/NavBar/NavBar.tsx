@@ -45,12 +45,12 @@ function CustomNavDropdown({ label, children }: { label: string; children: React
         className="custom-folder-dropdown-btn navbar-dropdown-btn"
         type="button"
         aria-haspopup="menu"
-        aria-expanded={open ? 'true' : 'false'}
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         style={{ minWidth: 120 }}
       >
         <span>{label}</span>
-        <span className="custom-folder-dropdown-arrow" aria-hidden>v</span>
+        <span className="custom-folder-dropdown-arrow" aria-hidden="true">v</span>
       </button>
       {open && (
         <div
@@ -93,9 +93,9 @@ export default function NavBar() {
             <Link to="/smart-categorization" className="custom-folder-dropdown-option" role="menuitem">Smart Categorization</Link>
             <Link to="/advanced-search" className="custom-folder-dropdown-option" role="menuitem">Advanced Search</Link>
             <Link to="/sermon-series-management" className="custom-folder-dropdown-option" role="menuitem">Series Management</Link>
-            <Link to="/analytics-dashboard" className="custom-folder-dropdown-option" role="menuitem">Analytics Dashboard</Link>
-            <div className="border-t border-gray-600 my-1 mx-4"></div>
+            <Link to="/analytics-dashboard" className="custom-folder-dropdown-option" role="menuitem">Analytics Dashboard</Link>            <div className="border-t border-gray-600 my-1 mx-4"></div>
             <span className="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wide">Data Management</span>
+            <Link to="/tag-management" className="custom-folder-dropdown-option" role="menuitem">Tag Management</Link>
             <Link to="/import-export" className="custom-folder-dropdown-option" role="menuitem">Import/Export</Link>
           </CustomNavDropdown>
           <span className="navbar-separator">|</span>
@@ -144,6 +144,7 @@ export default function NavBar() {
               <Link to="/sermon-series-management" className="block px-4 py-2 hover:bg-gray-700" onClick={() => setMenuOpen(false)}>Series Management</Link>
               <Link to="/analytics-dashboard" className="block px-4 py-2 hover:bg-gray-700" onClick={() => setMenuOpen(false)}>Analytics Dashboard</Link>              <div className="border-t border-gray-600 my-1 mx-4"></div>
               <span className="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wide">Data Management</span>
+              <Link to="/tag-management" className="block px-4 py-2 hover:bg-gray-700" onClick={() => setMenuOpen(false)}>Tag Management</Link>
               <Link to="/import-export" className="block px-4 py-2 hover:bg-gray-700" onClick={() => setMenuOpen(false)}>Import/Export</Link>
               <div className="border-t border-gray-600 my-1 mx-4"></div>
               <span className="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wide">Settings</span>

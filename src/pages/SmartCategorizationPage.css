@@ -1,34 +1,55 @@
+/* SmartCategorizationPage.css */
 /* Import unified theme patch for all settings pages */
 @import '../styles/theme_patch_all_pages.css';
 
-/* filepath: c:\Users\steve\Custom-Apps\Sermon Notes Assistant\src\pages\SmartCategorizationPage.css */
-/* Smart Categorization Page Styles */
+/* Background overlay for consistent theming with dashboard/analytics pages */
+.universal-search-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background: url('/Texas_Logo_Wallpaper.png') left center no-repeat;
+  background-size: cover;
+  filter: grayscale(0.2) brightness(0.8) contrast(1.1);
+}
+
 .smart-categorization-page {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  min-height: calc(100vh - 56px);
+  min-height: 100vh;  
 }
 
-.page-header {
+/* Page header styling to match analytics dashboard */
+.smart-categorization-page .page-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
-  font-weight: bold;
-  background: linear-gradient(45deg, #fbbf24, #f59e0b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 0.5rem;
+.smart-categorization-page .page-header h1 {
+  font-size: 2.8rem;
+  font-family: 'Trajan Pro', Georgia, serif;
+  font-weight: 700;
+  color: #ffe082;
+  letter-spacing: 1.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.18), 0 0 15px #e0c97f99, 1px 1px 0px #4B3A1A, 2px 2px 3px rgba(0,0,0,0.7);
+  margin-bottom: 18px;
 }
 
-.page-header p {
-  color: #cbd5e1;
+.smart-categorization-page .page-header p {
+  color: #e0c97f;
   font-size: 1.1rem;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
 /* Status Messages */
