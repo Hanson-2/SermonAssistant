@@ -102,7 +102,6 @@ export default function DashboardPage() {
   if (applyFilters(sermons).length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
-        <div className="dashboard-background" />
         <div className="relative z-10">
           <h1 className="text-white text-2xl mb-4">
             {selectedFolderId === "__unassigned__" 
@@ -137,8 +136,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="dashboard-background" />
-      <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-start p-8">
+      <div className="min-h-screen flex flex-col items-center justify-start p-8">
         <div className="flex flex-col md:flex-row justify-between items-center px-6 pt-8 pb-4 w-full max-w-7xl relative">
           {/* Folder Filter Dropdown */}
           <div className="dashboard-filter mb-4 md:mb-0 mr-0 md:mr-4 w-full md:w-auto">
@@ -173,7 +171,7 @@ export default function DashboardPage() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 13.414V20a1 1 0 01-1.447.894l-4-2A1 1 0 019 18v-4.586L3.293 6.707A1 1 0 013 6V4z"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 13.414V20a1 1 0 01-1.447.894l-4-2A1 1 0 009 18v-4.586L3.293 6.707A1 1 0 013 6V4z"
               />
             </svg>
           </button>

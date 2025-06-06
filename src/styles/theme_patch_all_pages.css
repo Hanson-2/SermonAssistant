@@ -11,6 +11,7 @@ body,
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  background-color: transparent !important; /* Force transparent background */
 }
 
 /* 2. Optional Branded Overlay Background */
@@ -145,4 +146,9 @@ label {
   margin-bottom: 0 !important;
   margin-right: 0.5rem !important;
   white-space: nowrap !important;
+}
+
+html, body {
+  background: none !important;
+  background-color: transparent !important;
 }

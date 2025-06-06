@@ -1053,3 +1053,41 @@ export async function importUserData(importData: any, replaceExisting: boolean =
     throw error;
   }
 }
+
+/**
+ * Delete a verse from the 'verses' collection by its document ID (objectID)
+ */
+export async function deleteVerseById(objectID: string): Promise<void> {
+  if (!objectID) throw new Error("No verse ID provided");
+  const verseDocRef = doc(versesRef, objectID);
+  await deleteDoc(verseDocRef);
+}
+
+/**
+ * Update the text of a verse in the 'verses' collection by its document ID (objectID)
+ */
+export async function updateVerseTextById(objectID: string, newText: string): Promise<void> {
+  if (!objectID) throw new Error("No verse ID provided");
+  const verseDocRef = doc(versesRef, objectID);
+  await updateDoc(verseDocRef, { text: newText });
+}
+
+/**
+ * Delete an expository image from Firebase Storage by its download URL.
+ * @param imageUrl The download URL of the image to delete.
+ */
+export async function deleteExpositoryImage(imageUrl: string): Promise<void> {
+  // Firebase Storage URLs look like:
+  // https://firebasestorage.googleapis.com/v0/b/<bucket>/o/expositories%2Ffilename.jpg?alt=media&token=...
+  // We need to extract the path after '/o/' and before '?' and decode it.
+  try {
+    const matches = imageUrl.match(/\/o\/([^?]+)/);
+    if (!matches || !matches[1]) throw new Error('Invalid image URL');
+    const filePath = decodeURIComponent(matches[1]); // e.g., 'expositories/filename.jpg'
+    const imageRef = ref(storage, filePath);
+    await deleteObject(imageRef);
+  } catch (err) {
+    console.error('Failed to delete expository image:', err);
+    throw err;
+  }
+}

@@ -23,7 +23,7 @@ export default function DashboardGrid() {
   const pagedItems = allItems.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between bg-gray-900 p-8">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-between p-8">
       <div className="flex flex-col flex-grow justify-between max-w-7xl mx-auto w-full h-full">
         <div
           {...swipeHandlers}

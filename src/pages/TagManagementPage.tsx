@@ -252,9 +252,6 @@ export default function TagManagementPage() {
 
   return (
     <div className="tag-management-page">
-      {/* Background overlay for consistent theming */}
-      <div className="universal-search-bg"></div>
-      
       <div className="page-header">
         <h1 className="analytics-dashboard-title">Tag Management</h1>
       </div>
@@ -295,7 +292,7 @@ export default function TagManagementPage() {
                   }
                 }}
                 aria-label={`Tag ${tag.name}`}
-                aria-expanded={activeOverlayTagId === tag.id} // Corrected: directly use boolean
+                aria-expanded={activeOverlayTagId === tag.id}
               >
                 <span className="tag-label">{tag.name}</span>
                 {/* Desktop: Icon Overlay */}

@@ -160,7 +160,6 @@ const SmartCategorizationPage: React.FC = () => {
     setSuccess(null);
   };  return (
     <div className="smart-categorization-page">
-      <div className="universal-search-bg"></div>
       <div className="black-overlay"></div>
       <div className="page-header">
         <h1 className="analytics-dashboard-title">Smart Categorization</h1>

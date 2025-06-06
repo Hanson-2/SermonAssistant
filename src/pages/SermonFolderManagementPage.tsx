@@ -80,9 +80,6 @@ const SermonFolderManagementPage: React.FC = () => {
   };
   return (
     <>
-      {/* Background overlay */}
-      <div className="universal-search-bg"></div>
-      
       <div className="sermon-folder-management-page">
         <div className="folder-management-container">
           <h1>Sermon Folders</h1>

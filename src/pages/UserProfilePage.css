@@ -1,7 +1,9 @@
 /* UserProfilePage.css */
 .profile-page {
+  /* Remove background override so global theme/wallpaper is visible */
+  /* background: none !important; */
+  background: transparent !important;
   min-height: calc(100vh - 56px);
-  background: linear-gradient(180deg, #0f172a, #1e293b);
   padding: 2rem;
   
   @media (max-width: 768px) {

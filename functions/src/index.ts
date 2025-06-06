@@ -24,6 +24,9 @@ import {
     getAllUniqueTranslationsHandler,
     batchUpdateTagsByCriteriaHandler
 } from "./universalSearch";
+// Import scripture reference extraction utility
+import { extractScriptureReferences } from '../../src/utils/smartParseScriptureInput';
+
 // Remove v2 imports
 // import { onCall, CallableRequest } from "firebase-functions/v2/https";
 
@@ -731,25 +734,45 @@ export const advancedSermonSearchFunc = functions.https.onCall(
       } as SermonData));
 
       // Client-side filtering for complex criteria
-      if (data.query) {
-        const searchTerms = data.query.toLowerCase().split(' ');
+      if (data.query || (data.tags && data.tags.length > 0) || (data.books && data.books.length > 0)) {
         sermons = sermons.filter(sermon => {
-          const searchableText = `${sermon.title || ''} ${sermon.description || ''}`.toLowerCase();
-          return searchTerms.some(term => searchableText.includes(term));
-        });
-      }
-
-      if (data.tags && data.tags.length > 0) {
-        sermons = sermons.filter(sermon => {
-          const sermonTags = sermon.tags || [];
-          return data.tags!.some(tag => sermonTags.includes(tag));
-        });
-      }
-
-      if (data.books && data.books.length > 0) {
-        sermons = sermons.filter(sermon => {
-          const sermonBooks = sermon.books || [];
-          return data.books!.some(book => sermonBooks.includes(book));
+          const matches: boolean[] = [];
+          // Text query (title, description)
+          if (data.query) {
+            const searchTerms = data.query.toLowerCase().split(' ');
+            const searchableText = `${sermon.title || ''} ${sermon.description || ''}`.toLowerCase();
+            if (searchTerms.some(term => searchableText.includes(term))) {
+              matches.push(true);
+            }
+          }
+          // Tag match
+          if (data.tags && data.tags.length > 0) {
+            const sermonTags = sermon.tags || [];
+            if (data.tags.some(tag => sermonTags.includes(tag))) {
+              matches.push(true);
+            }
+          }
+          // Book match (OR): check both sermon.books and scripture refs in description
+          if (data.books && data.books.length > 0) {
+            let found = false;
+            // Check books field
+            const sermonBooks = sermon.books || [];
+            if (data.books.some(book => sermonBooks.includes(book))) {
+              found = true;
+            }
+            // Check scripture references in description/notes
+            if (!found && sermon.description) {
+              const refs = extractScriptureReferences(sermon.description);
+              if (refs.some(ref => (data.books || []).includes(ref.book))) {
+                found = true;
+              }
+            }
+            if (found) {
+              matches.push(true);
+            }
+          }
+          // OR logic: include if any match
+          return matches.length > 0;
         });
       }
 

@@ -7,10 +7,12 @@ import {
   removeSermonFromSeriesFunc,
   fetchSermons,
   getSermonSeriesFunc,
-  Sermon
+  Sermon,
+  uploadExpositoryImage
 } from '../services/firebaseService';
 import { Link } from 'react-router-dom';
 import SermonCard from '../components/SermonCard/SermonCard';
+import { fetchTags, Tag } from '../services/tagService';
 import './SermonSeriesManagementPage.css';
 
 // --- Error Boundary for Debugging ---
@@ -38,6 +40,18 @@ class ErrorBoundary extends React.Component<any, { hasError: boolean; error: any
   }
 }
 
+// Helper: normalize tag for storage (matches rest of app)
+function normalizeTagForStorage(tag: string) {
+  return tag.trim().toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-');
+}
+// Helper: normalize tag for display (capitalize, spaces, no hyphens/underscores)
+function normalizeTagForDisplay(tag: string) {
+  // Replace hyphens/underscores with spaces, capitalize first letter of each word
+  return tag
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 const SermonSeriesManagementPage: React.FC = () => {
   const [series, setSeries] = useState<SermonSeries[]>([]);
   const [sermons, setSermons] = useState<Sermon[]>([]);
@@ -51,8 +65,14 @@ const SermonSeriesManagementPage: React.FC = () => {
   const [newSeriesTitle, setNewSeriesTitle] = useState('');
   const [newSeriesDescription, setNewSeriesDescription] = useState('');
   const [newSeriesStartDate, setNewSeriesStartDate] = useState('');
-  const [newSeriesEndDate, setNewSeriesEndDate] = useState('');  useEffect(() => {
+  const [newSeriesEndDate, setNewSeriesEndDate] = useState('');  const [newSeriesTags, setNewSeriesTags] = useState<string[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [newSeriesImage, setNewSeriesImage] = useState<File | null>(null);
+  const [newSeriesImageUrl, setNewSeriesImageUrl] = useState<string | undefined>(undefined);
+  
+  useEffect(() => {
     loadInitialData();
+    fetchTags().then(setAllTags);
   }, []);
 
   const loadInitialData = async () => {
@@ -77,27 +97,30 @@ const SermonSeriesManagementPage: React.FC = () => {
       setError('Please enter a series title.');
       return;
     }
-
     setIsLoading(true);
     setError(null);
-    
+    let uploadedImageUrl: string | undefined = undefined;
     try {
+      if (newSeriesImage) {
+        uploadedImageUrl = await uploadExpositoryImage(newSeriesImage);
+      }
       await createSermonSeriesFunc({
         name: newSeriesTitle.trim(),
         description: newSeriesDescription.trim() || undefined,
         startDate: newSeriesStartDate || undefined,
-        endDate: newSeriesEndDate || undefined
+        endDate: newSeriesEndDate || undefined,
+        tags: newSeriesTags,
+        imageUrl: uploadedImageUrl
       });
       setSuccess('Series created successfully!');
-      
-      // Reset form
       setNewSeriesTitle('');
       setNewSeriesDescription('');
       setNewSeriesStartDate('');
       setNewSeriesEndDate('');
+      setNewSeriesTags([]);
+      setNewSeriesImage(null);
+      setNewSeriesImageUrl(undefined);
       setShowCreateForm(false);
-      
-      // Refresh series
       const updatedSeries = await getSermonSeriesFunc();
       setSeries(updatedSeries);
     } catch (error) {
@@ -224,7 +247,27 @@ const SermonSeriesManagementPage: React.FC = () => {
   const clearMessages = () => {
     setError(null);
     setSuccess(null);
-  };  return (
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setNewSeriesImage(e.target.files[0]);
+      // Optionally show preview
+      const url = URL.createObjectURL(e.target.files[0]);
+      setNewSeriesImageUrl(url);
+    }
+  };
+
+  const handleTagClick = (tagName: string) => {
+    setNewSeriesTags(prev => {
+      const normalized = normalizeTagForStorage(tagName);
+      return prev.includes(normalized)
+        ? prev.filter(t => t !== normalized)
+        : [...prev, normalized];
+    });
+  };
+  
+  return (
     <>
       <div className="series-management-background" aria-hidden="true" />
       <div className="series-management-page">
@@ -313,6 +356,54 @@ const SermonSeriesManagementPage: React.FC = () => {
                 </div>
               </div>
               
+              <div className="form-group">
+                <label>Tags</label>
+                <div className="series-tags-multiselect">
+                  {allTags.map(tag => {
+                    const normalized = normalizeTagForStorage(tag.name);
+                    const selected = newSeriesTags.includes(normalized);
+                    return (
+                      <span
+                        key={tag.id}
+                        className={`series-tag-multiselect${selected ? ' selected' : ''}`}
+                        onClick={() => handleTagClick(tag.name)}
+                        style={{
+                          cursor: 'pointer',
+                          background: selected ? '#e0c97f' : '#222',
+                          color: selected ? '#222' : '#e0c97f',
+                          border: selected ? '1.5px solid #e0c97f' : '1.5px solid #444',
+                          borderRadius: 8,
+                          padding: '4px 12px',
+                          margin: '0 6px 6px 0',
+                          fontWeight: 500,
+                          userSelect: 'none',
+                          transition: 'all 0.15s',
+                          display: 'inline-block',
+                        }}
+                        tabIndex={0}
+                        role="button"
+                      >
+                        {normalizeTagForDisplay(tag.name)}
+                      </span>
+                    );
+                  })}
+                </div>
+                <small>Click to select/deselect tags. All tags are normalized for storage.</small>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="seriesImage">Series Image</label>
+                <input
+                  id="seriesImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                {newSeriesImageUrl && (
+                  <img src={newSeriesImageUrl} alt="Preview" style={{ maxWidth: 180, marginTop: 8, borderRadius: 8 }} />
+                )}
+              </div>
+              
               <div className="form-actions">
                 <button className="btn btn-primary" onClick={handleCreateSeries}>
                   Create Series
@@ -337,20 +428,20 @@ const SermonSeriesManagementPage: React.FC = () => {
                 const seriesSermons = getSeriesSermons(s.id!);
                 return (
                   <div key={s.id} className="series-card">
+                    {s.imageUrl && (
+                      <img src={s.imageUrl} alt={s.name} className="series-image" style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
+                    )}
                     <div className="series-header">
                       <h3>{s.name}</h3>
-                      <button 
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDeleteSeries(s.id!)}
-                      >
-                        Delete
-                      </button>
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDeleteSeries(s.id!)}>Delete</button>
                     </div>
-                    
-                    {s.description && (
-                      <p className="series-description">{s.description}</p>
+                    {s.tags && s.tags.length > 0 && (
+                      <div className="series-tags-list">
+                        {s.tags.map(tag => (
+                          <span key={tag} className="series-tag">{normalizeTagForDisplay(tag)}</span>
+                        ))}
+                      </div>
                     )}
-                    
                     <div className="series-meta">
                       {s.startDate && (
                         <span className="series-date">

@@ -331,7 +331,7 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             <div className="flex-grow overflow-y-auto">
               {/* Translation Selector - Placed above scripture text */}
               {!loading && translations.length > 1 && (
-                <div className="p-3 md:p-4 border-b border-gray-800/60 bg-gray-900/50 sticky top-0 z-10 backdrop-blur-sm">                  <div className="flex flex-wrap gap-2 justify-center">
+                <div className="p-3 md:p-4 border-b border-gray-800/60 sticky top-0 z-10 backdrop-blur-sm bg-gray-900/50">                  <div className="flex flex-wrap gap-2 justify-center">
                     {translations.map(t => (
                       <button
                         key={t.code}

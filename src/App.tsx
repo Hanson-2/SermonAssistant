@@ -7,6 +7,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 // Layout
 import NavBar from "./components/NavBar/NavBar";
 import SplashScreen from "./components/SplashScreen";
+import UniversalBackground from "./components/UniversalBackground";
 
 // Pages
 import DashboardPage from "./pages/DashboardPage";
@@ -48,7 +49,9 @@ function App() {
     <SplashScreen onFinish={() => setShowSplash(false)} />
   ) : (
     <ThemeProvider>
-      <div className="min-h-screen bg-gray-900 text-white">
+      {/* Universal background overlay, appears on all pages except login/splash */}
+      {location.pathname !== "/login" && !showSplash && <UniversalBackground />}
+      <div className="min-h-screen text-white">
         {location.pathname !== "/login" && <NavBar />}
         <main className="pt-[56px]">
           <Routes>

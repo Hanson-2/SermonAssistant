@@ -24,6 +24,33 @@ const AnalyticsDashboardPage: React.FC = () => {
   // --- Enhancement: Series Filter State ---
   const [selectedSeriesFilter, setSelectedSeriesFilter] = useState<string>('');
 
+  // Add state for expanded book dropdowns
+  const [expandedBooks, setExpandedBooks] = useState<string[]>([]);
+
+  // Collapsible analytics cards state
+  const [expandedCards, setExpandedCards] = useState<{ [key: string]: boolean }>({
+    tags: true,
+    books: true,
+    categories: true,
+    series: true,
+  });
+
+  const toggleCard = (key: string) => {
+    setExpandedCards(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // --- Collapsible state for analytics cards ---
+  const [collapsedCards, setCollapsedCards] = useState({
+    tags: false,
+    books: false,
+    categories: false,
+    series: false,
+  });
+
+  const toggleCardCollapse = (card: keyof typeof collapsedCards) => {
+    setCollapsedCards(prev => ({ ...prev, [card]: !prev[card] }));
+  };
+
   // Fetch sermons, categories, and series ONCE on mount
   useEffect(() => {
     const loadInitialData = async () => {
@@ -83,20 +110,32 @@ const AnalyticsDashboardPage: React.FC = () => {
     return filtered.filter(s => !!s && typeof s === 'object');
   };
 
+  // Defensive: If getFilteredSermons() is empty, fallback to all sermons for analytics
+  const getSafeSermons = () => {
+    const filtered = getFilteredSermons();
+    return filtered.length > 0 ? filtered : sermons;
+  };
+
+  // --- Recent Sermons: Use sermon.date (prefer Timestamp, fallback to string) ---
   const getRecentSermons = (count: number = 5) => {
-    return [...getFilteredSermons()]
-      .filter(s => s && s.dateAdded && typeof s.dateAdded === 'object' && 'seconds' in s.dateAdded)
+    return getSafeSermons()
+      .filter(s => s && s.date)
       .sort((a, b) => {
-        const aSec = a && a.dateAdded && typeof a.dateAdded === 'object' && 'seconds' in a.dateAdded ? a.dateAdded.seconds : 0;
-        const bSec = b && b.dateAdded && typeof b.dateAdded === 'object' && 'seconds' in b.dateAdded ? b.dateAdded.seconds : 0;
-        return bSec - aSec;
+        // Firestore Timestamp: { seconds, nanoseconds }
+        const aDate = a.date && typeof a.date === 'object' && a.date !== null && 'seconds' in a.date
+          ? (a.date as any).seconds
+          : (a.date ? new Date(a.date).getTime() / 1000 : 0);
+        const bDate = b.date && typeof b.date === 'object' && b.date !== null && 'seconds' in b.date
+          ? (b.date as any).seconds
+          : (b.date ? new Date(b.date).getTime() / 1000 : 0);
+        return bDate - aDate;
       })
       .slice(0, count);
   };
 
   const getCategoryStats = () => {
     const categoryCount: { [key: string]: number } = {};
-    getFilteredSermons().forEach(sermon => {
+    getSafeSermons().forEach(sermon => {
       if (sermon && sermon.category) {
         categoryCount[sermon.category] = (categoryCount[sermon.category] || 0) + 1;
       }
@@ -108,7 +147,7 @@ const AnalyticsDashboardPage: React.FC = () => {
 
   const getSeriesStats = () => {
     const seriesCount: { [key: string]: number } = {};
-    getFilteredSermons().forEach(sermon => {
+    getSafeSermons().forEach(sermon => {
       if (sermon.seriesId) {
         const seriesTitle = series.find(s => s.id === sermon.seriesId)?.name || 'Unknown Series';
         seriesCount[seriesTitle] = (seriesCount[seriesTitle] || 0) + 1;
@@ -122,7 +161,7 @@ const AnalyticsDashboardPage: React.FC = () => {
 
   const getTagStats = () => {
     const tagCount: { [key: string]: number } = {};
-    getFilteredSermons().forEach(sermon => {
+    getSafeSermons().forEach(sermon => {
       if (sermon.tags) {
         sermon.tags.forEach(tag => {
           tagCount[tag] = (tagCount[tag] || 0) + 1;
@@ -136,27 +175,55 @@ const AnalyticsDashboardPage: React.FC = () => {
       .slice(0, 10); // Top 10 tags
   };
 
+  // --- Most Referenced Books: Extract from notes, count by book and chapter ---
   const getBooksStats = () => {
-    const bookCount: { [key: string]: number } = {};
-    getFilteredSermons().forEach(sermon => {
-      let bookKey = '';
-      if (sermon.bibleBook) {
-        if (typeof sermon.bibleBook === 'string') {
-          bookKey = sermon.bibleBook;
-        } else if (React.isValidElement(sermon.bibleBook) && sermon.bibleBook.props && typeof sermon.bibleBook.props === 'object' && sermon.bibleBook.props !== null && 'children' in sermon.bibleBook.props) {
-          bookKey = String((sermon.bibleBook.props as { children?: React.ReactNode }).children);
-        } else {
-          bookKey = String(sermon.bibleBook);
-        }
-        if (bookKey) {
-          bookCount[bookKey] = (bookCount[bookKey] || 0) + 1;
-        }
+    const bookCount: { [book: string]: number } = {};
+    const chapterCount: { [book: string]: { [chapter: string]: number } } = {};
+    const safeSermons = getSafeSermons();
+    safeSermons.forEach(sermon => {
+      let allNotes = '';
+      // Defensive: Combine notes and description for scripture extraction
+      if (sermon.notes && typeof sermon.notes === 'object' && !Array.isArray(sermon.notes)) {
+        allNotes = Object.values(sermon.notes).join(' ');
+      } else if (Array.isArray(sermon.notes)) {
+        allNotes = sermon.notes.join(' ');
+      } else if (typeof sermon.notes === 'string') {
+        allNotes = sermon.notes;
+      }
+      // Also include description if present
+      if (sermon.description && typeof sermon.description === 'string') {
+        allNotes += ' ' + sermon.description;
+      }
+      if (allNotes) {
+        const refs = extractScriptureReferences(allNotes);
+        refs.forEach(({ book, chapter }) => {
+          bookCount[book] = (bookCount[book] || 0) + 1;
+          if (!chapterCount[book]) chapterCount[book] = {};
+          chapterCount[book][chapter] = (chapterCount[book][chapter] || 0) + 1;
+        });
       }
     });
-    return Object.entries(bookCount)
+    const booksArray = Object.entries(bookCount)
       .map(([book, count]) => ({ book, count }))
       .sort((a, b) => b.count - a.count);
+    return { booksArray, chapterCount };
   };
+
+  // Utility: Extract all references like "BookName Chapter:Verse" from a string, stripping HTML
+  function extractScriptureReferences(text: string): { book: string, chapter: string }[] {
+    // Remove HTML tags if present
+    const plain = text.replace(/<[^>]+>/g, ' ');
+    // Regex matches e.g. "Genesis 1:1", "1 John 2:3", "Song of Solomon 3:4", with optional dash/colon/space
+    const regex = /([1-3]?\s?[A-Za-z .]+?)\s+(\d+):\d+(?:[-–]\d+)?/g;
+    const results: { book: string, chapter: string }[] = [];
+    let match;
+    while ((match = regex.exec(plain)) !== null) {
+      const book = match[1].replace(/\s+/g, ' ').trim();
+      const chapter = match[2];
+      results.push({ book, chapter });
+    }
+    return results;
+  }
 
   const getTimeframePeriod = () => {
     const now = new Date();
@@ -181,9 +248,8 @@ const AnalyticsDashboardPage: React.FC = () => {
       ['Total Sermons', analytics?.totalSermons || sermons.length],
       ['Categories', categories.length],
       ['Series', series.length],
-      ['Bible Books', getBooksStats().length],
-      ['Unique Tags', getTagStats().length],
-      ['Avg per Month', analytics?.averageSermonLength || (sermons.length / 12).toFixed(1)],
+      // Removed Bible Books and Unique Tags
+      ['Avg per Month', getAverageSermonsPerMonth()],
     ];
     const csvContent = 'data:text/csv;charset=utf-8,' +
       rows.map(e => e.join(',')).join('\n');
@@ -210,6 +276,34 @@ const AnalyticsDashboardPage: React.FC = () => {
     return Object.entries(months)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, count]) => ({ month, count }));
+  };
+
+  // --- Helper: Calculate Average Sermons Per Month ---
+  const getAverageSermonsPerMonth = () => {
+    const filtered = getFilteredSermons();
+    if (!filtered.length) return '0.0';
+    // Find earliest sermon date
+    const earliest = filtered.reduce((min, s) => {
+      if (s.dateAdded && typeof s.dateAdded === 'object' && 'seconds' in s.dateAdded) {
+        const d = s.dateAdded.seconds;
+        return min === null || d < min ? d : min;
+      }
+      return min;
+    }, null);
+    if (!earliest) return filtered.length.toFixed(1); // fallback
+    const earliestDate = new Date(earliest * 1000);
+    const now = new Date();
+    const months = Math.max(
+      (now.getFullYear() - earliestDate.getFullYear()) * 12 + (now.getMonth() - earliestDate.getMonth()) + 1,
+      1
+    );
+    return (filtered.length / months).toFixed(1);
+  };
+
+  const handleBookClick = (book: string) => {
+    setExpandedBooks(prev => prev.includes(book)
+      ? prev.filter(b => b !== book)
+      : [...prev, book]);
   };
 
   if (isLoading) {
@@ -358,21 +452,10 @@ const AnalyticsDashboardPage: React.FC = () => {
                   {sermon.title || 'Untitled'}
                 </Link>
                 <span className="sermon-date">
-                  {sermon.dateAdded && typeof sermon.dateAdded === 'object' && 'seconds' in sermon.dateAdded
-                    ? new Date(sermon.dateAdded.seconds * 1000).toLocaleDateString()
-                    : 'No date'}
+                  {sermon.date && typeof sermon.date === 'object' && sermon.date !== null && 'seconds' in sermon.date
+                    ? new Date((sermon.date as any).seconds * 1000).toLocaleDateString()
+                    : (sermon.date ? new Date(sermon.date).toLocaleDateString() : 'No date')}
                 </span>
-              </div>
-              <div className="sermon-details">
-                <p className="scripture-ref">
-                  {sermon.bibleBook ? String(sermon.bibleBook) : ''}
-                  {sermon.bibleChapter ? ` ${sermon.bibleChapter}` : ''}
-                  {sermon.bibleStartVerse ? `:${sermon.bibleStartVerse}` : ''}
-                  {sermon.bibleEndVerse ? `-${sermon.bibleEndVerse}` : ''}
-                </p>
-                {sermon.category && (
-                  <span className="category-tag">{sermon.category}</span>
-                )}
               </div>
             </div>
           ))}
@@ -381,7 +464,7 @@ const AnalyticsDashboardPage: React.FC = () => {
 
       {/* Overview Stats */}
       <div className="stats-overview">
-        <div className="stat-card">
+        <div className="stat-card" title="Total number of sermons in your collection.">
           <div className="stat-icon">📝</div>
           <div className="stat-content">
             <h3>Total Sermons</h3>
@@ -389,7 +472,7 @@ const AnalyticsDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" title="Number of unique categories assigned to your sermons.">
           <div className="stat-icon">🏷️</div>
           <div className="stat-content">
             <h3>Categories</h3>
@@ -397,7 +480,7 @@ const AnalyticsDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" title="Number of unique series your sermons belong to.">
           <div className="stat-icon">📚</div>
           <div className="stat-content">
             <h3>Series</h3>
@@ -405,28 +488,12 @@ const AnalyticsDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon">📖</div>
-          <div className="stat-content">
-            <h3>Bible Books</h3>
-            <span className="stat-number">{getBooksStats().length}</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon">🏷️</div>
-          <div className="stat-content">
-            <h3>Unique Tags</h3>
-            <span className="stat-number">{getTagStats().length}</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
+        <div className="stat-card" title="Average number of sermons added per month (since your first sermon).">
           <div className="stat-icon">📊</div>
           <div className="stat-content">
             <h3>Avg per Month</h3>
             <span className="stat-number">
-              {analytics?.averageSermonLength || (sermons.length / 12).toFixed(1)}
+              {getAverageSermonsPerMonth()}
             </span>
           </div>
         </div>
@@ -435,154 +502,162 @@ const AnalyticsDashboardPage: React.FC = () => {
       {/* Charts and Analytics */}
       <div className="analytics-grid">
         {/* Top Tags */}
-        <div className="analytics-card">
-          <h3>Most Used Tags <span title="Shows the top 10 tags used across all sermons.">ℹ️</span></h3>
-          <div className="chart-container">
-            {getTagStats().length === 0 ? (
-              <p className="no-data">No tags assigned to sermons yet.</p>
-            ) : (
-              <div className="tag-cloud">
-                {getTagStats().map(({ tag, count }, index) => (
-                  <span 
-                    key={tag} 
-                    className="tag-item"
-                    style={{
-                      fontSize: `${Math.max(0.8, count / 5)}rem`,
-                      color: `hsl(${index * 30}, 70%, 65%)`,
-                      cursor: 'pointer',
-                      margin: '0 6px',
-                    }}
-                    title={`Used in ${count} sermon${count !== 1 ? 's' : ''}`}
-                  >
-                    {tag} ({count})
-                  </span>
-                ))}
-              </div>
-            )}
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.tags ? ' collapsed' : ''}`} title="Shows the top 10 tags used across all sermons.">
+          <div className="analytics-card-header" onClick={() => toggleCardCollapse('tags')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+            <span>{collapsedCards.tags ? '▶' : '▼'}</span>
+            <h3 style={{margin:0}}>Most Used Tags</h3>
           </div>
+          {!collapsedCards.tags && (
+            <div className="chart-container analytics-card-content-scrollable">
+              {getTagStats().length === 0 ? (
+                <p className="no-data">No tags assigned to sermons yet.</p>
+              ) : (
+                <div className="tag-cloud">
+                  {getTagStats().map(({ tag, count }, index) => (
+                    <span 
+                      key={tag} 
+                      className="tag-item"
+                      style={{
+                        fontSize: `${Math.max(0.8, count / 5)}rem`,
+                        color: `hsl(${index * 30}, 70%, 65%)`,
+                        cursor: 'pointer',
+                        margin: '0 6px',
+                      }}
+                      title={`Used in ${count} sermon${count !== 1 ? 's' : ''}`}
+                    >
+                      {tag} ({count})
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Bible Books */}
-        <div className="analytics-card">
-          <h3>Most Preached Books <span title="Shows the top 10 Bible books referenced in your sermons.">ℹ️</span></h3>
-          <div className="chart-container">
-            <div className="bar-chart">
-              {getBooksStats().slice(0, 10).map(({ book, count }, index) => (
-                <div key={book} className="bar-item">
-                  <div className="bar-label" title={`Book: ${book}`}>{book}</div>
-                  <div className="bar-container">
-                    <div 
-                      className="bar"
-                      style={{ 
-                        width: `${(count / Math.max(...getBooksStats().map(s => s.count))) * 100}%`,
-                        backgroundColor: `hsl(${index * 36}, 60%, 50%)`
-                      }}
-                      title={`Referenced in ${count} sermon${count !== 1 ? 's' : ''}`}
-                    ></div>
-                    <span className="bar-value">{count}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Most Referenced Books */}
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.books ? ' collapsed' : ''}`} title="Shows all Bible books referenced in your sermons, ordered by total references.">
+          <div className="analytics-card-header" onClick={() => toggleCardCollapse('books')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+            <span>{collapsedCards.books ? '▶' : '▼'}</span>
+            <h3 style={{margin:0}}>Most Referenced Books</h3>
           </div>
+          {!collapsedCards.books && (
+            <div className="chart-container analytics-card-content-scrollable">
+              <div className="bar-chart">
+                {getBooksStats().booksArray.map(({ book, count }, index) => (
+                  <div key={book} className="bar-item">
+                    <div
+                      className="bar-label clickable"
+                      title={`Book: ${book}`}
+                      style={{ cursor: 'pointer', fontWeight: 'bold' }}
+                      onClick={() => handleBookClick(book)}
+                    >
+                      {book}
+                      <span style={{ marginLeft: 8, fontSize: '0.9em', color: '#ffe082' }}>
+                        {expandedBooks.includes(book) ? '▼' : '▶'}
+                      </span>
+                    </div>
+                    <div className="bar-container">
+                      <div
+                        className="bar"
+                        style={{
+                          width: `${(count / Math.max(...getBooksStats().booksArray.map(s => s.count))) * 100}%`,
+                          backgroundColor: `hsl(${index * 36}, 60%, 50%)`
+                        }}
+                        title={`Referenced ${count} time${count !== 1 ? 's' : ''}`}
+                      ></div>
+                      <span className="bar-value">{count}</span>
+                    </div>
+                    {/* Chapter breakdown dropdown */}
+                    {expandedBooks.includes(book) && (
+                      <div style={{ marginLeft: 24, marginTop: 4, paddingBottom: 8 }}>
+                        {Object.entries(getBooksStats().chapterCount[book] || {})
+                          .sort((a, b) => Number(a[0]) - Number(b[0]))
+                          .map(([chapter, chapCount]) => (
+                            <div key={chapter} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.98em', color: '#ffe082' }}>
+                              <span style={{ minWidth: 40, fontWeight: 500 }}>Ch. {chapter}</span>
+                              <span style={{ fontWeight: 400, color: '#fffbe6' }}>{chapCount}</span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Category Distribution */}
-        <div className="analytics-card">
-          <h3>Sermons by Category <span title="Distribution of sermons by category.">ℹ️</span></h3>
-          <div className="chart-container">
-            {getCategoryStats().length === 0 ? (
-              <p className="no-data">No categories assigned to sermons yet.</p>
-            ) : (
-              <div className="bar-chart">
-                {getCategoryStats().map(({ category, count }, index) => (
-                  <div key={category} className="bar-item">
-                    <div className="bar-label" title={`Category: ${category}`}>{category}</div>
-                    <div className="bar-container">
-                      <div 
-                        className="bar"
-                        style={{ 
-                          width: `${(count / Math.max(...getCategoryStats().map(s => s.count))) * 100}%`,
-                          backgroundColor: `hsl(${index * 45}, 70%, 60%)`
-                        }}
-                        title={`${count} sermon${count !== 1 ? 's' : ''} in this category`}
-                      ></div>
-                      <span className="bar-value">{count}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.categories ? ' collapsed' : ''}`} title="Distribution of sermons by category.">
+          <div className="analytics-card-header" onClick={() => toggleCardCollapse('categories')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+            <span>{collapsedCards.categories ? '▶' : '▼'}</span>
+            <h3 style={{margin:0}}>Sermons by Category</h3>
           </div>
+          {!collapsedCards.categories && (
+            <div className="chart-container analytics-card-content-scrollable">
+              {getCategoryStats().length === 0 ? (
+                <p className="no-data">No categories assigned to sermons yet.</p>
+              ) : (
+                <div className="bar-chart">
+                  {getCategoryStats().map(({ category, count }, index) => (
+                    <div key={category} className="bar-item">
+                      <div className="bar-label" title={`Category: ${category}`}>{category}</div>
+                      <div className="bar-container">
+                        <div 
+                          className="bar"
+                          style={{ 
+                            width: `${(count / Math.max(...getCategoryStats().map(s => s.count))) * 100}%`,
+                            backgroundColor: `hsl(${index * 45}, 70%, 60%)`
+                          }}
+                          title={`${count} sermon${count !== 1 ? 's' : ''} in this category`}
+                        ></div>
+                        <span className="bar-value">{count}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Series Distribution */}
-        <div className="analytics-card">
-          <h3>Sermons by Series <span title="Distribution of sermons by series.">ℹ️</span></h3>
-          <div className="chart-container">
-            {getSeriesStats().length === 0 ? (
-              <p className="no-data">No series created yet.</p>
-            ) : (
-              <div className="bar-chart">
-                {getSeriesStats().map(({ seriesTitle, count }, index) => (
-                  <div key={seriesTitle} className="bar-item">
-                    <div className="bar-label" title={`Series: ${seriesTitle}`}>{seriesTitle}</div>
-                    <div className="bar-container">
-                      <div 
-                        className="bar"
-                        style={{ 
-                          width: `${(count / Math.max(...getSeriesStats().map(s => s.count))) * 100}%`,
-                          backgroundColor: `hsl(${index * 60}, 65%, 55%)`
-                        }}
-                        title={`${count} sermon${count !== 1 ? 's' : ''} in this series`}
-                      ></div>
-                      <span className="bar-value">{count}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.series ? ' collapsed' : ''}`} title="Distribution of sermons by series.">
+          <div className="analytics-card-header" onClick={() => toggleCardCollapse('series')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+            <span>{collapsedCards.series ? '▶' : '▼'}</span>
+            <h3 style={{margin:0}}>Sermons by Series</h3>
           </div>
+          {!collapsedCards.series && (
+            <div className="chart-container analytics-card-content-scrollable">
+              {getSeriesStats().length === 0 ? (
+                <p className="no-data">No series created yet.</p>
+              ) : (
+                <div className="bar-chart">
+                  {getSeriesStats().map(({ seriesTitle, count }, index) => (
+                    <div key={seriesTitle} className="bar-item">
+                      <div className="bar-label" title={`Series: ${seriesTitle}`}>{seriesTitle}</div>
+                      <div className="bar-container">
+                        <div 
+                          className="bar"
+                          style={{ 
+                            width: `${(count / Math.max(...getSeriesStats().map(s => s.count))) * 100}%`,
+                            backgroundColor: `hsl(${index * 60}, 65%, 55%)`
+                          }}
+                          title={`${count} sermon${count !== 1 ? 's' : ''} in this series`}
+                        ></div>
+                        <span className="bar-value">{count}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* --- Enhancement: Sermons Over Time Chart --- */}
-        <div className="analytics-card">
-          <h3>Sermons Added Per Month</h3>
-          <div className="chart-container">
-            {getSermonsPerMonth().length === 0 ? (
-              <p className="no-data">No sermon data available.</p>
-            ) : (
-              <svg width="100%" height="120" viewBox="0 0 400 120" style={{ background: '#f8f8fa', borderRadius: 8, marginBottom: 8 }}>
-                {(() => {
-                  const data = getSermonsPerMonth();
-                  const max = Math.max(...data.map(d => d.count), 1);
-                  const stepX = 400 / Math.max(data.length - 1, 1);
-                  const points = data.map((d, i) => `${i * stepX},${120 - (d.count / max) * 100}`).join(' ');
-                  return (
-                    <>
-                      <polyline
-                        fill="none"
-                        stroke="#4a90e2"
-                        strokeWidth="3"
-                        points={points}
-                      />
-                      {data.map((d, i) => (
-                        <circle key={d.month} cx={i * stepX} cy={120 - (d.count / max) * 100} r="4" fill="#4a90e2">
-                          <title>{`${d.month}: ${d.count}`}</title>
-                        </circle>
-                      ))}
-                    </>
-                  );
-                })()}
-              </svg>
-            )}
-            <div className="sermon-month-labels" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-              {getSermonsPerMonth().map(d => (
-                <span key={d.month}>{d.month}</span>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Removed Sermons Added Per Month chart */}
+
       </div>
 
       {/* Insights */}

@@ -158,6 +158,80 @@
   display: block;
 }
 
+/* Preview Toggle Button - New Styles */
+.preview-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.6em 1.2em;
+  font-size: 1.08rem;
+  font-weight: 600;
+  border-radius: 2em;
+  border: none;
+  background: linear-gradient(180deg, #232323 80%, #181818 100%);
+  color: #e0c97f;
+  box-shadow: 0 2px 6px #000a, 0 1px 0 #fff2 inset;
+  text-shadow: 0 2px 4px #000a, 0 1px 0 #fff2;
+  transition: box-shadow 0.18s, background 0.18s, color 0.18s;
+  outline: none;
+  position: relative;
+  cursor: pointer;
+  border-bottom: 2.5px solid #bfa14a;
+  margin-bottom: 0.5em;
+}
+
+.preview-toggle-btn .toggle-label {
+  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+
+.preview-toggle-btn .toggle-indicator {
+  width: 2.1em;
+  height: 1.1em;
+  border-radius: 1em;
+  background: linear-gradient(90deg, #444 60%, #222 100%);
+  box-shadow: 0 1px 2px #0007 inset;
+  margin-left: 0.7em;
+  position: relative;
+  transition: background 0.18s;
+  display: inline-block;
+}
+
+.preview-toggle-btn .toggle-indicator::after {
+  content: '';
+  display: block;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0c97f 60%, #bfa14a 100%);
+  box-shadow: 0 1px 2px #0007;
+  position: absolute;
+  top: 0.05em;
+  left: 0.1em;
+  transition: left 0.18s, background 0.18s;
+}
+
+.preview-toggle-btn.active {
+  background: linear-gradient(180deg, #181818 80%, #232323 100%);
+  color: #bfa14a;
+  box-shadow: 0 2px 8px #000c, 0 1px 0 #fff2 inset;
+  border-bottom: 2.5px solid #e0c97f;
+  text-shadow: 0 2px 6px #000a, 0 1px 0 #fff2;
+}
+
+.preview-toggle-btn.active .toggle-indicator {
+  background: linear-gradient(90deg, #e0c97f 60%, #bfa14a 100%);
+}
+
+.preview-toggle-btn.active .toggle-indicator::after {
+  left: 1em;
+  background: linear-gradient(135deg, #232323 60%, #181818 100%);
+}
+
+.preview-toggle-btn:focus {
+  box-shadow: 0 0 0 3px #e0c97f55, 0 2px 6px #000a, 0 1px 0 #fff2 inset;
+}
+
 /* Settings Grid */
 .theme-settings-grid {
   display: grid;
@@ -268,6 +342,17 @@
   box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
 }
 
+.theme-mode-toggles .theme-toggle.active {
+  background: var(--theme-primary, #e0c97f);
+  color: #111 !important;
+  border: 1.5px solid var(--theme-primary, #e0c97f);
+  box-shadow: 0 2px 8px 0 #0002;
+}
+
+.theme-mode-toggles .theme-toggle.active .toggle-label {
+  color: #111 !important;
+}
+
 .toggle-icon {
   font-size: 1.5rem;
 }
@@ -338,16 +423,35 @@
 }
 
 .color-preset-card {
+  background: #232323 !important; /* Force solid background, no gradients */
+  border-radius: 10px;
+  border: 1.5px solid #222;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+  padding: 10px 14px;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border: 2px solid var(--border-color, #374151);
-  border-radius: 12px;
-  background: var(--card-bg, #1f2937);
+  gap: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.color-preset-card .preset-colors {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.color-preset-card *,
+.color-preset-card .color-swatch,
+.color-preset-card .color-swatch.primary,
+.color-preset-card .color-swatch.accent {
+  /* Force removal of any potential gradient inheritance */
+  background-image: none !important;
+  background: initial;
+}
+
+.preset-colors {
+  display: flex;
+  gap: 6px;
 }
 
 .color-preset-card:hover {
@@ -357,45 +461,19 @@
 }
 
 .color-preset-card.selected {
-  border-color: var(--primary-color, #fbbf24);
-  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
+  outline: 2px solid var(--theme-primary, #e0c97f);
+  box-shadow: 0 0 0 2px var(--theme-primary, #e0c97f)33;
 }
 
-.preset-colors {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.color-swatch {
+.color-swatch.primary,
+.color-swatch.accent {
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  position: relative;
-}
-
-.color-swatch.primary::after {
-  content: 'P';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 10px;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
-}
-
-.color-swatch.accent::after {
-  content: 'A';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 10px;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+  border: 1.5px solid #222;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.10);
+  /* Remove any background inheritance to ensure inline styles work */
+  background: initial;
 }
 
 .preset-info {
@@ -452,7 +530,17 @@
 .font-size-toggle.active {
   border-color: var(--primary-color);
   background: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
+  color: #111 !important;
+  border: 1.5px solid var(--theme-primary, #e0c97f);
+  box-shadow: 0 2px 8px 0 #0002;
+}
+
+.font-size-toggles .font-size-toggle.active .size-label {
+  color: #111 !important;
+}
+
+.font-size-toggles .font-size-toggle.active .size-preview {
+  color: #111 !important;
 }
 
 .size-preview {
@@ -510,6 +598,15 @@
   border-color: var(--primary-color);
   background: var(--primary-light);
   box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
+  color: #111 !important;
+}
+
+.line-height-toggle.active .line-height-preview {
+  color: #111 !important;
+}
+
+.line-height-toggle.active .height-label {
+  color: #111 !important;
 }
 
 .line-height-preview {
@@ -519,15 +616,15 @@
 }
 
 .line-height-preview[data-height="normal"] {
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .line-height-preview[data-height="relaxed"] {
-  line-height: 1.5;
+  line-height: 1.7;
 }
 
 .line-height-preview[data-height="loose"] {
-  line-height: 1.8;
+  line-height: 2.2;
 }
 
 .height-label {
@@ -567,6 +664,15 @@
   border-color: var(--primary-color);
   background: var(--primary-light);
   box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
+  color: #111 !important;
+}
+
+.letter-spacing-toggle.active .spacing-preview {
+  color: #111 !important;
+}
+
+.letter-spacing-toggle.active .spacing-label {
+  color: #111 !important;
 }
 
 .spacing-preview {

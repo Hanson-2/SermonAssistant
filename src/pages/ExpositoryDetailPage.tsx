@@ -330,7 +330,7 @@ export default function ExpositoryDetailPage() {
   }, [slides, debouncedSetRefs, overlayOpen, lockedOverlayRef]);
 
   if (!sermon) {
-    return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   }
 
   return (

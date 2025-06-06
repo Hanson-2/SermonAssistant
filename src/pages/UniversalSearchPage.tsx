@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { deleteVerseById, updateVerseTextById } from "../services/firebaseService";
 import "./UniversalSearchPage.scss";
 
 // REMOVE OLD STATIC TRANSLATION DATA
@@ -107,6 +108,10 @@ const UniversalSearchPage: React.FC = () => {
   const [isTranslationsCollapsed, setIsTranslationsCollapsed] = useState(false);
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
   const [selectedHitsPerPage, setSelectedHitsPerPage] = useState(50); // Default 50
+  const [deletingVerseId, setDeletingVerseId] = useState<string | null>(null);
+  const [editingVerseId, setEditingVerseId] = useState<string | null>(null);
+  const [editText, setEditText] = useState<string>("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const functions = getFunctions();
 
@@ -281,9 +286,46 @@ const UniversalSearchPage: React.FC = () => {
     setIsFiltersCollapsed(false);     // Expand on clear
   };
 
+  // Delete verse handler
+  const handleDeleteVerse = async (objectID: string) => {
+    if (!window.confirm("Are you sure you want to delete this verse? This cannot be undone.")) return;
+    setDeletingVerseId(objectID);
+    try {
+      await deleteVerseById(objectID);
+      setCurrentResults(prev => prev.filter(v => v.objectID !== objectID));
+      setTotalHits(h => h - 1);
+    } catch (err: any) {
+      alert("Failed to delete verse: " + (err.message || err));
+    } finally {
+      setDeletingVerseId(null);
+    }
+  };
+
+  // Edit verse handler
+  const handleEditVerse = (verse: Verse) => {
+    setEditingVerseId(verse.objectID);
+    setEditText(verse.text);
+  };
+  const handleCancelEdit = () => {
+    setEditingVerseId(null);
+    setEditText("");
+  };
+  const handleSaveEdit = async (verse: Verse) => {
+    setSavingEdit(true);
+    try {
+      await updateVerseTextById(verse.objectID, editText);
+      setCurrentResults(prev => prev.map(v => v.objectID === verse.objectID ? { ...v, text: editText } : v));
+      setEditingVerseId(null);
+      setEditText("");
+    } catch (err: any) {
+      alert("Failed to update verse: " + (err.message || err));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   return (
     <div className="universal-search-page">
-      <div className="universal-search-bg" />
       <div className="universal-search-content">
         <h1 className="universal-search-title">Universal Scripture Search</h1>
 
@@ -431,17 +473,54 @@ const UniversalSearchPage: React.FC = () => {
                       __html: verse._highlightResult?.reference?.value || `${verse.reference} (${verse.translation})`
                     }}
                   />
-                  <p 
-                    className="result-text" 
-                    dangerouslySetInnerHTML={{
-                      __html: verse._highlightResult?.text?.value || verse.text
-                    }}
-                  />
+                  {editingVerseId === verse.objectID ? (
+                    <>
+                      <textarea
+                        value={editText}
+                        onChange={e => setEditText(e.target.value)}
+                        rows={3}
+                        style={{ width: '100%', marginBottom: 8 }}
+                        disabled={savingEdit}
+                        placeholder="Edit verse text"
+                        title="Edit verse text"
+                      />
+                      <button onClick={() => handleSaveEdit(verse)} disabled={savingEdit} style={{ marginRight: 8 }}>
+                        {savingEdit ? 'Saving...' : 'Save'}
+                      </button>
+                      <button onClick={handleCancelEdit} disabled={savingEdit}>Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <p 
+                        className="result-text" 
+                        dangerouslySetInnerHTML={{
+                          __html: verse._highlightResult?.text?.value || verse.text
+                        }}
+                      />
+                      <button
+                        className="edit-verse-btn"
+                        onClick={() => handleEditVerse(verse)}
+                        style={{ marginLeft: 8, color: '#e0c97f', background: 'none', border: 'none', cursor: 'pointer' }}
+                        title="Edit this verse text"
+                      >
+                        Edit
+                      </button>
+                    </>
+                  )}
                   {verse.tags && verse.tags.length > 0 && (
                     <div className="result-tags">
                       <strong>Tags:</strong> {verse.tags.join(', ')}
                     </div>
                   )}
+                  <button
+                    className="delete-verse-btn"
+                    onClick={() => handleDeleteVerse(verse.objectID)}
+                    disabled={deletingVerseId === verse.objectID}
+                    style={{ marginLeft: 12, color: '#ff4040', background: 'none', border: 'none', cursor: 'pointer' }}
+                    title="Delete this verse from Firestore"
+                  >
+                    {deletingVerseId === verse.objectID ? 'Deleting...' : 'Delete'}
+                  </button>
                 </li>
               ))}
             </ul>

@@ -8,6 +8,8 @@ import {
 import { AdvancedSearchCriteria, Sermon, SermonCategory, SermonSeries } from '../services/firebaseService';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import SermonCard from '../components/SermonCard/SermonCard';
+import { useNavigate } from 'react-router-dom';
+import './AnalyticsDashboardPage.css';
 import './AdvancedSearchPage.scss';
 
 // Tag interface to match Firebase function response
@@ -17,7 +19,8 @@ interface Tag {
   displayName: string;
 }
 
-const AdvancedSearchPage: React.FC = () => {
+const ExpositorySearchPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchCriteria, setSearchCriteria] = useState<AdvancedSearchCriteria>({
     query: '',
     tags: [],
@@ -66,13 +69,13 @@ const AdvancedSearchPage: React.FC = () => {
     setIsLoadingTags(true);
     try {
       const functions = getFunctions();
-      const getAllUniqueTagsCallable = httpsCallable<void, { uniqueTags: Tag[] }>(
+      const getAllUniqueTagsCallable = httpsCallable<void, { uniqueTags: Tag }>(
         functions, 
         'getAllUniqueTags'
       );
       const result = await getAllUniqueTagsCallable();
       const fetchedTags = result.data.uniqueTags || [];
-      setAvailableTags(fetchedTags);
+      setAvailableTags(Array.isArray(fetchedTags) ? fetchedTags : [fetchedTags]);
     } catch (error) {
       console.error('Error fetching tags:', error);
       setError('Failed to load tags. Please try again.');
@@ -171,20 +174,33 @@ const AdvancedSearchPage: React.FC = () => {
     );
   };
 
-  const openSermonInNewWindow = (sermonId: string) => {
-    const url = `/expository/${sermonId}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+  // Replace tag selection dropdown+add with a scrollable clickable list
+  const handleTagClick = (tagDisplayName: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tagDisplayName)
+        ? prev.filter(t => t !== tagDisplayName)
+        : [...prev, tagDisplayName]
+    );
   };
+
+  // Replace book selection dropdown+add with a scrollable clickable list
+  const handleBookClick = (book: string) => {
+    setSelectedBooks(prev =>
+      prev.includes(book)
+        ? prev.filter(b => b !== book)
+        : [...prev, book]
+    );
+  };
+
   return (
     <div>
-      {/* Background overlays for consistent theming */}
-      <div className="universal-search-bg"></div>
+      {/* Removed <div className="universal-search-bg"></div>; now handled globally */}
       <div className="black-overlay"></div>
       
-      <div className="advanced-search-page">
+      <div className="expository-search-page">
         <div className="page-header">
-          <h1 className="analytics-dashboard-title">Advanced Search</h1>
-          <p>Find sermons using powerful filters and search criteria</p>
+          <h1 className="analytics-dashboard-title">Expository Search</h1>
+          <p className="search-subtitle">Find expository notes using powerful filters and search criteria</p>
         </div>
 
       {/* Error Message */}
@@ -196,7 +212,7 @@ const AdvancedSearchPage: React.FC = () => {
       )}
 
       {/* Search Form */}
-      <div className="search-form">
+      <div className="search-form search-form-theme">
         <div className="form-section">
           <h3>Text Search</h3>
           <div className="form-group">
@@ -209,80 +225,37 @@ const AdvancedSearchPage: React.FC = () => {
               placeholder="Enter keywords to search for..."
             />
           </div>
-        </div>        <div className="form-section">
+        </div>        {/* Tags section */}
+        <div className="form-section">
           <h3>Tags</h3>
           <div className="form-group">
-            <div className="tag-input-group">
-              <label htmlFor="tagSelect">Select Tag</label>
-              <select
-                id="tagSelect"
-                value=""
-                onChange={(e) => {
-                  if (e.target.value) {
-                    addTagFromDropdown(e.target.value);
-                  }
-                }}
-                aria-label="Select Tag"
-                disabled={isLoadingTags}
-              >
-                <option value="">
-                  {isLoadingTags ? 'Loading tags...' : 'Select from existing tags'}
-                </option>
-                {availableTags
-                  .filter(tag => !selectedTags.includes(tag.displayName))
-                  .map(tag => (
-                    <option key={tag.id} value={tag.displayName}>
-                      {tag.displayName}
-                    </option>
-                  ))
-                }
-              </select>
-              <button type="button" onClick={() => {
-                const selectElement = document.getElementById('tagSelect') as HTMLSelectElement;
-                if (selectElement && selectElement.value) {
-                  addTagFromDropdown(selectElement.value);
-                }
-              }} className="btn export-btn">
-                Add
-              </button>
-            </div>
-            <div className="selected-items">
-              {selectedTags.map(tag => (
-                <span key={tag} className="selected-tag">
-                  {tag}
-                  <button onClick={() => removeTag(tag)}>×</button>
-                </span>
+            <ul className="filter-scrollable-list">
+              {availableTags.map(tag => (
+                <li
+                  key={tag.displayName}
+                  onClick={() => handleTagClick(tag.displayName)}
+                  className={selectedTags.includes(tag.displayName) ? 'selected' : ''}
+                >
+                  {tag.displayName}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
-        </div>        <div className="form-section">
+        </div>        {/* Bible Books section */}
+        <div className="form-section">
           <h3>Bible Books</h3>
           <div className="form-group">
-            <div className="book-input-group">
-              <label htmlFor="bibleBookSelect">Select Bible Book</label>
-              <select
-                id="bibleBookSelect"
-                value={newBook}
-                onChange={(e) => setNewBook(e.target.value)}
-                aria-label="Select Bible Book"
-              >
-                <option value="">Select a Bible book</option>
-                {bibleBooks.filter(book => !selectedBooks.includes(book)).map(book => (
-                  <option key={book} value={book}>{book}</option>
-                ))}
-              </select>
-              <button type="button" onClick={addBook} className="btn export-btn">
-                Add
-              </button>
-            </div>
-            <div className="selected-items">
-              {selectedBooks.map(book => (
-                <span key={book} className="selected-book">
+            <ul className="filter-scrollable-list">
+              {bibleBooks.map(book => (
+                <li
+                  key={book}
+                  onClick={() => handleBookClick(book)}
+                  className={selectedBooks.includes(book) ? 'selected' : ''}
+                >
                   {book}
-                  <button onClick={() => removeBook(book)}>×</button>
-                </span>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </div>
 
@@ -378,23 +351,12 @@ const AdvancedSearchPage: React.FC = () => {
           ) : (
             <div className="results-grid">
               {searchResults.sermons.map(sermon => (
-                <div key={sermon.id} className="sermon-result-wrapper">                  <SermonCard
-                    sermon={{
-                      id: sermon.id,
-                      title: sermon.title,
-                      description: sermon.description || '',
-                      date: sermon.date ? new Date(sermon.date).toLocaleDateString() : '',
-                      imageUrl: sermon.imageUrl
-                    }}
-                    hideActions={true}
-                  /><div className="sermon-result-overlay">
-                    <button 
-                      onClick={() => openSermonInNewWindow(sermon.id.toString())}
-                      className="btn btn-primary btn-sm"
-                    >
-                      Open in New Window
-                    </button>
-                  </div>
+                <div key={sermon.id} className="sermon-result-wrapper">
+                  <SermonCard
+                    key={sermon.id}
+                    sermon={sermon}
+                    className="clickable-sermon-card"
+                  />
                 </div>
               ))}
             </div>
@@ -413,4 +375,4 @@ const AdvancedSearchPage: React.FC = () => {
   );
 };
 
-export default AdvancedSearchPage;
+export default ExpositorySearchPage;

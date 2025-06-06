@@ -13,15 +13,15 @@ import {
 import './ThemeSettingsPage.css';
 
 const colorPresets = [
-  { name: 'Default Theme', primary: '#e0c97f', accent: '#3b82f6' },
-  { name: 'Golden Elegance', primary: '#fbbf24', accent: '#3b82f6' },
-  { name: 'Royal Purple', primary: '#8b5cf6', accent: '#ec4899' },
-  { name: 'Nature Green', primary: '#10b981', accent: '#06b6d4' },
-  { name: 'Warm Sunset', primary: '#f59e0b', accent: '#ef4444' },
-  { name: 'Ocean Blue', primary: '#3b82f6', accent: '#06b6d4' },
-  { name: 'Forest Deep', primary: '#059669', accent: '#8b5cf6' },
-  { name: 'Crimson Fire', primary: '#dc2626', accent: '#f59e0b' },
-  { name: 'Midnight Azure', primary: '#1e40af', accent: '#ec4899' },
+  { name: 'Default Theme', primary: '#e0c97f', accent: '#ffffff' }, // Changed accent to white
+  { name: 'Golden Elegance', primary: '#fbbf24', accent: '#fffbea' },
+  { name: 'Royal Purple', primary: '#8b5cf6', accent: '#f3e8ff' },
+  { name: 'Nature Green', primary: '#10b981', accent: '#e0f7fa' },
+  { name: 'Warm Sunset', primary: '#f59e0b', accent: '#fff7ed' },
+  { name: 'Ocean Blue', primary: '#3b82f6', accent: '#e0f2fe' },
+  { name: 'Forest Deep', primary: '#059669', accent: '#e0ffe0' },
+  { name: 'Crimson Fire', primary: '#dc2626', accent: '#fff0f0' },
+  { name: 'Midnight Azure', primary: '#1e40af', accent: '#e0e7ff' },
 ];
 
 const backgroundImages = [
@@ -32,13 +32,35 @@ const backgroundImages = [
 ];
 
 const fontFamilies = [
-  'Georgia, serif',
-  'Trajan Pro, serif',
-  'Arial, sans-serif',
-  'Helvetica, sans-serif',
-  'Times New Roman, serif',
-  'Roboto, sans-serif',
-  'Open Sans, sans-serif',
+  { name: 'Georgia (Serif)', value: 'Georgia, serif' },
+  { name: 'Trajan Pro (Serif)', value: 'Trajan Pro, serif' },
+  { name: 'Arial (Sans-serif)', value: 'Arial, sans-serif' },
+  { name: 'Helvetica (Sans-serif)', value: 'Helvetica, sans-serif' },
+  { name: 'Times New Roman (Serif)', value: 'Times New Roman, serif' },
+  { name: 'Roboto (Sans-serif)', value: 'Roboto, sans-serif' },
+  { name: 'Open Sans (Sans-serif)', value: 'Open Sans, sans-serif' },
+  { name: 'Lato (Sans-serif)', value: 'Lato, Arial, sans-serif' },
+  { name: 'Montserrat (Sans-serif)', value: 'Montserrat, Arial, sans-serif' },
+  { name: 'Merriweather (Serif)', value: 'Merriweather, serif' },
+  { name: 'Oswald (Sans-serif)', value: 'Oswald, Arial, sans-serif' },
+  { name: 'Raleway (Sans-serif)', value: 'Raleway, Arial, sans-serif' },
+  { name: 'PT Sans (Sans-serif)', value: 'PT Sans, Arial, sans-serif' },
+  { name: 'Nunito (Sans-serif)', value: 'Nunito, Arial, sans-serif' },
+  { name: 'Playfair Display (Serif)', value: 'Playfair Display, serif' },
+  { name: 'Trebuchet MS (Sans-serif)', value: 'Trebuchet MS, sans-serif' },
+  { name: 'Verdana (Sans-serif)', value: 'Verdana, sans-serif' },
+  { name: 'Garamond (Serif)', value: 'Garamond, serif' },
+  { name: 'Palatino (Serif)', value: 'Palatino Linotype, Book Antiqua, Palatino, serif' },
+  { name: 'Tahoma (Sans-serif)', value: 'Tahoma, Geneva, sans-serif' },
+  { name: 'Segoe UI (Sans-serif)', value: 'Segoe UI, Segoe, Tahoma, Geneva, Verdana, sans-serif' },
+  { name: 'Calibri (Sans-serif)', value: 'Calibri, Candara, Segoe, Segoe UI, Optima, Arial, sans-serif' },
+  { name: 'Candara (Sans-serif)', value: 'Candara, Calibri, Segoe, Segoe UI, Optima, Arial, sans-serif' },
+  { name: 'Century Gothic (Sans-serif)', value: 'Century Gothic, CenturyGothic, AppleGothic, sans-serif' },
+  { name: 'Franklin Gothic (Sans-serif)', value: 'Franklin Gothic Medium, Arial Narrow, Arial, sans-serif' },
+  { name: 'Comic Sans MS (Casual)', value: 'Comic Sans MS, cursive, sans-serif' },
+  { name: 'Impact (Display)', value: 'Impact, Charcoal, sans-serif' },
+  { name: 'Futura (Geometric)', value: 'Futura, Trebuchet MS, Arial, sans-serif' },
+  { name: 'System Default', value: 'system-ui' },
 ];
 
 export default function ThemeSettingsPage() {
@@ -250,7 +272,6 @@ export default function ThemeSettingsPage() {
   if (loading) {
     return (
       <>
-        <div className="universal-search-bg" />
         <div className="theme-settings-page">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -263,7 +284,6 @@ export default function ThemeSettingsPage() {
 
   return (
     <>
-      <div className="universal-search-bg" />
       <div className="theme-settings-page">
         <div className="page-header">
           <h1>Theme Settings</h1>
@@ -286,21 +306,22 @@ export default function ThemeSettingsPage() {
 
         <div className="theme-container">          {/* Preview Toggle */}
           <div className="preview-toggle">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={previewMode}
-                onChange={(e) => {
-                  setPreviewMode(e.target.checked);
-                  if (e.target.checked) {
-                    setSuccess('Preview mode enabled. Changes will be applied temporarily.');
-                  } else {
-                    setSuccess('Preview mode disabled. Reverted to saved theme.');
-                  }
-                }}
-              />
-              Live Preview Mode
-            </label>
+            <button
+              type="button"
+              className={`preview-toggle-btn${previewMode ? ' active' : ''}`}
+              onClick={() => {
+                setPreviewMode(!previewMode);
+                setSuccess(
+                  !previewMode
+                    ? 'Preview mode enabled. Changes will be applied temporarily.'
+                    : 'Preview mode disabled. Reverted to saved theme.'
+                );
+              }}
+              tabIndex={0}
+            >
+              <span className="toggle-label">Live Preview Mode</span>
+              <span className="toggle-indicator" />
+            </button>
             <small>Enable to see changes immediately without saving</small>
           </div>
 
@@ -421,12 +442,12 @@ export default function ThemeSettingsPage() {
                       <div className="preset-colors">
                         <div 
                           className="color-swatch primary"
-                          style={{ backgroundColor: preset.primary }}
+                          style={{ background: preset.primary }}
                           title={`Primary: ${preset.primary}`}
                         ></div>
                         <div 
                           className="color-swatch accent"
-                          style={{ backgroundColor: preset.accent }}
+                          style={{ background: preset.accent }}
                           title={`Accent: ${preset.accent}`}
                         ></div>
                       </div>
@@ -444,12 +465,13 @@ export default function ThemeSettingsPage() {
               
               <div className="form-group">
                 <label>Primary Color</label>
-                <div className="color-input-group">
+                <div className="color-input-group" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input
                     type="color"
                     value={settings.primaryColor}
                     onChange={(e) => setSettings({...settings, primaryColor: e.target.value})}
                     title="Primary Color Picker"
+                    style={{ width: 36, height: 36, border: 'none', background: 'none', cursor: 'pointer', marginRight: 8 }}
                   />
                   <input
                     type="text"
@@ -457,25 +479,28 @@ export default function ThemeSettingsPage() {
                     onChange={(e) => setSettings({...settings, primaryColor: e.target.value})}
                     title="Primary Color Hex"
                     placeholder="#fbbf24"
+                    style={{ flex: 1 }}
                   />
                 </div>
               </div>
 
               <div className="form-group">
                 <label>Accent Color</label>
-                <div className="color-input-group">
+                <div className="color-input-group" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input
                     type="color"
                     value={settings.accentColor}
                     onChange={(e) => setSettings({...settings, accentColor: e.target.value})}
                     title="Accent Color Picker"
+                    style={{ width: 36, height: 36, border: 'none', background: 'none', cursor: 'pointer', marginRight: 8 }}
                   />
                   <input
                     type="text"
                     value={settings.accentColor}
                     onChange={(e) => setSettings({...settings, accentColor: e.target.value})}
                     title="Accent Color Hex"
-                    placeholder="#3b82f6"
+                    placeholder="#ffffff"
+                    style={{ flex: 1 }}
                   />
                 </div>
               </div>
@@ -486,8 +511,7 @@ export default function ThemeSettingsPage() {
               <div className="section-header">
                 <h2>Typography</h2>
               </div>
-              
-              <div className="form-group">
+                <div className="form-group">
                 <label>Font Family</label>
                 <select
                   value={settings.fontFamily}
@@ -496,12 +520,12 @@ export default function ThemeSettingsPage() {
                   title="Font Family"
                 >
                   {fontFamilies.map(font => (
-                    <option key={font} value={font} style={{ fontFamily: font }}>
-                      {font.split(',')[0]}
+                    <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                      {font.name}
                     </option>
                   ))}
                 </select>
-              </div>              <div className="form-group">
+              </div><div className="form-group">
                 <label>Font Size</label>
                 <div className="font-size-toggles">
                   {(['small', 'medium', 'large'] as const).map(size => (

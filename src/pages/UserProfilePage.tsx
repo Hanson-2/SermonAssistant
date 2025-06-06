@@ -14,6 +14,7 @@ import {
   updateUserProfilePhoto
 } from '../services/firebaseService';
 import './UserProfilePage.css';
+import '../styles/theme_patch_all_pages.css';
 
 interface Translation {
   id: string;

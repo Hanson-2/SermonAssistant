@@ -7,9 +7,9 @@
   /* === PRIMARY COLORS === */
   --primary-color: #e0c97f;
   --primary-color-rgb: 224, 201, 127;
-  --primary-hover: #f0e68c;
+  --primary-hover: #f3e3b2;
   --primary-light: rgba(224, 201, 127, 0.3);
-  --primary-dark: #4B3A1A;
+  --primary-dark: #bfa85f;
   
   /* === ACCENT COLORS === */
   --accent-color: #3b82f6;
@@ -291,15 +291,15 @@
 
 /* === LINE HEIGHT VARIATIONS === */
 :root[data-line-height="normal"] {
-  --line-height: 1.6;
+  --line-height: 1.4;
 }
 
 :root[data-line-height="relaxed"] {
-  --line-height: 1.8;
+  --line-height: 1.7;
 }
 
 :root[data-line-height="loose"] {
-  --line-height: 2.0;
+  --line-height: 2.2;
 }
 
 /* === LETTER SPACING VARIATIONS === */
@@ -330,6 +330,55 @@ body {
   transition: all 0.3s ease;
 }
 
+/* Global font family override - apply to all elements except specific exceptions */
+body *:not(.monospace):not(code):not(pre):not(textarea[class*="code"]):not([class*="code-"]) {
+  font-family: var(--font-family) !important;
+  line-height: var(--line-height) !important;
+  letter-spacing: var(--letter-spacing) !important;
+}
+
+/* Preserve monospace fonts for code elements */
+code, pre, .monospace, textarea[class*="code"], [class*="code-"] {
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace !important;
+}
+
+/* Apply compact mode spacing to common elements */
+:root[data-accessibility*="compact-mode"] .theme-settings-page,
+:root[data-accessibility*="compact-mode"] .settings-section,
+:root[data-accessibility*="compact-mode"] .form-group,
+:root[data-accessibility*="compact-mode"] .btn,
+:root[data-accessibility*="compact-mode"] .toggle,
+:root[data-accessibility*="compact-mode"] .card {
+  padding: var(--spacing-sm) !important;
+  margin: var(--spacing-xs) !important;
+  gap: var(--spacing-xs) !important;
+}
+
+:root[data-accessibility*="compact-mode"] .page-header {
+  margin-bottom: var(--spacing-md) !important;
+}
+
+:root[data-accessibility*="compact-mode"] .theme-settings-grid {
+  gap: var(--spacing-md) !important;
+}
+
+:root[data-accessibility*="compact-mode"] h1, 
+:root[data-accessibility*="compact-mode"] h2, 
+:root[data-accessibility*="compact-mode"] h3 {
+  margin-bottom: var(--spacing-sm) !important;
+  font-size: calc(1em * 0.9) !important;
+}
+
+:root[data-accessibility*="compact-mode"] .font-size-toggle,
+:root[data-accessibility*="compact-mode"] .line-height-toggle,
+:root[data-accessibility*="compact-mode"] .letter-spacing-toggle,
+:root[data-accessibility*="compact-mode"] .theme-toggle {
+  padding: var(--spacing-sm) !important;
+  min-height: 40px !important;
+}
+
+/* Debug indicators removed after successful testing */
+
 body::before {
   content: '';
   position: fixed;
@@ -354,3 +403,105 @@ body::before {
 .shadow-sm { box-shadow: var(--shadow-sm); }
 .shadow-md { box-shadow: var(--shadow-md); }
 .shadow-lg { box-shadow: var(--shadow-lg); }
+
+/*
+  THEME: Default (Current Look)
+  This theme matches the application's current color scheme and style.
+  --primary-color: #e0c97f (golden tan)
+  --accent-color: #3b82f6 (blue)
+*/
+/* Titles/Headers */
+h1, h2, h3, .page-header h1, .section-header h2, .stat-number, .analytics-dashboard-title {
+  color: var(--primary-color) !important;
+}
+
+/* Section Dividers & HR */
+hr, .section-divider, .divider, .theme-divider {
+  border: none;
+  border-top: 2px solid var(--accent-color) !important;
+  background: linear-gradient(90deg, var(--accent-color) 0%, var(--primary-color) 100%) !important;
+  height: 2px;
+  margin: 2rem 0;
+  opacity: 0.7;
+}
+
+/* Primary Buttons */
+.btn-primary, .add-expository-button-shared, .theme-toggle.active, .font-size-toggle.active, .line-height-toggle.active, .letter-spacing-toggle.active {
+  background: var(--primary-color) !important;
+  color: #222 !important;
+  border-color: var(--primary-dark) !important;
+}
+.btn-primary:hover, .add-expository-button-shared:hover {
+  background: var(--primary-hover) !important;
+}
+
+/* Secondary/Accent Buttons */
+.btn-secondary, .remove-custom-bg, .filter-button.active, .icon-btn.edit-btn {
+  border-color: var(--accent-color) !important;
+  color: var(--accent-color) !important;
+  background: transparent !important;
+}
+.btn-secondary:hover, .remove-custom-bg:hover {
+  background: var(--accent-light) !important;
+}
+
+/* Active Tab/Navigation */
+.navbar .nav-link.active, .dashboard-filter label, .theme-mode-toggles .theme-toggle.active {
+  color: var(--primary-color) !important;
+  border-bottom: 2px solid var(--accent-color) !important;
+}
+
+/* Progress Bars, Loading Indicators */
+.loading-spinner, .progress-bar {
+  border-top-color: var(--accent-color) !important;
+}
+
+/* Badges, Tags, Notification Dots */
+.badge, .tag-label, .notification-dot {
+  background: var(--accent-color) !important;
+  color: #fff !important;
+}
+
+/* Focus/Active Border for Inputs */
+input:focus, select:focus, textarea:focus, .form-input:focus, .form-select:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px var(--accent-light) !important;
+}
+
+/* Checkbox/Radio/Toggles Checked State */
+input[type="checkbox"]:checked, input[type="radio"]:checked, .preview-toggle-btn.active {
+  accent-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Card Borders/Highlights */
+.card, .stat-card, .color-preset-card.selected, .background-option.selected {
+  border-color: var(--accent-color) !important;
+}
+
+/* Table Headers/Selected Rows */
+th, .table-header, .table-row.selected {
+  color: var(--primary-color) !important;
+  background: var(--accent-light) !important;
+}
+
+/* Alert/Info/Success Message Borders */
+.message.error, .message.success, .success-message {
+  border-left: 4px solid var(--accent-color) !important;
+}
+
+/* Pagination Controls */
+.pagination .page-item.active {
+  background: var(--primary-color) !important;
+  color: #222 !important;
+}
+
+/* Links */
+a, .link {
+  color: var(--accent-color) !important;
+}
+a:hover, .link:hover {
+  color: var(--primary-hover) !important;
+}
+
+/* Minimal, non-distracting application: Only key elements use theme colors. */
