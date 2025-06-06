@@ -6,7 +6,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBj4EKhM7aZC3VfOEF3zjmMx8xnUxnEIhM",
   authDomain: "sermon-notes-assistant.firebaseapp.com", 
   projectId: "sermon-notes-assistant",
-  storageBucket: "sermon-notes-assistant.firebasestorage.app",
+  storageBucket: "sermon-notes-assistant.appspot.com",
   messagingSenderId: "111602120623602939751",
   appId: "1:111602120623602939751:web:84c2b825ad9b7eb86cbbb9",
   measurementId: "G-CCVS1DTFR6"
