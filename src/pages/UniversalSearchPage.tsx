@@ -80,42 +80,7 @@ const commonBookGroups = {
     "Pentateuch": ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy"]
 };
 
-// Fetch tags dynamically from Firebase Function
-const fetchAvailableTags = async (): Promise<string[]> => {
-  // Construct the full URL to your Firebase Function
-  const functionUrl = "https://us-central1-sermon-notes-assistant.cloudfunctions.net/getAllUniqueTags";
 
-  try {
-    console.log("Attempting to fetch tags from URL:", functionUrl); // New client-side log
-    // Using fetch API for an onRequest function
-    const response = await fetch(functionUrl, {
-      method: 'POST', // Or 'GET', depending on how you want to call it, ensure server handles it
-      headers: {
-        'Content-Type': 'application/json',
-        // If you have auth or other headers, add them here
-      },
-      body: JSON.stringify({}), // Ensure a valid JSON body for POST with Content-Type: application/json
-    });
-
-    console.log("Received response object from fetch:", response); // New client-side log
-
-    if (!response.ok) {
-      // Log the response text for more details on the error
-      const errorText = await response.text();
-      console.error('Server responded with an error:', response.status, errorText);
-      throw new Error(`Failed to fetch tags. Status: ${response.status}. Message: ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log("Received data from getAllUniqueTags:", data); // Updated client-side log
-    const tags = data.tags as string[];
-    console.log("Extracted tags:", tags); // New client-side log
-    return tags;
-  } catch (e) {
-    console.error('Client-side error in fetchAvailableTags (calling getAllUniqueTags):', e); // Updated client-side error
-    throw e; // Re-throw to be caught by the useEffect
-  }
-};
 
 const UniversalSearchPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
