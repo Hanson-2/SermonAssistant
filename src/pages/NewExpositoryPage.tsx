@@ -47,14 +47,17 @@ export default function NewExpositoryPage() {
     const currentDate = new Date().toISOString().split('T')[0]; // Generate date in YYYY-MM-DD format
 
     await createSermon({
-      title,
-      description,
-      date: currentDate, // Add generated date
-      imageUrl,
-      isArchived: false,
-      imageOnly: false,
-      // Remove dateAdded and all undefined fields
-      // bibleBook, bibleChapter, bibleStartVerse, bibleEndVerse are omitted if not set
+        title,
+        description,
+        date: currentDate, // Add generated date
+        imageUrl,
+        isArchived: false,
+        imageOnly: false,
+        dateAdded: undefined,
+        bibleBook: undefined,
+        bibleChapter: undefined,
+        bibleStartVerse: undefined,
+        bibleEndVerse: undefined
     });
 
     // Add a short delay to ensure Firestore indexes the new record before navigation

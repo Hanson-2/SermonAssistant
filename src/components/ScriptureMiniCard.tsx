@@ -1,5 +1,5 @@
 import React from "react";
-import { getDisplayBookFull, normalizeBookName } from "../utils/getDisplayBookAbbrev";
+import { getDisplayBookAbbrev, normalizeBookName } from "../utils/getDisplayBookAbbrev";
 
 interface ScriptureMiniCardProps {
   verse: any; // Accepts a verse object from the autocomplete
@@ -20,8 +20,7 @@ const ScriptureMiniCard: React.FC<ScriptureMiniCardProps> = ({ verse, onRemove }
     }
     const event = new CustomEvent("showScriptureOverlay", { detail });
     window.dispatchEvent(event);
-  };
-  // Normalize and display full reference name (not abbreviated)
+  };  // Normalize and display abbreviated reference name
   let displayRef = "";
   if (verse.reference) {
     // Try to parse reference like "Genesis 1:1" or "Gen 1:1-2"
@@ -31,24 +30,21 @@ const ScriptureMiniCard: React.FC<ScriptureMiniCardProps> = ({ verse, onRemove }
       const chapter = refMatch[2];
       const verseStart = refMatch[3];
       const verseEnd = refMatch[4];
-      displayRef = `${getDisplayBookFull(book)} ${chapter}:${verseStart}${verseEnd ? "-" + verseEnd : ""}`;
+      displayRef = `${getDisplayBookAbbrev(book)} ${chapter}:${verseStart}${verseEnd ? "-" + verseEnd : ""}`;
     } else {
       displayRef = verse.reference;
     }
   } else if (verse.book && verse.chapter && verse.verse) {
     const book = normalizeBookName(verse.book);
-    displayRef = `${getDisplayBookFull(book)} ${verse.chapter}:${verse.verse}`;
+    displayRef = `${getDisplayBookAbbrev(book)} ${verse.chapter}:${verse.verse}`;
   } else {
     displayRef = "";
-  }
-
-  return (
-    <div 
-      className="scripture-mini-card p-3 rounded-lg shadow-md cursor-pointer
+  }  return (<div 
+      className="scripture-mini-card p-2 rounded-lg shadow-md cursor-pointer
                  bg-gradient-to-br from-gray-900 to-black 
                  border border-transparent 
                  hover:border-yellow-500/70 transition-all duration-200 ease-in-out
-                 relative group" // Added for potential future use with group-hover
+                 relative group text-center flex flex-col justify-center items-center min-h-[80px]"
       onClick={handleClick} 
       tabIndex={0}
       style={{
@@ -56,9 +52,8 @@ const ScriptureMiniCard: React.FC<ScriptureMiniCardProps> = ({ verse, onRemove }
         borderImageSource: 'linear-gradient(to bottom right, #b8860b, #ffd700, #b8860b)',
         borderWidth: '2px', // Ensure border width is set for borderImage to be visible
       }}
-    >
-      <span className="scripture-mini-card-title text-sm font-semibold text-yellow-400 block mb-1">
-        <strong>{displayRef}</strong>
+    >      <span className="scripture-mini-card-title text-sm font-normal text-yellow-400 block mb-1">
+        {displayRef}
       </span>
       <span className="scripture-mini-card-text text-xs text-gray-300 line-clamp-2">{verse.text}</span>
       {onRemove && (

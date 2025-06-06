@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Google Fonts for better serif typography */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -104,4 +107,21 @@ button:focus-visible {
 
 .debug-mode body {
   background-color: rgba(0, 0, 255, 0.1) !important;
+}
+
+/* Scripture Mini Card Global Styles */
+.scripture-mini-card {
+  font-family: 'Crimson Text', 'Times New Roman', serif !important;
+}
+
+.scripture-mini-card-title {
+  font-family: 'Crimson Text', 'Times New Roman', serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.01em;
+}
+
+.scripture-mini-card-text {
+  font-family: 'Crimson Text', 'Times New Roman', serif !important;
+  font-weight: 300 !important;
+  line-height: 1.5 !important;
 }

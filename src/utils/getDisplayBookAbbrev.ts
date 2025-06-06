@@ -88,9 +88,19 @@ export function getDisplayBookAbbrev(book: string): string {
     return abbrevs.includes(book);
   });
   if (entry) {
-    // Use the first abbreviation, capitalize first letter, add period
+    // Use the first abbreviation, capitalize properly, add period
     const abbr = entry[1][0];
-    return abbr.charAt(0).toUpperCase() + abbr.slice(1) + '.';
+    // Split by spaces and capitalize each word
+    const capitalizedAbbr = abbr.split(' ')
+      .map(word => {
+        // Keep numbers as-is, capitalize first letter of words
+        if (/^\d+$/.test(word)) {
+          return word;
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(' ');
+    return capitalizedAbbr + '.';
   }
   // Fallback: capitalize first letter, add period
   return book.charAt(0).toUpperCase() + book.slice(1, 4) + '.';

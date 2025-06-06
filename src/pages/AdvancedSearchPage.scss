@@ -188,7 +188,8 @@
         font-weight: 500;
         white-space: nowrap;
         margin-right: 0.5rem;
-        min-width: -webkit-fill-available;
+        -webkit-min-width: fit-content; // For Safari/old WebKit
+        min-width: -webkit-fill-available; // For Samsung Internet compatibility
         min-width: fit-content;
         
         @media (max-width: 768px) {

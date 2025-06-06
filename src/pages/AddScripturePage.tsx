@@ -193,6 +193,7 @@ export default function AddScripturePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState("");
   const [progress, setProgress] = useState(0);
+  const [isParsing, setIsParsing] = useState(false); // New state for parsing indicator
 
   // User tags state
   const [userTags, setUserTags] = useState<UserTag[]>([]);
@@ -208,6 +209,11 @@ export default function AddScripturePage() {
   const [showAddTranslationPrompt, setShowAddTranslationPrompt] = useState(false);
   const [newTranslation, setNewTranslation] = useState("");
   const [newTranslationDisplay, setNewTranslationDisplay] = useState("");
+
+  // Batch parsing state
+  const [unparsedText, setUnparsedText] = useState<string>("");
+  const [parsedBookCount, setParsedBookCount] = useState<number>(0);
+  const [batchDone, setBatchDone] = useState<boolean>(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -311,87 +317,128 @@ export default function AddScripturePage() {
     setHighlightedSuggestionIdx(-1);
   }, [userTagFilter, filteredUserTags.length]);
 
+  // Non-blocking, chunked parsing for large files with progress
   const handleParse = () => {
-    try {
-      const lines = input.split(/\r?\n/).map(line => line.trim());
-      const verses: ParsedVerse[] = [];
-      let currentBook = "";
-      let currentChapter = 0;
-      let verseNum = 1;
-      let lastChapterLine = false;
-      let currentVerseText = "";
-      let currentVerseNum = 1;
-
-      const pushVerse = () => {
-        if (currentVerseText.trim()) {
-          verses.push({
-            book: currentBook,
-            book_lower: currentBook.toLowerCase(),
-            chapter: currentChapter,
-            linkedSermonID: "",
-            reference: `${currentBook} ${currentChapter}:${currentVerseNum}`,
-            tags: suggestTagsFromText(currentVerseText),
-            text: currentVerseText.trim(),
-            translation,
-            verse: currentVerseNum,
-          });
+    setIsParsing(true);
+    setProgress(0);
+    setTimeout(() => {
+      try {
+        const source = unparsedText || input;
+        const lines = source.split(/\r?\n/).map(line => line.trim());
+        const verses: ParsedVerse[] = [];
+        let currentBook = "";
+        let currentChapter = 0;
+        let verseNum = 1;
+        let lastChapterLine = false;
+        let currentVerseText = "";
+        let currentVerseNum = 1;
+        let i = 0;
+        const total = lines.length;
+        const chunkSize = 50;
+        let booksParsed = 0;
+        let batchLimitReached = false;
+        let batchEndLine = 0;
+        const pushVerse = () => {
+          if (currentVerseText.trim()) {
+            verses.push({
+              book: currentBook,
+              book_lower: currentBook.toLowerCase(),
+              chapter: currentChapter,
+              linkedSermonID: "",
+              reference: `${currentBook} ${currentChapter}:${currentVerseNum}`,
+              tags: suggestTagsFromText(currentVerseText),
+              text: currentVerseText.trim(),
+              translation,
+              verse: currentVerseNum,
+            });
+          }
+        };
+        function parseChunk() {
+          const end = Math.min(i + chunkSize, total);
+          for (; i < end; i++) {
+            const line = lines[i];
+            const chapterMatch = line.match(/^([1-3]?\s?[A-Za-z ]+)\s+(\d+)$/);
+            if (chapterMatch) {
+              if (currentBook && chapterMatch[1].trim() !== currentBook) {
+                booksParsed++;
+                if (booksParsed >= 10) {
+                  batchLimitReached = true;
+                  batchEndLine = i;
+                  break;
+                }
+              }
+              pushVerse();
+              currentBook = chapterMatch[1].trim();
+              currentChapter = parseInt(chapterMatch[2], 10);
+              verseNum = 1;
+              currentVerseNum = 1;
+              currentVerseText = "";
+              lastChapterLine = true;
+              continue;
+            }
+            if (!line) continue;
+            if (lastChapterLine) {
+              pushVerse();
+              currentVerseNum = 1;
+              currentVerseText = line;
+              verseNum = 2;
+              lastChapterLine = false;
+              continue;
+            }
+            const numberedVerseMatch = line.match(/^(\d+)\.[\s·]+(.+)/);
+            if (numberedVerseMatch) {
+              pushVerse();
+              currentVerseNum = parseInt(numberedVerseMatch[1], 10);
+              currentVerseText = numberedVerseMatch[2].trim();
+              verseNum = currentVerseNum + 1;
+              continue;
+            }
+            if (currentVerseText) {
+              currentVerseText += " " + line;
+            } else {
+              currentVerseText = line;
+            }
+          }
+          setProgress(Math.round((i / total) * 100));
+          if (batchLimitReached || i >= total) {
+            pushVerse();
+            setParsedVerses(verses);
+            setError("");
+            setIsParsing(false);
+            setProgress(0);
+            setParsedBookCount(booksParsed);
+            setBatchDone(i >= total);
+            // Save remaining unparsed text for next batch
+            if (batchLimitReached && batchEndLine < lines.length) {
+              setUnparsedText(lines.slice(batchEndLine).join("\n"));
+            } else {
+              setUnparsedText("");
+            }
+            return;
+          }
+          if (i < total) {
+            if (window.requestIdleCallback) {
+              window.requestIdleCallback(parseChunk, { timeout: 100 });
+            } else {
+              setTimeout(parseChunk, 0);
+            }
+          }
         }
-      };
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        // Detect chapter heading (e.g. Genesis 1, John 3, 1 Samuel 2)
-        const chapterMatch = line.match(/^([1-3]?\s?[A-Za-z ]+)\s+(\d+)$/);
-        if (chapterMatch) {
-          // Push any pending verse before starting new chapter
-          pushVerse();
-          currentBook = chapterMatch[1].trim();
-          currentChapter = parseInt(chapterMatch[2], 10);
-          verseNum = 1;
-          currentVerseNum = 1;
-          currentVerseText = "";
-          lastChapterLine = true;
-          continue;
-        }
-        // Skip empty lines
-        if (!line) continue;
-        // If the previous line was a chapter heading, treat this as verse 1
-        if (lastChapterLine) {
-          pushVerse();
-          currentVerseNum = 1;
-          currentVerseText = line;
-          verseNum = 2;
-          lastChapterLine = false;
-          continue;
-        }
-        // If the line starts with a number and a dot (e.g. 2. text), use that as the verse number
-        const numberedVerseMatch = line.match(/^(\d+)\.[\s·]+(.+)/);
-        if (numberedVerseMatch) {
-          // Push previous verse
-          pushVerse();
-          currentVerseNum = parseInt(numberedVerseMatch[1], 10);
-          currentVerseText = numberedVerseMatch[2].trim();
-          verseNum = currentVerseNum + 1;
-          continue;
-        }
-        // Otherwise, treat as a continuation of the current verse
-        if (currentVerseText) {
-          currentVerseText += " " + line;
-        } else {
-          currentVerseText = line;
-        }
+        parseChunk();
+      } catch (err: any) {
+        setError(err.message || "Parsing failed.");
+        setIsParsing(false);
+        setProgress(0);
       }
-      // Push the last verse if any
-      pushVerse();
-      if (!currentBook || !currentChapter || verses.length === 0) {
-        setError("No valid chapter/verse format found. Make sure to start with a chapter heading like 'Genesis 1'.");
-        return;
-      }
-      setParsedVerses(verses);
-      setError("");
-    } catch (err: any) {
-      setError(err.message || "Parsing failed.");
-    }
+    }, 0);
+  };
+
+  // After submitting, allow parsing next batch if available
+  const handleNextBatch = () => {
+    setParsedVerses([]);
+    setParsedBookCount(0);
+    setBatchDone(false);
+    setTimeout(() => handleParse(), 0);
   };
 
   const updateVerse = (index: number, action: string, payload: any) => {
@@ -451,6 +498,19 @@ export default function AddScripturePage() {
     }
   };
 
+  // File upload handler
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setInput(text || "");
+      setTimeout(() => handleParse(), 0); // Parse after state update
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="add-scripture-layout">
@@ -467,6 +527,12 @@ export default function AddScripturePage() {
               >
                 {progress}%
               </div>
+            </div>
+          )}
+          {isParsing && (
+            <div className="add-scripture-loading-indicator">
+              <span className="spinner" style={{ marginRight: 8 }} />
+              Parsing scripture, please wait... ({progress}%)
             </div>
           )}
 
@@ -509,6 +575,18 @@ export default function AddScripturePage() {
             )}
           </div>
 
+          <div style={{ marginBottom: 16 }}>
+            <label htmlFor="scripture-file-upload" style={{ fontWeight: 500, marginRight: 8 }}>Upload Scripture File (.txt):</label>
+            <input
+              id="scripture-file-upload"
+              type="file"
+              accept=".txt"
+              onChange={handleFileUpload}
+              disabled={submitting}
+              style={{ marginRight: 8 }}
+            />
+          </div>
+
           <textarea
             className="add-scripture-textarea"
             value={input}
@@ -521,8 +599,19 @@ export default function AddScripturePage() {
             <button onClick={handleParse} className="add-scripture-parse-btn" disabled={submitting || !input.trim()}>
               Parse Scripture
             </button>
-            <button onClick={handleSubmit} className="add-scripture-submit-btn" disabled={submitting || parsedVerses.length === 0}>
-              {submitting ? "Submitting..." : "Submit Verses"}
+            <button 
+              onClick={async () => {
+                await handleSubmit();
+                if (unparsedText) handleNextBatch();
+              }} 
+              className="add-scripture-submit-btn" 
+              disabled={submitting || parsedVerses.length === 0}
+            >
+              {submitting
+                ? "Submitting..."
+                : unparsedText
+                  ? "Submit and Parse Next Batch"
+                  : "Submit Verses"}
             </button>
           </div>
 
@@ -533,17 +622,27 @@ export default function AddScripturePage() {
                 <ul className="add-scripture-preview-list">
                   {parsedVerses.map((verse, index) => (
                     <SortableVerseItem
-                      key={index} // Using index as key for sortable items, ensure it's stable if items don't have unique IDs yet
-                      id={index} // ID for dnd-kit
+                      key={index}
+                      id={index}
                       verse={verse}
                       index={index}
-                      onChange={updateVerse} // Corrected: Was handleVerseChange
-                      onDelete={handleDelete}  // Corrected: Was handleDeleteVerse
+                      onChange={updateVerse}
+                      onDelete={handleDelete}
                       userTags={userTags}
                     />
                   ))}
                 </ul>
               </SortableContext>
+              {unparsedText && (
+                <div className="add-scripture-batch-controls">
+                  <button onClick={handleNextBatch} className="add-scripture-next-batch-btn">
+                    Parse Next Batch ({batchDone ? 'Done' : 'Next 10 Books'})
+                  </button>
+                  <span style={{ marginLeft: 12, color: '#e0c97f' }}>
+                    {batchDone ? 'All scripture parsed.' : 'More scripture remains to be parsed.'}
+                  </span>
+                </div>
+              )}
             </>
           )}
         </div>

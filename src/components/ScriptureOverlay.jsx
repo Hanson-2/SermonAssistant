@@ -224,20 +224,25 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             text: t.verses.map(v => v.text).join('\n'), // legacy
             verses: t.verses,
           };
-        });        setTranslations(list);
-        // Use defaultTranslation if provided and available, else fallback
-        console.log('[ScriptureOverlay] Setting translations and initial current:', {
-          translationsList: list.map(t => t.code),
-          defaultTranslation,
-          willUseDefault: defaultTranslation && list.some(t => t.code === defaultTranslation),
-          fallbackToFirst: list[0]?.code
-        });
-        
-        if (defaultTranslation && list.some(t => t.code === defaultTranslation)) {
-          console.log('[ScriptureOverlay] Using defaultTranslation:', defaultTranslation);
-          setCurrent(defaultTranslation);
+        });        
+        // Normalize codes for robust comparison
+        const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, '');
+        let preferredIdx = -1;
+        if (defaultTranslation) {
+          preferredIdx = list.findIndex(t => norm(t.code) === norm(defaultTranslation));
+        }
+        if (preferredIdx !== -1) {
+          const preferred = list[preferredIdx];
+          const rest = list.filter((_, i) => i !== preferredIdx).sort((a, b) => norm(a.code).localeCompare(norm(b.code)));
+          list.splice(0, list.length, preferred, ...rest);
         } else {
-          console.log('[ScriptureOverlay] Falling back to first translation:', list[0]?.code || 'none');
+          list.sort((a, b) => norm(a.code).localeCompare(norm(b.code)));
+        }
+        setTranslations(list);
+        // Always set current to preferred if available, else first in list
+        if (preferredIdx !== -1) {
+          setCurrent(list[0].code);
+        } else {
           setCurrent(list[0]?.code || '');
         }
         // Debug: show what will be rendered

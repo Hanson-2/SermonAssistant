@@ -368,19 +368,25 @@
   position: relative !important;
   overflow: hidden !important;
   min-width: 100px !important;
-  padding: 0.3rem 0.8rem !important;
+  min-height: 80px !important;
+  padding: 0.5rem !important;
   font-size: 0.9rem !important;
   border: 2px solid transparent !important;
   border-image: linear-gradient(45deg, #FFD700, #FFA500) 1 !important;
   background: linear-gradient(135deg, #494949 0%, #000000 100%) !important;
   color: #ffd000 !important;
-  font-weight: 600 !important;
+  font-weight: 400 !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4) !important;
   transition: transform 0.12s, color 0.18s !important;
   margin: 0.5rem 0.5rem 0.5rem 0 !important;
   border-radius: 0.75rem !important;
   cursor: pointer !important;
   z-index: 1;
+  text-align: center !important; /* Center text in scripture mini cards */
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
 
 .expository-scripture-banner .scripture-mini-card::before {
@@ -413,17 +419,21 @@
 
 .expository-scripture-banner .scripture-mini-card-title {
   color: #ffd700 !important;
-  font-size: 1.2em !important;
-  letter-spacing: 0.04em !important;
+  font-size: 1em !important;
+  letter-spacing: 0.02em !important;
   text-shadow: 0 1px 2px #000a !important;
-  font-weight: 700 !important;
+  font-weight: 400 !important;
+  font-family: 'Crimson Text', 'Times New Roman', serif !important;
+  margin-bottom: 0.25rem !important;
 }
 
 .expository-scripture-banner .scripture-mini-card-text {
   color: #ffd000 !important;
-  font-size: 1em !important;
-  font-weight: 500 !important;
-  margin-left: 0.5em;
+  font-size: 0.8em !important;
+  font-weight: 300 !important;
+  font-family: 'Crimson Text', 'Times New Roman', serif !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
 }
 
 .expository-scripture-banner .scripture-mini-card-remove {
@@ -441,4 +451,65 @@
   color: #fff !important;
   transform: scale(1.18) rotate(-8deg) !important;
   opacity: 1 !important;
+}
+
+/* --- Expository Navigation Layout --- */
+.expository-main-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  min-height: 0;
+}
+
+.expository-page-list {
+  min-width: 180px;
+  max-width: 240px;
+  background: rgba(24,24,24,0.92);
+  border-right: 1px solid #232b3e;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.expository-page-list-item {
+  background: none;
+  color: #fff;
+  font-weight: 400;
+  border: none;
+  border-left: 4px solid transparent;
+  text-align: left;
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  font-size: 1rem;
+  outline: none;
+  transition: background 0.18s, color 0.18s;
+  border-radius: 0;
+  width: 100%;
+  border-bottom: 1px solid #232b3e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expository-page-list-item.active {
+  background: linear-gradient(90deg,#ffd70022,#232b3e);
+  color: #ffd700;
+  font-weight: 700;
+  border-left: 4px solid #ffd700;
+}
+
+@media (max-width: 900px) {
+  .expository-page-list {
+    min-width: 120px;
+    max-width: 140px;
+    font-size: 0.95rem;
+  }
+  .expository-page-list-item {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.7rem;
+  }
 }

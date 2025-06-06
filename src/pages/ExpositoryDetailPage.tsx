@@ -273,6 +273,53 @@ export default function ExpositoryDetailPage() {
     console.log('[ExpositoryDetailPage] Overlay closed. overlayOpen set to false, lockedOverlayRef to null.');
   }
 
+  // --- Per-slide scripture refs ---
+  const [slideScriptureRefs, setSlideScriptureRefs] = useState<any[][]>([]);
+  // --- Per-slide titles ---
+  const [slideTitles, setSlideTitles] = useState<string[]>([]);
+  const [editingTitleIdx, setEditingTitleIdx] = useState<number | null>(null);
+  useEffect(() => {
+    // For each slide, extract and normalize scripture refs
+    const refsBySlide = slides.map(slideText => {
+      const rawRefs = extractScriptureReferences(slideText);
+      return rawRefs.map(ref => {
+        let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
+        let bookName = bookAliases[localRawBook] || ref.book;
+        let referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
+        if (ref.endVerse && ref.endVerse !== ref.verse) {
+          referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
+        }
+        return { ...ref, book: bookName, reference: referenceString };
+      });
+    });
+    setSlideScriptureRefs(refsBySlide);
+    // Initialize slide titles if not set or slides changed
+    setSlideTitles(prev => {
+      if (!prev || prev.length !== slides.length) {
+        return slides.map((_, idx) => `Page ${idx + 1}`);
+      }
+      return prev;
+    });
+  }, [slides]);
+
+  // Editable sidebar title logic
+  function handleTitleDoubleClick(idx: number) {
+    setEditingTitleIdx(idx);
+  }
+  function handleTitleChange(idx: number, value: string) {
+    setSlideTitles(titles => titles.map((t, i) => (i === idx ? value : t)));
+  }
+  function handleTitleBlur(idx: number) {
+    setEditingTitleIdx(null);
+    // Optionally: persist titles to backend here
+  }
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>, idx: number) {
+    if (e.key === 'Enter') {
+      setEditingTitleIdx(null);
+      // Optionally: persist titles to backend here
+    }
+  }
+
   // Only update scriptureRefs if overlay is not open AND lockedOverlayRef is null
   useEffect(() => {
     if (overlayOpen || lockedOverlayRef) return; // Freeze mini-cards/refs while overlay is open or locked
@@ -297,50 +344,110 @@ export default function ExpositoryDetailPage() {
         <div className="expository-banner-desc">{sermon.description?.slice(0, 120)}</div>
       </div>
 
+      {/* Scripture mini cards banner */}
       <div className="expository-scripture-banner">
-        {scriptureRefs.map((ref, i) => (
+        {(slideScriptureRefs[activeSlide] || []).map((ref, i) => (
           <ScriptureMiniCard key={i} verse={ref} />
         ))}
-      </div>      {overlayOpen && lockedOverlayRef && (
-        (() => {
-          console.log('[ExpositoryDetailPage] Rendering ScriptureOverlay with defaultTranslation:', defaultTranslation);
-          return (
-            <ScriptureOverlay
-              open={overlayOpen}
-              onClose={handleOverlayClose}
-              book={lockedOverlayRef.book}
-              chapter={lockedOverlayRef.chapter}
-              verseRange={lockedOverlayRef.verseRange}
-              reference={lockedOverlayRef.reference}
-              defaultTranslation={defaultTranslation}
-            />
-          );
-        })()
-      )}
+      </div>
 
-      <div className="slide-editor-vertical-layout">
-        <div className="slide-editor-notes-area">
-          <EditableRichText
-            html={slides[activeSlide]}
-            onHtmlChange={updateSlideContent}
-            onRefsChange={handleRefsChange}
-          />
-          <div className="expository-slide-status">
-            {saving ? <span className="saving">Saving...</span> : saveStatus && <span className="saved">{saveStatus}</span>}
-          </div>
+      <div className="expository-main-layout" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', width: '100%' }}>
+        <div style={{ minWidth: 180, maxWidth: 240, background: 'rgba(24,24,24,0.92)', borderRight: '1px solid #232b3e', padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: 0, height: '100%', overflowY: 'auto' }}>
+          {/* Sidebar page list, below mini cards */}
+          <nav className="expository-page-list">
+            {slides.map((slide, idx) => (
+              <div key={idx} style={{ width: '100%' }}>
+                {editingTitleIdx === idx ? (
+                  <input
+                    className="expository-page-list-item editing"
+                    value={slideTitles[idx] || `Page ${idx + 1}`}
+                    autoFocus
+                    onChange={e => handleTitleChange(idx, e.target.value)}
+                    onBlur={() => handleTitleBlur(idx)}
+                    onKeyDown={e => handleTitleKeyDown(e, idx)}
+                    style={{ width: '90%', fontSize: '1rem', padding: '0.5rem', borderRadius: 4, border: '1px solid #ffd700', background: '#232b3e', color: '#ffd700', fontWeight: 700 }}
+                    placeholder={`Enter title for Page ${idx + 1}`}
+                    title={`Slide title input for Page ${idx + 1}`}
+                  />
+                ) : (
+                  <button
+                    className={`expository-page-list-item${activeSlide === idx ? ' active' : ''}`}
+                    style={{
+                      background: activeSlide === idx ? 'linear-gradient(90deg,#ffd70022,#232b3e)' : 'none',
+                      color: activeSlide === idx ? '#ffd700' : '#fff',
+                      fontWeight: activeSlide === idx ? 700 : 400,
+                      border: 'none',
+                      borderLeft: activeSlide === idx ? '4px solid #ffd700' : '4px solid transparent',
+                      textAlign: 'left',
+                      padding: '0.7rem 1.2rem',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      outline: 'none',
+                      transition: 'background 0.18s, color 0.18s',
+                      borderRadius: 0,
+                      width: '100%',
+                      borderBottom: '1px solid #232b3e',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    onClick={() => setActiveSlide(idx)}
+                    onDoubleClick={() => handleTitleDoubleClick(idx)}
+                    onTouchStart={e => { e.preventDefault(); handleTitleDoubleClick(idx); }}
+                    tabIndex={0}
+                    title={slideTitles[idx] || `Page ${idx + 1}`}
+                  >
+                    {slideTitles[idx] || `Page ${idx + 1}`}
+                  </button>
+                )}
+              </div>
+            ))}
+          </nav>
         </div>
 
-        <div className="slide-editor-bottom-bar">
-          <div className="slide-editor-bottom-controls">
-            {activeSlide > 0 && (
-              <button className="nav-arrow left" onClick={goToPreviousSlide}>&lt;</button>
-            )}
-            <button className="add-slide-button left" onClick={addSlide} title="Add Slide Left">+</button>
-            <button className="slide-delete-btn" onClick={deleteSlide} title="Delete Slide">🗑</button>
-            <button className="add-slide-button right" onClick={addSlide} title="Add Slide Right">+</button>
-            {activeSlide < slides.length - 1 && (
-              <button className="nav-arrow right" onClick={goToNextSlide}>&gt;</button>
-            )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {overlayOpen && lockedOverlayRef && (
+            (() => {
+              console.log('[ExpositoryDetailPage] Rendering ScriptureOverlay with defaultTranslation:', defaultTranslation);
+              return (
+                <ScriptureOverlay
+                  open={overlayOpen}
+                  onClose={handleOverlayClose}
+                  book={lockedOverlayRef.book}
+                  chapter={lockedOverlayRef.chapter}
+                  verseRange={lockedOverlayRef.verseRange}
+                  reference={lockedOverlayRef.reference}
+                  defaultTranslation={defaultTranslation}
+                />
+              );
+            })()
+          )}
+
+          <div className="slide-editor-vertical-layout">
+            <div className="slide-editor-notes-area">
+              <EditableRichText
+                html={slides[activeSlide]}
+                onHtmlChange={updateSlideContent}
+                onRefsChange={handleRefsChange}
+              />
+              <div className="expository-slide-status">
+                {saving ? <span className="saving">Saving...</span> : saveStatus && <span className="saved">{saveStatus}</span>}
+              </div>
+            </div>
+
+            <div className="slide-editor-bottom-bar">
+              <div className="slide-editor-bottom-controls">
+                {activeSlide > 0 && (
+                  <button className="nav-arrow left" onClick={goToPreviousSlide}>&lt;</button>
+                )}
+                <button className="add-slide-button left" onClick={addSlide} title="Add Slide Left">+</button>
+                <button className="slide-delete-btn" onClick={deleteSlide} title="Delete Slide">🗑</button>
+                <button className="add-slide-button right" onClick={addSlide} title="Add Slide Right">+</button>
+                {activeSlide < slides.length - 1 && (
+                  <button className="nav-arrow right" onClick={goToNextSlide}>&gt;</button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
