@@ -97,18 +97,25 @@ export default function ExpositoryDetailPage() {
     // Load user's default translation from their profile
     const loadUserPreferences = async () => {
       try {
+        console.log('[ExpositoryDetailPage] Loading user profile...');
         const profile = await getUserProfile();
+        console.log('[ExpositoryDetailPage] User profile loaded:', profile);
+        
         if (profile?.preferences?.defaultBibleVersion) {
+          console.log('[ExpositoryDetailPage] Setting defaultTranslation from profile:', profile.preferences.defaultBibleVersion);
           setDefaultTranslation(profile.preferences.defaultBibleVersion);
         } else {
+          console.log('[ExpositoryDetailPage] No defaultBibleVersion in profile, checking localStorage...');
           // Fallback to localStorage if profile doesn't exist yet
           const stored = localStorage.getItem('defaultBibleVersion');
+          console.log('[ExpositoryDetailPage] localStorage defaultBibleVersion:', stored);
           if (stored) setDefaultTranslation(stored);
         }
       } catch (error) {
-        console.error('Error loading user profile:', error);
+        console.error('[ExpositoryDetailPage] Error loading user profile:', error);
         // Fallback to localStorage if there's an error
         const stored = localStorage.getItem('defaultBibleVersion');
+        console.log('[ExpositoryDetailPage] Fallback to localStorage:', stored);
         if (stored) setDefaultTranslation(stored);
       }
     };
@@ -294,18 +301,21 @@ export default function ExpositoryDetailPage() {
         {scriptureRefs.map((ref, i) => (
           <ScriptureMiniCard key={i} verse={ref} />
         ))}
-      </div>
-
-      {overlayOpen && lockedOverlayRef && (
-        <ScriptureOverlay
-          open={overlayOpen}
-          onClose={handleOverlayClose}
-          book={lockedOverlayRef.book}
-          chapter={lockedOverlayRef.chapter}
-          verseRange={lockedOverlayRef.verseRange}
-          reference={lockedOverlayRef.reference}
-          defaultTranslation={defaultTranslation}
-        />
+      </div>      {overlayOpen && lockedOverlayRef && (
+        (() => {
+          console.log('[ExpositoryDetailPage] Rendering ScriptureOverlay with defaultTranslation:', defaultTranslation);
+          return (
+            <ScriptureOverlay
+              open={overlayOpen}
+              onClose={handleOverlayClose}
+              book={lockedOverlayRef.book}
+              chapter={lockedOverlayRef.chapter}
+              verseRange={lockedOverlayRef.verseRange}
+              reference={lockedOverlayRef.reference}
+              defaultTranslation={defaultTranslation}
+            />
+          );
+        })()
       )}
 
       <div className="slide-editor-vertical-layout">

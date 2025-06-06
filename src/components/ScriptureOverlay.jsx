@@ -79,6 +79,15 @@ function parseReference(ref, fallbackBook, fallbackChapter) {
  *  - defaultTranslation?: string // NEW: user's preferred translation
  */
 export default function ScriptureOverlay({ open, onClose, book, chapter, verseRange, reference, defaultTranslation }) {
+  console.log('[ScriptureOverlay] Component rendered with props:', {
+    open,
+    book,
+    chapter,
+    verseRange,
+    reference,
+    defaultTranslation: defaultTranslation || 'undefined/empty'
+  });
+
   const [lockedProps, setLockedProps] = useState(null);
   const hasOpenedAndLocked = useRef(false); // Tracks if initial props have been locked for the current "open" session
 
@@ -215,12 +224,20 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             text: t.verses.map(v => v.text).join('\n'), // legacy
             verses: t.verses,
           };
-        });
-        setTranslations(list);
+        });        setTranslations(list);
         // Use defaultTranslation if provided and available, else fallback
+        console.log('[ScriptureOverlay] Setting translations and initial current:', {
+          translationsList: list.map(t => t.code),
+          defaultTranslation,
+          willUseDefault: defaultTranslation && list.some(t => t.code === defaultTranslation),
+          fallbackToFirst: list[0]?.code
+        });
+        
         if (defaultTranslation && list.some(t => t.code === defaultTranslation)) {
+          console.log('[ScriptureOverlay] Using defaultTranslation:', defaultTranslation);
           setCurrent(defaultTranslation);
         } else {
+          console.log('[ScriptureOverlay] Falling back to first translation:', list[0]?.code || 'none');
           setCurrent(list[0]?.code || '');
         }
         // Debug: show what will be rendered
@@ -237,22 +254,30 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
       }
     };
     fetchVerses();
-  }, [open, effective, defaultTranslation]);
-
-  // Ensure default translation is set on mount and when translations change
+  }, [open, effective, defaultTranslation]);  // Ensure default translation is set on mount and when translations change
   useEffect(() => {
+    console.log('[ScriptureOverlay] Translation selection effect triggered:', {
+      defaultTranslation,
+      translationsLength: translations.length,
+      translationCodes: translations.map(t => t.code),
+      currentSelected: current
+    });
+    
     if (translations.length > 0) {
       if (defaultTranslation && translations.some(t => t.code === defaultTranslation)) {
+        console.log('[ScriptureOverlay] Setting current translation to defaultTranslation:', defaultTranslation);
         setCurrent(defaultTranslation);
-      } else if (translations[0]?.code) { 
+      } else if (translations[0]?.code && !current) { 
         // Fallback to the first available translation if default is not found or not provided
+        console.log('[ScriptureOverlay] No valid defaultTranslation, falling back to first translation:', translations[0].code);
         setCurrent(translations[0].code);
       }
     } else {
       // If translations become empty (e.g., new reference has no data yet), clear current.
+      console.log('[ScriptureOverlay] No translations available, clearing current');
       setCurrent('');
     }
-  }, [defaultTranslation, translations]);
+  }, [defaultTranslation, translations, current]);
 
   const active = translations.find(t => t.code === current) || { verses: [] }; // Ensure active.verses is always an array
   const displayBook = displayRef.book ? getDisplayBookAbbrev(displayRef.book) : 'Scripture';
