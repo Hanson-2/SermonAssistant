@@ -1,12 +1,12 @@
 import * as functions from 'firebase-functions';
 
-export const openaiProxy = functions.https.onCall(async (request, context) => {
+export const openaiProxy = functions.https.onCall(async (data, context) => {
   console.log('openaiProxy function invoked');
-  if (!context || !('auth' in context)) {
+  if (!context || !context.auth) {
     console.error('Authentication error: context.auth is missing');
     throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
-  const { prompt, action } = request.data;
+  const { prompt, action } = data;
   console.log('Request data:', { prompt, action });
   if (!prompt || !action) {
     console.error('Invalid arguments: prompt or action is missing');
