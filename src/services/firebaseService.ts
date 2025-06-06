@@ -12,12 +12,13 @@ import {
   setDoc,
   writeBatch, // Import writeBatch
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL, listAll } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, listAll, deleteObject } from "firebase/storage";
 import type { Scripture } from "./scriptureParser";
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "../utils/bookOrder";
 import { httpsCallable } from "firebase/functions";
 import { functions as fbFunctions } from "../lib/firebase";
 import { ReactNode } from "react";
+import { updateProfile } from "firebase/auth";
 
 const sermonsRef = collection(db, "sermons");
 const scripturesRef = collection(db, "scriptures");
@@ -119,6 +120,42 @@ export async function uploadExpositoryImage(file: File): Promise<string> {
   const fileRef = ref(storage, `expositories/${file.name}-${Date.now()}`);
   await uploadBytes(fileRef, file);
   return await getDownloadURL(fileRef);
+}
+
+// Upload a profile picture and return its URL
+export async function uploadProfileImage(file: File, userId: string): Promise<string> {
+  // Create a separate folder for profile images
+  const fileExtension = file.name.split('.').pop();
+  const fileName = `profile-${userId}-${Date.now()}.${fileExtension}`;
+  const fileRef = ref(storage, `profile-images/${fileName}`);
+  
+  await uploadBytes(fileRef, file);
+  const downloadURL = await getDownloadURL(fileRef);
+  
+  return downloadURL;
+}
+
+// Delete a profile image from storage
+export async function deleteProfileImage(imageUrl: string): Promise<void> {
+  try {
+    const imageRef = ref(storage, imageUrl);
+    await deleteObject(imageRef);
+  } catch (error) {
+    console.error('Error deleting profile image:', error);
+    // Non-blocking error - continue even if deletion fails
+  }
+}
+
+// Update user profile with new photoURL
+export async function updateUserProfilePhoto(photoURL: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  
+  // Update Firebase Auth profile
+  await updateProfile(user, { photoURL });
+  
+  // Update Firestore profile
+  await updateUserProfile({ photoURL });
 }
 
 // Get All Scriptures
@@ -603,8 +640,7 @@ export type UserProfile = {
     enableKeyboardShortcuts?: boolean;
     showPreviewPane?: boolean;
   };
-  
-  // Theme Settings (from ThemeSettingsPage)
+    // Theme Settings (from ThemeSettingsPage)
   themeSettings?: {
     themeMode: 'light' | 'dark' | 'auto';
     primaryColor?: string;
@@ -615,43 +651,11 @@ export type UserProfile = {
     compactMode?: boolean;
     highContrast?: boolean;
     reducedMotion?: boolean;
-    customCSS?: string;
-  };
-  
-  // UI Customization (from CustomizeUIPage)
-  uiCustomization?: {
-    // Layout Settings
-    sidebarPosition: 'left' | 'right' | 'hidden';
-    navigationStyle: 'horizontal' | 'vertical' | 'compact';
-    contentWidth: 'narrow' | 'medium' | 'wide' | 'full';
-    
-    // Component Visibility
-    showWelcomeMessage: boolean;
-    showQuickActions: boolean;
-    showRecentSermons: boolean;
-    showStatistics: boolean;
-    showSearchSuggestions: boolean;
-    
-    // Grid Layout
-    dashboardColumns: 1 | 2 | 3 | 4;
-    cardSize: 'compact' | 'normal' | 'large';
-    cardSpacing: 'tight' | 'normal' | 'loose';
-    
-    // Typography & Spacing
-    interfaceScale: 80 | 90 | 100 | 110 | 120;
-    lineHeight: 'compact' | 'normal' | 'relaxed';
-    buttonSize: 'small' | 'medium' | 'large';
-    
-    // Toolbar & Actions
-    showToolbarLabels: boolean;
-    toolbarPosition: 'top' | 'bottom' | 'floating';
-    quickActionButtons: string[];
-    
-    // Advanced Options
-    enableAnimations: boolean;
-    showTooltips: boolean;
-    enableKeyboardNavigation: boolean;
-    autoCollapseSidebar: boolean;
+    largeClickTargets?: boolean;
+    enhancedFocus?: boolean;
+    dyslexiaFriendly?: boolean;
+    lineHeight?: 'normal' | 'relaxed' | 'loose';
+    letterSpacing?: 'normal' | 'wide' | 'wider';    customCSS?: string;
   };
   
   statistics: {
@@ -668,10 +672,58 @@ export type UserProfile = {
 };
 
 export async function getUserProfile(): Promise<UserProfile | null> {
-  const getUserProfileFn = httpsCallable(fbFunctions, "getUserProfile");
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  
   try {
-    const result = await getUserProfileFn({});
-    return (result.data as any).profile || null;
+    const userProfileDoc = doc(db, "userProfiles", user.uid);
+    const userProfileSnap = await getDoc(userProfileDoc);
+    
+    if (!userProfileSnap.exists()) {      // Create a default user profile if it doesn't exist
+      const defaultProfile: UserProfile = {
+        userId: user.uid,
+        email: user.email || "",
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
+        preferences: {
+          defaultBibleVersion: "ESV",
+          theme: "dark",
+          language: "en",
+          emailNotifications: true,
+          autoSave: true,
+          sermonBackupFrequency: "weekly",
+          pushNotifications: true,
+          showWelcomeScreen: true,
+          enableKeyboardShortcuts: true,
+          showPreviewPane: true
+        },
+        themeSettings: {
+          themeMode: "dark",
+          primaryColor: "#3b82f6",
+          accentColor: "#10b981",
+          fontFamily: "Inter",
+          fontSize: "medium",
+          compactMode: false,
+          highContrast: false,          reducedMotion: false
+        },
+        statistics: {
+          totalSermons: 0,
+          totalVerses: 0,
+          totalTags: 0,
+          totalFolders: 0,
+          totalVersions: 0,
+          joinDate: new Date().toISOString(),
+          lastActivity: new Date().toISOString()
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await setDoc(userProfileDoc, defaultProfile);
+      return { id: user.uid, ...defaultProfile };
+    }
+    
+    return { id: userProfileSnap.id, ...userProfileSnap.data() } as UserProfile;
   } catch (error) {
     console.error("Error fetching user profile:", error);
     return null;
@@ -680,25 +732,45 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
 export async function updateUserProfile(profileData: {
   displayName?: string;
+  photoURL?: string;
   preferences?: Partial<UserProfile['preferences']>;
-  uiCustomization?: Partial<UserProfile['uiCustomization']>;
   themeSettings?: Partial<UserProfile['themeSettings']>;
 }): Promise<void> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
   
-  const updateUserProfileFn = httpsCallable(fbFunctions, "updateUserProfile");
-  await updateUserProfileFn({ 
-    userId: user.uid, 
-    profile: profileData 
-  });
+  try {
+    const userProfileDoc = doc(db, "userProfiles", user.uid);
+    const userProfileSnap = await getDoc(userProfileDoc);
+    
+    if (!userProfileSnap.exists()) {
+      throw new Error("User profile not found. Please refresh the page.");
+    }
+    
+    // Update the profile with the new data
+    await updateDoc(userProfileDoc, {
+      ...profileData,
+      updatedAt: new Date()
+    });
+    
+    // If displayName or photoURL is being updated, also update the auth profile
+    if (profileData.displayName !== undefined || profileData.photoURL !== undefined) {
+      await updateProfile(user, {
+        displayName: profileData.displayName || user.displayName,
+        photoURL: profileData.photoURL || user.photoURL
+      });
+    }
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
 }
 
 export async function getUserStats(): Promise<UserProfile['statistics'] | null> {
   const getUserStatsFn = httpsCallable(fbFunctions, "getUserStats");
   try {
     const result = await getUserStatsFn({});
-    return (result.data as any).statistics || null;
+    return (result.data as UserProfile['statistics']) || null;
   } catch (error) {
     console.error("Error fetching user statistics:", error);
     return null;

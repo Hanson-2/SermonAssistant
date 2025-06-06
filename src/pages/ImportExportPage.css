@@ -1,6 +1,48 @@
 /* Import unified theme patch for all settings pages */
 @import '../styles/theme_patch_all_pages.css';
 
+/* ========== NAVBAR MOBILE MENU FIX ========== */
+/* Ensure navbar mobile menu button is visible and properly positioned on Import/Export page */
+@media (max-width: 768px) {
+  /* Fix mobile menu button positioning */
+  .navbar .navbar-mobile-menu-btn,
+  nav.navbar .navbar-mobile-menu-btn,
+  .navbar-mobile-menu-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: absolute !important;
+    right: 1rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 1.8rem !important;
+    color: #ffe082 !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    z-index: 10001 !important;
+    margin-left: 0 !important;
+  }
+  
+  /* Hide desktop navigation on mobile */
+  .navbar .navbar-center,
+  .navbar .navbar-right {
+    display: none !important;
+  }
+  
+  /* Ensure navbar shows properly */
+  .navbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;
+  }
+}
+
 /* Dashboard-style background to match application theme */
 .import-export-background {
   position: fixed;
@@ -22,6 +64,14 @@
   z-index: 1;
 }
 
+/* Reduce min-height on mobile to prevent excessive bottom space */
+@media (max-width: 768px) {
+  .import-export-layout {
+    min-height: unset !important;
+    height: auto !important;
+  }
+}
+
 .import-export-container {
   position: relative;
   max-width: 1200px;
@@ -31,6 +81,8 @@
   color: #e0c97f;
   z-index: 1;
 }
+
+/* Add bottom padding control for mobile */
 
 .import-export-title {
   font-size: 2.8rem;
@@ -511,6 +563,50 @@
   cursor: not-allowed;
 }
 
+/* ========== AGGRESSIVE BOTTOM SPACING FIX ========== */
+/* Force remove any excessive height constraints and bottom spacing on mobile */
+@media (max-width: 768px) {
+  /* Global container height fixes */
+  html, body, #root, .app, .import-export-page {
+    min-height: unset !important;
+    height: auto !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Eliminate any bottom margins/padding from the page wrapper */
+  .import-export-layout {
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Force the info section to be the last element with minimal spacing */
+  .info-section {
+    margin-bottom: 0 !important;
+    padding-bottom: 1.5rem !important;
+  }
+  
+  /* Ensure no extra spacing after info section */
+  .info-section:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Even more aggressive spacing reduction for very small screens */
+  .import-export-layout {
+    padding-bottom: 0.25rem !important;
+  }
+  
+  .info-section {
+    padding-bottom: 0.75rem !important;
+  }
+  
+  .info-section:last-child {
+    padding-bottom: 0.5rem !important;
+  }
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 968px) {
   .import-export-grid {
@@ -520,8 +616,26 @@
 }
 
 @media (max-width: 768px) {
+  /* Force remove min-height constraints on mobile */
+  html, body {
+    min-height: unset !important;
+    height: auto !important;
+  }
+  
+  #root, .app {
+    min-height: unset !important;
+    height: auto !important;
+  }
+  
+  .import-export-layout {
+    /* Remove excessive min-height and add proper top padding for navbar */
+    min-height: unset !important;
+    height: auto !important;
+    padding-top: 3.5rem; /* Account for fixed navbar */
+  }
+  
   .import-export-container {
-    padding: 1.5rem;
+    padding: 1rem 1.5rem 0.5rem 1.5rem; /* Significantly reduced bottom padding */
   }
   
   .import-export-title {
@@ -546,23 +660,84 @@
   .preview-stats {
     grid-template-columns: 1fr;
   }
+  
+  /* Significantly reduce info section spacing on mobile */
+  .info-section {
+    margin-top: 1rem !important; /* Reduced from 1.5rem */
+    margin-bottom: 0 !important; /* Remove bottom margin */
+    padding: 1.5rem;
+  }
+  
+  .info-title {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
+  /* Force remove any min-height constraints on very small screens */
+  html, body {
+    min-height: unset !important;
+    height: auto !important;
+  }
+  
+  /* Also override any app-level constraints */
+  #root, .app {
+    min-height: unset !important;
+    height: auto !important;
+  }
+  
+  .import-export-layout {
+    /* Remove excessive min-height and add proper top padding for navbar */
+    min-height: unset !important;
+    height: auto !important;
+    padding-top: 3.5rem; /* Account for fixed navbar */
+    padding-bottom: 1rem; /* Minimal bottom padding */
+  }
+  
   .import-export-container {
-    padding: 1rem;
+    /* Significantly reduce padding to eliminate excessive bottom space */
+    padding: 0.5rem 1rem 1rem 1rem; /* Minimal padding */
+    margin-bottom: 0; /* Remove any margin */
   }
   
   .import-export-title {
     font-size: 1.8rem;
+    margin-bottom: 0.5rem; /* Reduce title bottom margin */
+  }
+  
+  .import-export-subtitle {
+    margin-bottom: 1rem; /* Reduce subtitle bottom margin */
   }
   
   .export-section,
   .import-section {
     padding: 1rem;
+    margin-bottom: 0.5rem; /* Reduce space between sections */
   }
   
   .section-title {
     font-size: 1.4rem;
+  }
+  
+  /* Significantly reduce info section spacing */
+  .info-section {
+    margin-top: 0.5rem !important; /* Minimal top margin */
+    margin-bottom: 0 !important; /* Remove bottom margin */
+    padding: 1rem;
+  }
+  
+  .info-title {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .info-item {
+    padding: 1rem;
+  }
+  
+  .import-export-grid {
+    gap: 1rem;
+    margin: 1rem 0; /* Reduce grid margins */
   }
 }

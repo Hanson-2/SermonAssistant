@@ -6,8 +6,8 @@
 .add-expository-button-shared {
   position: relative;
   overflow: hidden;
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.85rem 0.5rem;
+  font-size: 0.8rem;
   border: 2px solid transparent;
   border-image: linear-gradient(45deg, #FFD700, #FFA500) 1;
   background: linear-gradient(135deg, #3a3a3a 0%, #000000 100%);
@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 60px;
+  min-height: 70px;
 
   &::before {
     content: "";
@@ -77,13 +77,32 @@
 .add-expository-button-shared-text {
   font-weight: 500;
   color: #fff;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-align: center;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  -webkit-hyphens: auto;
-  hyphens: auto;
+  white-space: nowrap; /* Prevent text wrapping */
   display: inline-block;
   max-width: 100%;
+}
+
+/* Mobile and touch device adjustments */
+@media (hover: none) {
+  .add-expository-button-shared:hover,
+  .add-expository-button-shared:focus,
+  .add-expository-button-shared:active {
+    background: inherit !important;
+    color: inherit !important;
+    border-color: inherit !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .add-expository-button-shared {
+    font-size: 0.95rem !important;
+    padding: 0.75rem 1rem !important;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
 }

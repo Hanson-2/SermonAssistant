@@ -3,27 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { app } from '../lib/firebase';
 import { getUserProfile, updateUserProfile } from '../services/firebaseService';
+import { useTheme } from '../context/ThemeContext';
+import { 
+  ThemeSettings, 
+  applyThemePreview, 
+  removeThemePreview, 
+  getSystemColorScheme 
+} from '../utils/themeUtils';
 import './ThemeSettingsPage.css';
 
-interface ThemeSettings {
-  theme: 'light' | 'dark' | 'auto';
-  primaryColor: string;
-  accentColor: string;
-  backgroundImage: string;
-  fontSize: 'small' | 'medium' | 'large';
-  fontFamily: string;
-  compactMode: boolean;
-  highContrast: boolean;
-  reducedMotion: boolean;
-  customCSS: string;
-}
-
 const colorPresets = [
-  { name: 'Gold & Blue', primary: '#fbbf24', accent: '#3b82f6' },
-  { name: 'Purple & Pink', primary: '#8b5cf6', accent: '#ec4899' },
-  { name: 'Green & Teal', primary: '#10b981', accent: '#06b6d4' },
-  { name: 'Orange & Red', primary: '#f59e0b', accent: '#ef4444' },
-  { name: 'Indigo & Cyan', primary: '#6366f1', accent: '#22d3ee' },
+  { name: 'Default Theme', primary: '#e0c97f', accent: '#3b82f6' },
+  { name: 'Golden Elegance', primary: '#fbbf24', accent: '#3b82f6' },
+  { name: 'Royal Purple', primary: '#8b5cf6', accent: '#ec4899' },
+  { name: 'Nature Green', primary: '#10b981', accent: '#06b6d4' },
+  { name: 'Warm Sunset', primary: '#f59e0b', accent: '#ef4444' },
+  { name: 'Ocean Blue', primary: '#3b82f6', accent: '#06b6d4' },
+  { name: 'Forest Deep', primary: '#059669', accent: '#8b5cf6' },
+  { name: 'Crimson Fire', primary: '#dc2626', accent: '#f59e0b' },
+  { name: 'Midnight Azure', primary: '#1e40af', accent: '#ec4899' },
 ];
 
 const backgroundImages = [
@@ -47,24 +45,35 @@ export default function ThemeSettingsPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('dark');
   const navigate = useNavigate();
-
-  const [settings, setSettings] = useState<ThemeSettings>({
-    theme: 'dark',
-    primaryColor: '#fbbf24',
-    accentColor: '#3b82f6',
-    backgroundImage: '/Blue Wall Background.png',
-    fontSize: 'medium',
-    fontFamily: 'Georgia, serif',
-    compactMode: false,
-    highContrast: false,
-    reducedMotion: false,
-    customCSS: ''
-  });
+  const { settings: themeSettings, updateTheme } = useTheme();
+  const [settings, setSettings] = useState<ThemeSettings>(themeSettings);
 
   const [previewMode, setPreviewMode] = useState(false);
+
+  useEffect(() => {
+  // Update local settings when theme context changes
+    setSettings(themeSettings);
+  }, [themeSettings]);
+  // Detect system color scheme
+  useEffect(() => {
+    const updateSystemColorScheme = () => {
+      setSystemColorScheme(getSystemColorScheme());
+    };
+    
+    // Set initial value
+    updateSystemColorScheme();
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => updateSystemColorScheme();
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     const auth = getAuth(app);
@@ -89,23 +98,47 @@ export default function ThemeSettingsPage() {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [success, error]);
-
-  // Apply theme preview
+  }, [success, error]);  // Apply theme preview
   useEffect(() => {
     if (previewMode) {
-      applyThemePreview();
+      applyThemePreview(settings);
     } else {
-      removeThemePreview();
+      removeThemePreview(themeSettings);
     }
-    return () => removeThemePreview();
-  }, [settings, previewMode]);
-  const loadThemeSettings = async () => {
+    return () => {
+      if (previewMode) {
+        removeThemePreview(themeSettings);
+      }
+    };
+  }, [settings, previewMode, themeSettings]);
+  // Also apply preview when any settings change while in preview mode
+  useEffect(() => {
+    if (previewMode) {
+      applyThemePreview(settings);
+    }
+  }, [
+    previewMode,
+    settings.primaryColor, 
+    settings.accentColor, 
+    settings.backgroundImage, 
+    settings.fontSize, 
+    settings.fontFamily, 
+    settings.themeMode, 
+    settings.compactMode, 
+    settings.highContrast, 
+    settings.reducedMotion,
+    settings.largeClickTargets,
+    settings.enhancedFocus,
+    settings.dyslexiaFriendly,
+    settings.lineHeight,
+    settings.letterSpacing,
+    settings.customCSS
+  ]);const loadThemeSettings = async () => {
     try {
       const profile = await getUserProfile();
-      if (profile && profile.themeSettings) {        setSettings({
-          theme: profile.themeSettings.themeMode ?? 'dark',
-          primaryColor: profile.themeSettings.primaryColor ?? '#fbbf24',
+      if (profile && profile.themeSettings) {        const updatedSettings: ThemeSettings = {
+          themeMode: profile.themeSettings.themeMode ?? 'dark',
+          primaryColor: profile.themeSettings.primaryColor ?? '#e0c97f',
           accentColor: profile.themeSettings.accentColor ?? '#3b82f6',
           backgroundImage: profile.themeSettings.backgroundImage ?? '/Blue Wall Background.png',
           fontSize: profile.themeSettings.fontSize ?? 'medium',
@@ -113,96 +146,34 @@ export default function ThemeSettingsPage() {
           compactMode: profile.themeSettings.compactMode ?? false,
           highContrast: profile.themeSettings.highContrast ?? false,
           reducedMotion: profile.themeSettings.reducedMotion ?? false,
+          largeClickTargets: profile.themeSettings.largeClickTargets ?? false,
+          enhancedFocus: profile.themeSettings.enhancedFocus ?? false,
+          dyslexiaFriendly: profile.themeSettings.dyslexiaFriendly ?? false,
+          lineHeight: profile.themeSettings.lineHeight ?? 'normal',
+          letterSpacing: profile.themeSettings.letterSpacing ?? 'normal',
           customCSS: profile.themeSettings.customCSS ?? ''
-        });
-      }
-    } catch (error) {
+        };
+        setSettings(updatedSettings);
+        updateTheme(updatedSettings);
+      }    } catch (error) {
       console.error('Error loading theme settings:', error);
       setError('Failed to load theme settings.');
     }
   };
-
-  const applyThemePreview = () => {
-    const root = document.documentElement;
-    root.style.setProperty('--primary-color', settings.primaryColor);
-    root.style.setProperty('--accent-color', settings.accentColor);
-    root.style.setProperty('--font-family', settings.fontFamily);
-    
-    // Apply font size
-    const fontSizes = { small: '14px', medium: '16px', large: '18px' };
-    root.style.setProperty('--base-font-size', fontSizes[settings.fontSize]);
-    
-    // Apply background
-    if (settings.backgroundImage) {
-      document.body.style.backgroundImage = `url('${settings.backgroundImage}')`;
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundAttachment = 'fixed';
-    } else {
-      document.body.style.backgroundImage = 'none';
-    }
-
-    // Apply theme class
-    document.body.className = document.body.className.replace(/theme-\w+/g, '');
-    document.body.classList.add(`theme-${settings.theme}`);
-
-    // Apply accessibility settings
-    if (settings.highContrast) {
-      document.body.classList.add('high-contrast');
-    } else {
-      document.body.classList.remove('high-contrast');
-    }
-
-    if (settings.reducedMotion) {
-      document.body.classList.add('reduced-motion');
-    } else {
-      document.body.classList.remove('reduced-motion');
-    }
-
-    if (settings.compactMode) {
-      document.body.classList.add('compact-mode');
-    } else {
-      document.body.classList.remove('compact-mode');
-    }
-
-    // Apply custom CSS
-    let customStyleEl = document.getElementById('custom-theme-css');
-    if (!customStyleEl) {
-      customStyleEl = document.createElement('style');
-      customStyleEl.id = 'custom-theme-css';
-      document.head.appendChild(customStyleEl);
-    }
-    customStyleEl.textContent = settings.customCSS;
-  };
-
-  const removeThemePreview = () => {
-    const root = document.documentElement;
-    root.style.removeProperty('--primary-color');
-    root.style.removeProperty('--accent-color');
-    root.style.removeProperty('--font-family');
-    root.style.removeProperty('--base-font-size');
-    
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundSize = '';
-    document.body.style.backgroundPosition = '';
-    document.body.style.backgroundAttachment = '';
-    
-    document.body.className = document.body.className.replace(/theme-\w+/g, '');
-    document.body.classList.remove('high-contrast', 'reduced-motion', 'compact-mode');
-
-    const customStyleEl = document.getElementById('custom-theme-css');
-    if (customStyleEl) {
-      customStyleEl.remove();
-    }
-  };
-
   const handleSave = async () => {
     if (!user) return;
 
     setSaving(true);
     setError(null);
-    setSuccess(null);    try {
+    setSuccess(null);
+    
+    try {
+      // Save to Firebase
       await updateUserProfile({ themeSettings: settings });
+      
+      // Update theme context and apply globally
+      updateTheme(settings);
+      
       setSuccess('Theme settings saved successfully!');
       setPreviewMode(false);
     } catch (error) {
@@ -219,21 +190,61 @@ export default function ThemeSettingsPage() {
       primaryColor: preset.primary,
       accentColor: preset.accent
     });
-  };
-
-  const handleReset = () => {
-    setSettings({
-      theme: 'dark',
-      primaryColor: '#fbbf24',
-      accentColor: '#3b82f6',
-      backgroundImage: '/Blue Wall Background.png',
-      fontSize: 'medium',
-      fontFamily: 'Georgia, serif',
-      compactMode: false,
-      highContrast: false,
-      reducedMotion: false,
-      customCSS: ''
-    });
+  };  const handleReset = () => {
+    if (window.confirm('Are you sure you want to reset all theme settings to defaults? This action cannot be undone.')) {
+      setSettings({
+        themeMode: 'dark',
+        primaryColor: '#e0c97f',
+        accentColor: '#3b82f6',
+        backgroundImage: '/Blue Wall Background.png',
+        fontSize: 'medium',
+        fontFamily: 'Georgia, serif',
+        compactMode: false,
+        highContrast: false,
+        reducedMotion: false,
+        largeClickTargets: false,
+        enhancedFocus: false,
+        dyslexiaFriendly: false,
+        lineHeight: 'normal',
+        letterSpacing: 'normal',
+        customCSS: ''
+      });
+      setSuccess('Theme settings reset to defaults.');
+    }
+  };const handleBackgroundUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Clear any previous errors
+      setError(null);
+      setUploading(true);
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file.');
+        setUploading(false);
+        return;
+      }
+      
+      // Validate file size (limit to 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Image file size must be less than 10MB.');
+        setUploading(false);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setSettings({...settings, backgroundImage: dataUrl});
+        setSuccess('Background image uploaded successfully!');
+        setUploading(false);
+      };
+      reader.onerror = () => {
+        setError('Failed to read the image file.');
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   if (loading) {
@@ -273,17 +284,24 @@ export default function ThemeSettingsPage() {
           </div>
         )}
 
-        <div className="theme-container">
-          {/* Preview Toggle */}
+        <div className="theme-container">          {/* Preview Toggle */}
           <div className="preview-toggle">
             <label className="checkbox-label">
               <input
                 type="checkbox"
                 checked={previewMode}
-                onChange={(e) => setPreviewMode(e.target.checked)}
+                onChange={(e) => {
+                  setPreviewMode(e.target.checked);
+                  if (e.target.checked) {
+                    setSuccess('Preview mode enabled. Changes will be applied temporarily.');
+                  } else {
+                    setSuccess('Preview mode disabled. Reverted to saved theme.');
+                  }
+                }}
               />
               Live Preview Mode
             </label>
+            <small>Enable to see changes immediately without saving</small>
           </div>
 
           <div className="theme-grid">
@@ -293,26 +311,26 @@ export default function ThemeSettingsPage() {
               <div className="section-header">
                 <h2>Basic Theme</h2>
               </div>
-              
-              <div className="form-group">
+                <div className="form-group">
                 <label>Theme Mode</label>
-                <div className="radio-group">
+                <div className="theme-mode-toggles">
                   {(['light', 'dark', 'auto'] as const).map(mode => (
-                    <label key={mode} className="radio-label">
-                      <input
-                        type="radio"
-                        name="theme"
-                        value={mode}
-                        checked={settings.theme === mode}
-                        onChange={(e) => setSettings({...settings, theme: e.target.value as any})}
-                      />
-                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                    </label>
+                    <button
+                      key={mode}
+                      className={`theme-toggle ${settings.themeMode === mode ? 'active' : ''}`}
+                      onClick={() => setSettings({...settings, themeMode: mode})}
+                    >                      <div className="toggle-icon">
+                        {mode === 'light' && '☀️'}
+                        {mode === 'dark' && '🌙'}
+                        {mode === 'auto' && (systemColorScheme === 'dark' ? '🌙' : '☀️')}
+                      </div>
+                      <span className="toggle-label">
+                        {mode === 'auto' ? `Auto (${systemColorScheme})` : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                      </span>
+                    </button>
                   ))}
                 </div>
-              </div>
-
-              <div className="form-group">
+              </div>              <div className="form-group">
                 <label>Background Image</label>
                 <div className="background-grid">
                   {backgroundImages.map(bg => (
@@ -322,13 +340,64 @@ export default function ThemeSettingsPage() {
                       onClick={() => setSettings({...settings, backgroundImage: bg.path})}
                     >
                       {bg.path ? (
-                        <img src={bg.path} alt={bg.name} />
+                        <div className="background-thumbnail">
+                          <img src={bg.path} alt={bg.name} />
+                          <div className="background-overlay"></div>
+                        </div>
                       ) : (
-                        <div className="no-background">None</div>
+                        <div className="no-background">
+                          <div className="no-bg-icon">🚫</div>
+                          <span>None</span>
+                        </div>
                       )}
-                      <span>{bg.name}</span>
+                      <span className="background-label">{bg.name}</span>
                     </div>
                   ))}
+                  
+                  {/* Show custom uploaded image if it exists and is not a predefined one */}
+                  {settings.backgroundImage && 
+                   !backgroundImages.some(bg => bg.path === settings.backgroundImage) && (
+                    <div className="background-option selected custom-bg">
+                      <div className="background-thumbnail">
+                        <img src={settings.backgroundImage} alt="Custom Background" />
+                        <div className="background-overlay"></div>
+                      </div>
+                      <span className="background-label">Custom</span>
+                      <button 
+                        className="remove-custom-bg"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSettings({...settings, backgroundImage: '/Blue Wall Background.png'});
+                        }}
+                        title="Remove custom background"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Upload Custom Background</label>
+                <div className="upload-section">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBackgroundUpload}
+                    id="background-upload"
+                    style={{ display: 'none' }}
+                  />                  <label 
+                    htmlFor="background-upload" 
+                    className="upload-button"
+                    data-uploading={uploading}
+                  >
+                    <span className="upload-icon">
+                      {uploading ? '⏳' : '📁'}
+                    </span>
+                    {uploading ? 'Uploading...' : 'Upload Background Image'}
+                  </label>
+                  <small className="upload-hint">Supports JPG, PNG, GIF. Recommended: 1920x1080 or higher</small>
                 </div>
               </div>
             </div>
@@ -337,29 +406,38 @@ export default function ThemeSettingsPage() {
             <div className="section">
               <div className="section-header">
                 <h2>Colors</h2>
-              </div>
-
-              <div className="form-group">
+              </div>              <div className="form-group">
                 <label>Color Presets</label>
                 <div className="preset-grid">
                   {colorPresets.map(preset => (
-                    <button
+                    <div
                       key={preset.name}
-                      className="color-preset"
+                      className={`color-preset-card ${
+                        settings.primaryColor === preset.primary && settings.accentColor === preset.accent 
+                          ? 'selected' : ''
+                      }`}
                       onClick={() => handlePreset(preset)}
                     >
                       <div className="preset-colors">
                         <div 
-                          className="color-circle"
+                          className="color-swatch primary"
                           style={{ backgroundColor: preset.primary }}
+                          title={`Primary: ${preset.primary}`}
                         ></div>
                         <div 
-                          className="color-circle"
+                          className="color-swatch accent"
                           style={{ backgroundColor: preset.accent }}
+                          title={`Accent: ${preset.accent}`}
                         ></div>
                       </div>
-                      <span>{preset.name}</span>
-                    </button>
+                      <div className="preset-info">
+                        <span className="preset-name">{preset.name}</span>
+                        <div className="preset-codes">
+                          <small>{preset.primary}</small>
+                          <small>{preset.accent}</small>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -423,22 +501,18 @@ export default function ThemeSettingsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div className="form-group">
+              </div>              <div className="form-group">
                 <label>Font Size</label>
-                <div className="radio-group">
+                <div className="font-size-toggles">
                   {(['small', 'medium', 'large'] as const).map(size => (
-                    <label key={size} className="radio-label">
-                      <input
-                        type="radio"
-                        name="fontSize"
-                        value={size}
-                        checked={settings.fontSize === size}
-                        onChange={(e) => setSettings({...settings, fontSize: e.target.value as any})}
-                      />
-                      {size.charAt(0).toUpperCase() + size.slice(1)}
-                    </label>
+                    <button
+                      key={size}
+                      className={`font-size-toggle ${settings.fontSize === size ? 'active' : ''}`}
+                      onClick={() => setSettings({...settings, fontSize: size})}
+                    >
+                      <div className="size-preview" data-size={size}>Aa</div>
+                      <span className="size-label">{size.charAt(0).toUpperCase() + size.slice(1)}</span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -484,6 +558,78 @@ export default function ThemeSettingsPage() {
                   Reduced Motion
                 </label>
                 <small>Minimize animations and transitions</small>
+              </div>
+
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.largeClickTargets || false}
+                    onChange={(e) => setSettings({...settings, largeClickTargets: e.target.checked})}
+                  />
+                  Large Click Targets
+                </label>
+                <small>Increase button and link sizes for easier interaction</small>
+              </div>
+
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.enhancedFocus || false}
+                    onChange={(e) => setSettings({...settings, enhancedFocus: e.target.checked})}
+                  />
+                  Enhanced Focus Indicators
+                </label>
+                <small>Make keyboard navigation more visible</small>
+              </div>
+
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.dyslexiaFriendly || false}
+                    onChange={(e) => setSettings({...settings, dyslexiaFriendly: e.target.checked})}
+                  />
+                  Dyslexia-Friendly Font
+                </label>
+                <small>Use OpenDyslexic font for improved readability</small>
+              </div>
+
+              <div className="form-group">
+                <label>Line Height</label>
+                <div className="line-height-toggles">
+                  {(['normal', 'relaxed', 'loose'] as const).map(height => (
+                    <button
+                      key={height}
+                      className={`line-height-toggle ${(settings.lineHeight || 'normal') === height ? 'active' : ''}`}
+                      onClick={() => setSettings({...settings, lineHeight: height})}
+                    >
+                      <div className="line-height-preview" data-height={height}>
+                        <div>Line 1</div>
+                        <div>Line 2</div>
+                        <div>Line 3</div>
+                      </div>
+                      <span className="height-label">{height.charAt(0).toUpperCase() + height.slice(1)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Letter Spacing</label>
+                <div className="letter-spacing-toggles">
+                  {(['normal', 'wide', 'wider'] as const).map(spacing => (
+                    <button
+                      key={spacing}
+                      className={`letter-spacing-toggle ${(settings.letterSpacing || 'normal') === spacing ? 'active' : ''}`}
+                      onClick={() => setSettings({...settings, letterSpacing: spacing})}
+                    >
+                      <div className="spacing-preview" data-spacing={spacing}>ABC</div>
+                      <span className="spacing-label">{spacing.charAt(0).toUpperCase() + spacing.slice(1)}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

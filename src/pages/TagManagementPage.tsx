@@ -57,6 +57,7 @@ export default function TagManagementPage() {
 
   const functions = getFunctions();
   const [activeOverlayTagId, setActiveOverlayTagId] = useState<string | null>(null);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 700); // Threshold for mobile view
 
   // Fetch all tags from Firestore 'tags' collection
   const fetchTagsList = useCallback(async () => {
@@ -95,6 +96,12 @@ export default function TagManagementPage() {
   useEffect(() => {
     fetchTagsList();
     fetchTranslations();
+
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth <= 700);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [fetchTagsList, fetchTranslations]);
 
   // Helper to normalize tag display
@@ -276,48 +283,68 @@ export default function TagManagementPage() {
         <div className="tag-management-grid">
           {tags.map(tag => (
             <div key={tag.id} className="tag-button-wrapper">
-              <button
-                type="button"
-                className="tag-dashboard-btn"
+              <div
+                role="button"
+                tabIndex={0}
+                className={`tag-dashboard-btn ${activeOverlayTagId === tag.id ? 'active' : ''}`}
                 onClick={() => handleTagClick(tag.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleTagClick(tag.id);
+                  }
+                }}
                 aria-label={`Tag ${tag.name}`}
+                aria-expanded={activeOverlayTagId === tag.id} // Corrected: directly use boolean
               >
                 <span className="tag-label">{tag.name}</span>
-                <div className={`tag-overlay${activeOverlayTagId === tag.id ? ' visible' : ''}`}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStartEdit(tag);
-                    }}
-                    disabled={loading}
-                    title="Edit Tag"
-                    className="icon-btn edit-btn"
+                {/* Desktop: Icon Overlay */}
+                {!isMobileView && activeOverlayTagId === tag.id && (
+                  <div className={`tag-overlay visible`}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleStartEdit(tag); }}
+                      disabled={loading}
+                      title="Edit Tag"
+                      className="icon-btn edit-btn"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                        <path d="m15 5 4 4"/>
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteTag(tag.id); }}
+                      disabled={loading}
+                      title="Delete Tag"
+                      className="icon-btn delete-btn"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m3 6 3 0"/><path d="m19 6-1 0"/><path d="m8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="m10 11 0 6"/><path d="m14 11 0 6"/><rect x="5" y="6" width="14" height="14" rx="2"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+              {/* Mobile: Text Buttons Below Tag */}
+              {isMobileView && activeOverlayTagId === tag.id && (
+                <div className="tag-mobile-actions">
+                  <button 
+                    onClick={() => handleStartEdit(tag)} 
+                    disabled={loading} 
+                    className="btn mobile-edit-btn"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                      <path d="m15 5 4 4"/>
-                    </svg>
+                    Edit
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTag(tag.id);
-                    }}
-                    disabled={loading}
-                    title="Delete Tag"
-                    className="icon-btn delete-btn"
+                  <button 
+                    onClick={() => handleDeleteTag(tag.id)} 
+                    disabled={loading} 
+                    className="btn mobile-delete-btn"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m3 6 3 0"/>
-                      <path d="m19 6-1 0"/>
-                      <path d="m8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                      <path d="m10 11 0 6"/>
-                      <path d="m14 11 0 6"/>
-                      <rect x="5" y="6" width="14" height="14" rx="2"/>
-                    </svg>
+                    Delete
                   </button>
                 </div>
-              </button>              {editingTagId === tag.id && (
+              )}
+              {editingTagId === tag.id && ( // Edit form (remains the same)
                 <div className="tag-edit-container">
                   <input
                     type="text"
@@ -334,7 +361,8 @@ export default function TagManagementPage() {
                 </div>
               )}
             </div>
-          ))}        </div>
+          ))}
+        </div>
       </div>
 
       {/* Section divider */}

@@ -105,42 +105,6 @@ interface UserProfile {
     customCSS?: string;
   };
   
-  // UI Customization (from CustomizeUIPage)
-  uiCustomization?: {
-    // Layout Settings
-    sidebarPosition: 'left' | 'right' | 'hidden';
-    navigationStyle: 'horizontal' | 'vertical' | 'compact';
-    contentWidth: 'narrow' | 'medium' | 'wide' | 'full';
-    
-    // Component Visibility
-    showWelcomeMessage: boolean;
-    showQuickActions: boolean;
-    showRecentSermons: boolean;
-    showStatistics: boolean;
-    showSearchSuggestions: boolean;
-    
-    // Grid Layout
-    dashboardColumns: 1 | 2 | 3 | 4;
-    cardSize: 'compact' | 'normal' | 'large';
-    cardSpacing: 'tight' | 'normal' | 'loose';
-    
-    // Typography & Spacing
-    interfaceScale: 80 | 90 | 100 | 110 | 120;
-    lineHeight: 'compact' | 'normal' | 'relaxed';
-    buttonSize: 'small' | 'medium' | 'large';
-    
-    // Toolbar & Actions
-    showToolbarLabels: boolean;
-    toolbarPosition: 'top' | 'bottom' | 'floating';
-    quickActionButtons: string[];
-    
-    // Advanced Options
-    enableAnimations: boolean;
-    showTooltips: boolean;
-    enableKeyboardNavigation: boolean;
-    autoCollapseSidebar: boolean;
-  };
-  
   statistics: {
     totalSermons: number;
     totalVerses: number;
@@ -1378,3 +1342,73 @@ export const importUserData = functions.https.onCall(
       throw new functions.https.HttpsError("internal", "Failed to import user data.");
     }
 });
+
+// Get real-time user statistics
+export const getUserStats = functions.https.onCall(
+  async (data: any, context: functions.https.CallableContext) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "You must be logged in to get stats.");
+    }
+    const userId = context.auth.uid;
+
+    try {
+      // Get all user data in parallel to calculate real-time stats
+      const [
+        sermonsSnapshot,
+        versionsSnapshot,
+        scripturesSnapshot,
+        tagsSnapshot,
+        foldersSnapshot,
+        userProfileSnapshot
+      ] = await Promise.all([
+        admin.firestore().collection("sermons").where("userID", "==", userId).get(),
+        admin.firestore().collection("userScriptureVersions").where("userId", "==", userId).get(),
+        admin.firestore().collection("userScriptures").where("userId", "==", userId).get(),
+        admin.firestore().collection("userTags").where("userId", "==", userId).get(),
+        admin.firestore().collection("sermonFolders").where("userId", "==", userId).get(),
+        admin.firestore().collection("userProfiles").doc(userId).get()
+      ]);
+
+      // Calculate statistics
+      const totalSermons = sermonsSnapshot.size;
+      const totalVerses = scripturesSnapshot.size;
+      const totalTags = tagsSnapshot.size;
+      const totalFolders = foldersSnapshot.size;
+      const totalVersions = versionsSnapshot.size;
+
+      // Get join date from user profile or Firebase Auth
+      let joinDate = new Date().toISOString();
+      let lastActivity = new Date().toISOString();
+      
+      if (userProfileSnapshot.exists) {
+        const profileData = userProfileSnapshot.data();
+        joinDate = profileData?.createdAt?.toDate?.()?.toISOString() || joinDate;
+        lastActivity = profileData?.updatedAt?.toDate?.()?.toISOString() || lastActivity;
+      }
+
+      // Update the user profile with the latest statistics
+      const userStats = {
+        totalSermons,
+        totalVerses,
+        totalTags,
+        totalFolders,
+        totalVersions,
+        joinDate,
+        lastActivity: new Date().toISOString()
+      };
+
+      // Update the user profile with current stats
+      if (userProfileSnapshot.exists) {
+        await admin.firestore().collection("userProfiles").doc(userId).update({
+          statistics: userStats,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      return userStats;
+    } catch (error) {
+      functions.logger.error("Error calculating user stats:", error);
+      throw new functions.https.HttpsError("internal", "Failed to calculate user statistics.");
+    }
+  }
+);

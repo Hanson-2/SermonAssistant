@@ -16,9 +16,10 @@
   height: 100vh;
   z-index: 0;
   pointer-events: none;
-  background: #111827 url('/Blue Wall Background.png') no-repeat center center;
+  background: linear-gradient(rgba(17, 24, 39, 0.97), rgba(17, 24, 39, 0.92)), 
+              url('/Texas_Logo_Background.png') center center fixed no-repeat;
   background-size: cover;
-  opacity: 0.25;
+  opacity: 1;
   display: block;
 }
 
@@ -121,6 +122,7 @@
   justify-content: center;
   align-items: center;
   background-color: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
 }
 
 /* Preview Panel */
@@ -231,6 +233,40 @@
   margin-right: -2rem; /* Cut right margin in half */
 }
 
+.existing-images-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem;
+  transition: background-color 0.2s ease;
+}
+
+.existing-images-header:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.toggle-icon {
+  margin-left: 8px;
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+  .toggle-icon {
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+}
+
 .existing-images-column h3 {
   color: #fff;
   font-weight: 500;
@@ -241,15 +277,15 @@
   z-index: 1;
 }
 
-/* Horizontal divider under heading */
+/* Horizontal divider under heading - Simple implementation */
 .existing-images-column .horizontal-divider {
   width: 80%;
-  height: 3px;
-  background: linear-gradient(to right, #0f192c 0%, #ffffff 50%, #0f192c 100%);
-  opacity: 0.8;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.5);
   margin: 0 0 1rem 0;
-  border-radius: 2px;
   align-self: center;
+  border: none;
+  display: block;
 }
 
 /* Vertical divider on left boundary */
@@ -291,6 +327,20 @@
 .thumbnails-grid.shifted-thumbnails {
   margin-top: 0.5rem;
   width: 90%;
+}
+
+.thumbnails-grid.hide {
+  display: none;
+}
+
+.thumbnails-grid.show {
+  display: grid;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Thumbnail Items */
@@ -398,24 +448,47 @@
     align-items: center;
     padding: 1rem;
   }
-
   /* Expand Form and Preview to Full Width */
   .form-and-preview-stack {
     width: 100%;
     max-width: 100%;
   }
 
-  .edit-expository-form,
+  .edit-expository-form {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.5rem;
+    gap: 1rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  }
+  
   .large-preview-panel {
     width: 100%;
     max-width: 100%;
-  }
-
-  /* Hide Dividers on Mobile */
-  .vertical-divider,
-  .inner-divider-line,
-  .horizontal-divider {
+    aspect-ratio: 3 / 1;
+    max-height: none;
+  }  /* Show ONLY the left-of-form divider on ALL screen sizes, hide other dividers on mobile */
+  .vertical-divider:not(.left-of-form),
+  .inner-divider-line {
     display: none;
+  }/* Convert Vertical Dividers to Horizontal for Mobile - Simple implementation */
+  .horizontal-divider {
+    width: 90%;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.3);
+    margin: 1.5rem auto;
+    display: block;
+    border: none;
+    clear: both;
+  }
+    /* Add Mobile Horizontal Divider between Sections - Simple implementation */
+  .edit-expository-layout > div:not(:last-child)::after {
+    content: "";
+    display: block;
+    width: 90%;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.3);
+    margin: 1.5rem auto;
   }
 
   /* Existing Images Column Full Width on Mobile */
@@ -424,10 +497,142 @@
     max-width: 100%;
     padding-left: 0;
     margin-top: 2rem;
+    margin-right: 0;
   }
-
+  
+  /* Style the collapsible section header */
+  .existing-images-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    width: 100%;
+    justify-content: space-between;
+    transition: background-color 0.3s;
+  }
+  
+  .existing-images-header:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
   /* Center Thumbnails on Mobile */
   .thumbnails-grid {
     justify-content: center;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 100%;
+    gap: 12px;
+  }
+  
+  .thumbnails-grid.shifted-thumbnails {
+    width: 100%;
+    padding: 0.75rem;
+  }
+    .thumbnail-item {
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    min-height: 60px;
+    min-width: 60px;
+    padding: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .form-label {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-input,
+  .form-textarea {
+    padding: 0.85rem;
+    margin-bottom: 1.2rem;
+    font-size: 1rem;
+  }
+  
+  .primary-action-button {
+    padding: 1rem;
+    font-size: 1.05rem;
+  }
+  
+  .file-upload-input {
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Desktop-only improvements */
+@media (min-width: 1024px) {
+  .edit-expository-layout {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-top: 2rem;
+  }
+  
+  .form-and-preview-stack {
+    gap: 1.5rem;
+  }
+  
+  .large-preview-panel {
+    transition: all 0.3s ease;
+  }
+  
+  .large-preview-panel:hover {
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* Empty Preview Placeholder */
+.empty-preview-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  color: #888;
+  font-style: italic;
+}
+
+/* Preview Label */
+.preview-label {
+  display: none;
+  width: 100%;
+  color: #fff;
+  font-weight: 500;
+  text-align: center;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .preview-label {
+    display: block;
+  }
+}
+
+/* Mobile-specific background handling */
+@media (max-width: 768px) {
+  .edit-expository-layout::before {
+    background: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.88)), 
+                url('/Texas_Logo_Wallpaper.png') center center no-repeat;
+    background-size: contain; /* Try contain instead of cover for mobile */
+    background-attachment: scroll; /* Use scroll instead of fixed for better mobile compatibility */
+    opacity: 1;
+  }
+}
+
+/* Desktop-specific divider styling */
+@media (min-width: 769px) {
+  .vertical-divider {
+    display: block;
+  }
+  
+  .vertical-divider.left-of-form {
+    opacity: 0.25;
+    width: 2px;
+    min-width: 2px;
+    max-width: 2px;
+    background: linear-gradient(to bottom, #3498db 0%, #ffffff 100%);
   }
 }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // Layout
 import NavBar from "./components/NavBar/NavBar";
@@ -26,9 +28,7 @@ import SermonSeriesManagementPage from "./pages/SermonSeriesManagementPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import ImportExportPage from "./pages/ImportExportPage";
 import UserProfilePage from "./pages/UserProfilePage";
-import AppPreferencesPage from "./pages/AppPreferencesPage";
 import ThemeSettingsPage from "./pages/ThemeSettingsPage";
-import CustomizeUIPage from "./pages/CustomizeUIPage";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -44,53 +44,50 @@ function App() {
     });
     return unsubscribe;
   }, [navigate]);
-
   return showSplash ? (
     <SplashScreen onFinish={() => setShowSplash(false)} />
   ) : (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {location.pathname !== "/login" && <NavBar />}
-      <main className="pt-[56px]">
-        <Routes>
-          {/* Redirect root to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <ThemeProvider>
+      <div className="min-h-screen bg-gray-900 text-white">
+        {location.pathname !== "/login" && <NavBar />}
+        <main className="pt-[56px]">
+          <Routes>
+            {/* Redirect root to dashboard */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-          {/* Dashboard and Sermon Management */}
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/new-sermon" element={<NewExpositoryPage />} />
-          <Route path="/edit-expository/:id" element={<EditExpositoryPage />} />
-          <Route path="/expository/:id" element={<ExpositoryDetailPage />} />
+            {/* Dashboard and Sermon Management */}
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/new-sermon" element={<NewExpositoryPage />} />
+            <Route path="/edit-expository/:id" element={<EditExpositoryPage />} />
+            <Route path="/expository/:id" element={<ExpositoryDetailPage />} />
 
-          {/* Scripture Management */}
-          <Route path="/add-scripture" element={<AddScripturePage />} />
-          <Route path="/scripture/:bookName/:chapter" element={<ScriptureBookPage />} />
-          <Route path="/scripture/:bookName" element={<ScriptureBookPage />} />
-          <Route path="/scripture-search" element={<UniversalSearchPage />} />
-          <Route path="/currently-added-scripture" element={<CurrentlyAddedScripturePage />} />
-          <Route path="/themes-and-topics" element={<ThemesAndTopicsPage />} />
-          <Route path="/themes-and-topics/:tag" element={<TaggedVersesPage />} />
+            {/* Scripture Management */}
+            <Route path="/add-scripture" element={<AddScripturePage />} />
+            <Route path="/scripture/:bookName/:chapter" element={<ScriptureBookPage />} />
+            <Route path="/scripture/:bookName" element={<ScriptureBookPage />} />
+            <Route path="/scripture-search" element={<UniversalSearchPage />} />
+            <Route path="/currently-added-scripture" element={<CurrentlyAddedScripturePage />} />
+            <Route path="/themes-and-topics" element={<ThemesAndTopicsPage />} />
+            <Route path="/themes-and-topics/:tag" element={<TaggedVersesPage />} />
 
-          {/* Admin Pages */}
-          <Route path="/tag-management" element={<TagManagementPage />} />
+            {/* Admin Pages */}
+            <Route path="/tag-management" element={<TagManagementPage />} />
 
-          {/* Login Page */}
-          <Route path="/login" element={<LoginPage />} />          {/* About Page */}
-          <Route path="/about" element={<AboutPage />} />
-          
-          {/* Settings Pages */}
-          <Route path="/user-profile" element={<UserProfilePage />} />
-          <Route path="/app-preferences" element={<AppPreferencesPage />} />
-          <Route path="/theme-settings" element={<ThemeSettingsPage />} />
-          <Route path="/customize-ui" element={<CustomizeUIPage />} />
-          <Route path="/sermon-folder-management" element={<SermonFolderManagementPage />} />
-          <Route path="/smart-categorization" element={<SmartCategorizationPage />} />
-          <Route path="/advanced-search" element={<AdvancedSearchPage />} />
-          <Route path="/sermon-series-management" element={<SermonSeriesManagementPage />} />
-          <Route path="/analytics-dashboard" element={<AnalyticsDashboardPage />} />
-          <Route path="/import-export" element={<ImportExportPage />} />
-        </Routes>
-      </main>
-    </div>
+            {/* Login Page */}
+            <Route path="/login" element={<LoginPage />} />          {/* About Page */}
+            <Route path="/about" element={<AboutPage />} />            {/* Settings Pages */}
+            <Route path="/user-profile" element={<UserProfilePage />} />
+            <Route path="/theme-settings" element={<ThemeSettingsPage />} />
+            <Route path="/sermon-folder-management" element={<SermonFolderManagementPage />} />
+            <Route path="/smart-categorization" element={<SmartCategorizationPage />} />
+            <Route path="/advanced-search" element={<AdvancedSearchPage />} />
+            <Route path="/sermon-series-management" element={<SermonSeriesManagementPage />} />
+            <Route path="/analytics-dashboard" element={<AnalyticsDashboardPage />} />
+            <Route path="/import-export" element={<ImportExportPage />} />
+          </Routes>
+        </main>
+      </div>
+    </ThemeProvider>
   );
 }
 

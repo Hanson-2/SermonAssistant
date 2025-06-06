@@ -3,9 +3,11 @@
 
 // 1. Variables and configuration (must be first)
 @import 'variables';
+@import './_variables.scss';
 
 // 2. Mixins and functions (must come after variables)
 @import 'mixins';
+@import './_mixins.scss';
 
 // 3. Base styles and reset
 @import 'base';
@@ -23,3 +25,28 @@
 
 // 7. Utilities (last to override anything if needed)
 // Add utility imports here as needed
+
+// Global fallback for disabling hover/focus/active on touch devices
+@media (hover: none) {
+  button:hover, button:focus, button:active,
+  .btn:hover, .btn:focus, .btn:active,
+  .overlay:hover, .popup:hover, .modal:hover {
+    background: inherit !important;
+    color: inherit !important;
+    border-color: inherit !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transform: none !important;
+  }
+}
+
+// Global font size/padding for very small screens
+@media (max-width: 360px) {
+  html, body {
+    font-size: 15px !important;
+  }
+  button, .btn, .form-control, .overlay, .popup, .modal {
+    font-size: 0.95rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+}

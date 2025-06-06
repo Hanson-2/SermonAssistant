@@ -1,6 +1,8 @@
 // AdvancedSearchPage.scss
 /* Import unified theme patch for all settings pages */
 @import '../styles/theme_patch_all_pages.css';
+@import '../styles/scss/_variables.scss';
+@import '../styles/scss/_mixins.scss';
 
 // Background overlay for consistent theming with dashboard/analytics pages
 .universal-search-bg {
@@ -130,16 +132,21 @@
           margin-bottom: 0.5rem;
           font-weight: 500;
         }
-        
-        input, select, textarea {
+          input, select, textarea {
           width: 100%;
           padding: 0.75rem;
+          min-height: 44px; // Ensure minimum touch target size
           border: 1px solid rgba(226, 232, 240, 0.2);
           border-radius: 8px;
           background: rgba(51, 65, 85, 0.6);
           color: #f1f5f9;
           font-size: 1rem;
           transition: border-color 0.3s, box-shadow 0.3s;
+          
+          @media (max-width: 768px) {
+            padding: 1rem;
+            font-size: 1.1rem; // Larger text on mobile for better readability
+          }
           
           &:focus {
             outline: none;
@@ -151,10 +158,13 @@
             color: #94a3b8;
           }
         }
-        
-        textarea {
+          textarea {
           resize: vertical;
           min-height: 100px;
+          
+          @media (max-width: 768px) {
+            min-height: 120px; // Larger on mobile for better usability
+          }
         }
       }
     }    // Tag and book input sections    
@@ -165,6 +175,12 @@
       margin-bottom: 1rem;
       align-items: center;
       
+      @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+      }
+      
       label {
         display: block;
         color: #cbd5e1;
@@ -172,7 +188,14 @@
         font-weight: 500;
         white-space: nowrap;
         margin-right: 0.5rem;
+        min-width: -webkit-fill-available;
         min-width: fit-content;
+        
+        @media (max-width: 768px) {
+          margin-bottom: 0.5rem;
+          margin-right: 0;
+          white-space: normal;
+        }
       }
       
       select {
@@ -200,11 +223,11 @@
           color: #f1f5f9;
         }
       }
-      
-      button {
+        button {
         margin: 0;
         font-size: 1rem;
-        padding: 0.5rem 1.2rem;
+        padding: 0.75rem 1.2rem; // Increased to meet 44px touch target
+        min-height: 44px; // Ensure minimum touch target size
         background: #23262e;
         color: #ffe082;
         border: 1.5px solid #3a3d44;
@@ -214,6 +237,12 @@
         transition: background 0.2s, color 0.2s, border 0.2s;
         cursor: pointer;
         white-space: nowrap;
+        
+        @media (max-width: 768px) {
+          width: 100%;
+          padding: 1rem 1.2rem; // Larger touch targets on mobile
+          font-size: 1.1rem;
+        }
         
         &:hover {
           background: #181b22;
@@ -226,25 +255,34 @@
           cursor: not-allowed;
         }
       }
-    }
-      // Selected items display
-    .selected-items {
+    }      .selected-items {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
       margin-top: 0.5rem;
       
+      @media (max-width: 768px) {
+        gap: 0.75rem;
+      }
+      
       .selected-tag,
       .selected-book {
         background: rgba(255, 224, 130, 0.2);
         color: #ffe082;
-        padding: 0.25rem 0.75rem;
+        padding: 0.5rem 0.75rem; // Increased padding for better touch targets
+        min-height: 36px; // Minimum touch target for tags
         border-radius: 20px;
         font-size: 0.9rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
         border: 1px solid rgba(255, 224, 130, 0.3);
+        
+        @media (max-width: 768px) {
+          padding: 0.75rem 1rem;
+          font-size: 1rem;
+          min-height: 44px; // Full touch target on mobile
+        }
         
         button {
           background: none;
@@ -253,14 +291,20 @@
           cursor: pointer;
           font-size: 1.1rem;
           padding: 0;
-          width: 18px;
-          height: 18px;
+          width: 20px;
+          height: 20px;
           display: flex;
           align-items: center;
           justify-content: center;
           border-radius: 50%;
           transition: all 0.2s;
           font-weight: bold;
+          
+          @media (max-width: 768px) {
+            width: 24px;
+            height: 24px;
+            font-size: 1.2rem;
+          }
           
           &:hover {
             background-color: rgba(239, 68, 68, 0.2);
@@ -279,8 +323,7 @@
       @media (max-width: 768px) {
         grid-template-columns: 1fr;
       }
-    }
-      // Category and series checkboxes
+    }    // Category and series checkboxes
     .categories-grid,
     .series-grid {
       display: grid;
@@ -288,24 +331,41 @@
       gap: 0.5rem;
       margin-top: 0.5rem;
       
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+      
       .category-checkbox,
       .series-checkbox {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
+        gap: 0.75rem; // Increased gap for better touch experience
+        padding: 0.75rem; // Increased padding for larger touch target
+        min-height: 44px; // Ensure minimum touch target size
         border-radius: 6px;
         transition: background-color 0.2s;
         cursor: pointer;
         
+        @media (max-width: 768px) {
+          padding: 1rem;
+          gap: 1rem;
+        }
+        
         &:hover {
           background: rgba(255, 224, 130, 0.1);
         }
-        
-        input[type="checkbox"] {
-          width: auto;
+          input[type="checkbox"] {
+          width: 20px; // Larger checkbox for better touch experience
+          height: 20px;
           margin: 0;
           accent-color: #ffe082;
+          cursor: pointer;
+          
+          @media (max-width: 768px) {
+            width: 24px;
+            height: 24px;
+          }
         }
         
         span {
@@ -313,24 +373,39 @@
           cursor: pointer;
           color: #cbd5e1;
           font-size: 0.9rem;
+          
+          @media (max-width: 768px) {
+            font-size: 1rem;
+          }
         }
       }
-    }
-      // Search actions
+    }      // Search actions
     .form-actions {
       display: flex;
       gap: 1rem;
       justify-content: center;
       margin-top: 2rem;
       
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
       .btn {
         padding: 0.75rem 2rem;
+        min-height: 44px; // Ensure minimum touch target size
         border: none;
         border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
         transition: transform 0.2s, box-shadow 0.2s;
         font-size: 1rem;
+        
+        @media (max-width: 768px) {
+          width: 100%;
+          padding: 1rem 2rem;
+          font-size: 1.1rem;
+        }
         
         &.btn-primary {
           background: linear-gradient(135deg, #ffe082, #e0c97f);
@@ -352,20 +427,11 @@
             transform: translateY(-1px);
           }
         }
-        
-        &:disabled {
+          &:disabled {
           opacity: 0.5;
           cursor: not-allowed;
           transform: none;
           box-shadow: none;
-        }
-      }
-      
-      @media (max-width: 768px) {
-        flex-direction: column;
-        
-        .btn {
-          width: 100%;
         }
       }
     }
@@ -416,8 +482,7 @@
         grid-template-columns: 1fr;
       }
     }
-    
-    .sermon-result-wrapper {
+      .sermon-result-wrapper {
       position: relative;
       
       .sermon-result-overlay {
@@ -428,16 +493,33 @@
         opacity: 0;
         transition: opacity 0.3s ease;
         
+        @media (max-width: 768px) {
+          // Always show on mobile for better accessibility
+          opacity: 1;
+          position: static;
+          display: flex;
+          justify-content: center;
+          margin-top: 1rem;
+          padding: 0 1rem;
+        }
+        
         .btn {
           background: rgba(59, 130, 246, 0.9);
           border: none;
           color: white;
           padding: 0.5rem 1rem;
+          min-height: 44px; // Ensure minimum touch target
           border-radius: 0.375rem;
           font-size: 0.875rem;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s ease;
+          
+          @media (max-width: 768px) {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            width: 100%;
+          }
           
           &:hover {
             background: rgba(59, 130, 246, 1);
@@ -449,6 +531,13 @@
       
       &:hover .sermon-result-overlay {
         opacity: 1;
+      }
+      
+      @media (max-width: 768px) {
+        // Remove hover behavior on mobile
+        &:hover .sermon-result-overlay {
+          opacity: 1;
+        }
       }
     }
   }
@@ -479,29 +568,217 @@
   100% { transform: rotate(360deg); }
 }
 
-// Responsive design
+// Enhanced responsive design
 @media (max-width: 768px) {
   .advanced-search-page {
     padding: 1rem;
     
-    .page-header h1.analytics-dashboard-title {
-      font-size: 2.2rem;
+    .page-header {
+      margin-bottom: 2rem;
+      
+      h1.analytics-dashboard-title {
+        font-size: 2.2rem;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+      }
+      
+      p {
+        font-size: 1rem;
+        padding: 0 1rem;
+      }
     }
     
     .search-form {
       padding: 1.5rem;
+      margin-bottom: 1.5rem;
       
-      .search-actions {
-        flex-direction: column;
+      .form-section {
+        margin-bottom: 1.5rem;
         
-        button {
-          width: 100%;
+        h3 {
+          font-size: 1.2rem;
+          margin-bottom: 0.75rem;
+        }
+        
+        .form-group {
+          margin-bottom: 1rem;
+          
+          label {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+          }
         }
       }
     }
     
-    .search-results .sermon-grid {
-      grid-template-columns: 1fr;
+    .search-results {
+      padding: 1.5rem;
+      
+      .results-header {
+        margin-bottom: 1.5rem;
+        
+        h2 {
+          font-size: 1.3rem;
+        }
+      }
+      
+      .results-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+  }
+}
+
+// Additional mobile optimizations for smaller screens
+@media (max-width: 480px) {
+  .advanced-search-page {
+    padding: 0.75rem;
+    
+    .page-header h1.analytics-dashboard-title {
+      font-size: 1.8rem;
+    }
+    
+    .search-form,
+    .search-results {
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    
+    .search-form .form-section .categories-grid,
+    .search-form .form-section .series-grid {
+      gap: 0.5rem;
+      
+      .category-checkbox,
+      .series-checkbox {
+        padding: 0.75rem;
+        
+        span {
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}
+
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .advanced-search-page {
+    .form-actions .btn:hover,
+    .tag-input-group button:hover,
+    .book-input-group button:hover,
+    .selected-items .selected-tag button:hover,
+    .selected-items .selected-book button:hover,
+    .categories-grid .category-checkbox:hover,
+    .series-grid .series-checkbox:hover,
+    .sermon-result-wrapper .sermon-result-overlay .btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+    .sermon-result-wrapper .sermon-result-overlay {
+      opacity: 1 !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .advanced-search-page {
+    padding: 0.5rem;
+    .page-header h1.analytics-dashboard-title {
+      font-size: 1.2rem;
+    }
+    .search-form,
+    .search-results {
+      padding: 0.5rem;
+      border-radius: 6px;
+    }
+    .search-form .form-section h3,
+    .search-form .form-section label,
+    .search-form input,
+    .search-form select,
+    .search-form textarea,
+    .form-actions .btn,
+    .categories-grid .category-checkbox span,
+    .series-grid .series-checkbox span,
+    .selected-items .selected-tag,
+    .selected-items .selected-book {
+      font-size: 0.95rem !important;
+    }
+    .form-actions .btn {
+      padding: 0.75rem 1rem;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .advanced-search-page {
+    .search-results,
+    .results-grid {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+// ===== MOBILE BUTTON & LAYOUT FIXES =====
+@media (max-width: 768px) {
+  .advanced-search-page {
+    padding-bottom: 6rem; // Space for bottom nav
+    .search-form {
+      .tag-input-group, .book-input-group {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 0.5rem;
+        button, .add-btn {
+          width: auto !important;
+          min-width: 80px;
+          max-width: 120px;
+          font-size: 0.98rem;
+          padding: 0.5rem 1rem;
+          margin: 0;
+          align-self: flex-end;
+        }
+        input {
+          flex: 1 1 0;
+        }
+      }
+      .form-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+        .btn {
+          width: 100%;
+          max-width: 320px;
+          margin: 0 auto;
+          font-size: 1rem;
+          padding: 0.7rem 0.5rem;
+        }
+      }
+    }
+  }
+}
+@media (max-width: 480px) {
+  .advanced-search-page {
+    padding-bottom: 7rem; // Extra for nav on very small screens
+    .search-form {
+      .tag-input-group, .book-input-group {
+        button, .add-btn {
+          font-size: 0.92rem;
+          padding: 0.45rem 0.7rem;
+          min-width: 60px;
+          max-width: 90px;
+        }
+      }
+      .form-actions .btn {
+        font-size: 0.98rem;
+        padding: 0.6rem 0.5rem;
+        max-width: 260px;
+      }
     }
   }
 }

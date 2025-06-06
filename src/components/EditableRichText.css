@@ -44,3 +44,102 @@
   flex-direction: column;
   height: 100%;
 }
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .rich-note-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  
+  .rich-note-toolbar button {
+    padding: 0.5rem 0.8rem;
+    font-size: 14px;
+    min-height: 44px; /* Touch target */
+    min-width: 44px;
+    border-radius: 6px;
+    flex: 1;
+    max-width: calc(25% - 6px); /* 4 buttons per row on mobile */
+  }
+  
+  .rich-note-editor {
+    padding: 0.75rem;
+    min-height: 200px;
+  }
+  
+  .tox-tinymce {
+    min-height: 250px !important; /* Larger on mobile */
+  }
+  
+  /* Ensure TinyMCE toolbar is mobile-friendly */
+  .tox .tox-toolbar__group {
+    flex-wrap: wrap;
+  }
+  
+  .tox .tox-tbtn {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .rich-note-toolbar {
+    gap: 4px;
+  }
+  
+  .rich-note-toolbar button {
+    padding: 0.4rem 0.6rem;
+    font-size: 13px;
+    max-width: calc(33.333% - 4px); /* 3 buttons per row on small mobile */
+  }
+  
+  .rich-note-editor {
+    padding: 0.5rem;
+  }
+  
+  .tox-tinymce {
+    min-height: 300px !important; /* Even larger on small screens */
+  }
+}
+
+/* Touch-friendly adjustments */
+@media (pointer: coarse) {
+  .rich-note-toolbar button {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 0.6rem 0.9rem;
+  }
+  
+  .tox .tox-tbtn {
+    min-height: 48px !important;
+    min-width: 48px !important;
+  }
+}
+
+/* 1. Disable hover/focus/active effects for toolbar buttons on touch devices */
+@media (hover: none) {
+  .rich-note-toolbar button:hover,
+  .rich-note-toolbar button:focus,
+  .rich-note-toolbar button:active {
+    background: inherit !important;
+    color: inherit !important;
+    border-color: inherit !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transform: none !important;
+  }
+}
+
+/* 2. Font size and padding for very small screens */
+@media (max-width: 360px) {
+  .rich-note-toolbar button {
+    font-size: 0.95rem !important;
+    padding: 0.75rem 1rem !important;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+  .rich-note-toolbar {
+    min-height: 2.5rem;
+  }
+}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchSermons } from '../services/firebaseService';
 import SermonCard, { Sermon } from '../components/SermonCard/SermonCard';
-import '../styles/edit-expository.css';
+import '../styles/edit-expository.scss';
 
 export default function MiniSermonList() {
   const [sermons, setSermons] = useState<Sermon[]>([]);

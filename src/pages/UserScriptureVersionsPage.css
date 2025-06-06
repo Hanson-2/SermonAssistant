@@ -1,5 +1,7 @@
 .user-versions-page {
   padding: 20px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .user-versions-error {
@@ -18,58 +20,123 @@
   border: 1px solid #ccc;
   border-radius: 6px;
   background: #fafbfc;
+  max-width: 100%;
 }
 
 .add-version-form .form-row {
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .add-version-form label {
-  min-width: 120px;
   font-weight: 500;
+  margin-bottom: 5px;
+  width: 100%;
 }
 
 .add-version-form input,
 .add-version-form textarea {
-  margin-left: 5px;
-  padding: 5px;
+  width: 100%;
+  padding: 8px 12px;
   border: 1px solid #bbb;
   border-radius: 4px;
   font-size: 1rem;
+  box-sizing: border-box;
+  min-height: 44px; /* Touch-friendly minimum */
 }
 
 .add-version-form textarea {
-  width: 100%;
-  min-width: 200px;
-  max-width: 100%;
+  min-height: 80px;
+  resize: vertical;
 }
 
 .add-version-form button {
-  padding: 8px 15px;
+  width: 100%;
+  padding: 12px 15px;
   background: #2d7ff9;
   color: #fff;
   border: none;
   border-radius: 4px;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s;
+  min-height: 48px; /* Touch-friendly */
+  margin-top: 10px;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.add-version-form button:hover:not(:disabled) {
+  background: #1a6ce8;
+}
+
 .add-version-form button:disabled {
   background: #b0c4de;
   cursor: not-allowed;
 }
 
+.versions-list {
+  max-width: 100%;
+}
+
+.versions-list h2 {
+  margin-bottom: 15px;
+}
+
 .versions-list ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .versions-list li {
-  margin-bottom: 10px;
-  padding: 10px;
+  margin-bottom: 15px;
+  padding: 15px;
   border: 1px solid #eee;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #fff;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Desktop improvements */
+@media (min-width: 768px) {
+  .user-versions-page {
+    padding: 30px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .add-version-form {
+    padding: 25px;
+  }
+  
+  .add-version-form .form-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .add-version-form label {
+    min-width: 140px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+  }
+  
+  .add-version-form input,
+  .add-version-form textarea {
+    flex: 1;
+  }
+  
+  .add-version-form button {
+    width: auto;
+    min-width: 150px;
+    margin-top: 0;
+  }
 }

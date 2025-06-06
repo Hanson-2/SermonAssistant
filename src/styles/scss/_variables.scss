@@ -37,6 +37,7 @@ $success-border: #b3ffb3;
 // Semantic color aliases for components
 $danger-color: $error-border;
 $success-color: $success-border;
+$info-color: #3b82f6; // Blue color for info/edit actions
 
 // Typography
 $font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -76,6 +77,12 @@ $font-size-2xl: $font-2xl;   // 1.5rem
 $font-size-3xl: $font-3xl;   // 1.875rem
 $font-size-4xl: $font-4xl;   // 2.25rem
 $font-size-5xl: $font-5xl;   // 2.8rem
+
+// Mobile-specific variables
+$mobile-font-size: 0.95rem;
+$mobile-header-font-size: 1.1rem;
+$mobile-btn-padding: 0.75rem 1rem;
+$mobile-min-touch: 44px;
 
 // Spacing
 $space-1: 0.25rem;
@@ -141,7 +148,7 @@ $container-narrow: 600px;
 $container-wide: 1400px;
 
 // Background Images
-$bg-wall: url('/Blue Wall Background.png');
+$bg-wall: url('/Texas_Logo_Background.png');
 $bg-logo: url('/Texas_Logo_Wallpaper.png');
 
 // Transitions

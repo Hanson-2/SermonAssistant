@@ -1,6 +1,8 @@
 // SmartCategorizationPage.scss
 /* Import unified theme patch for all settings pages */
 @import '../styles/theme_patch_all_pages.css';
+@import '../styles/scss/_variables.scss';
+@import '../styles/scss/_mixins.scss';
 
 // Background overlay for consistent theming with dashboard/analytics pages
 .universal-search-bg {
@@ -116,10 +118,11 @@
       height: 24px;
       border: 3px solid #403315;
       border-top: 3px solid #e0c97f;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      border-radius: 50%;      animation: spin 1s linear infinite;
     }
-  }  // Section Styles
+  }
+
+  // Section Styles
   .section {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid #B8860B;
@@ -147,20 +150,21 @@
         letter-spacing: 0.5px;
         text-shadow: 0 1px 3px rgba(0,0,0,0.3);
       }
-      
-      .section-actions {
+        .section-actions {
         display: flex;
         gap: 1rem;
       }
     }
-  }  // Form Styles
+  }
+
+  // Form Styles
   .create-category-form {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid #B8860B;
     border-radius: 8px;    padding: 1.5rem;
     margin-bottom: 1.5rem;
-    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
     
     .form-group {
@@ -217,12 +221,13 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
   }
-
   .sermons-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
-  }  // Card Styles
+  }
+
+  // Card Styles
   .category-card {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid #B8860B;
@@ -267,11 +272,12 @@
           padding: 0.25rem 0.5rem;
           border-radius: 4px;
           font-size: 0.75rem;
-          border: 1px solid #4a7c0a;
-        }
+          border: 1px solid #4a7c0a;        }
       }
     }
-  }  .sermon-card {
+  }
+
+  .sermon-card {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid #B8860B;
     border-radius: 8px;
@@ -332,11 +338,12 @@
     }
   }
 
-  // Auto-Tag Results
-  .auto-tag-results {
+  // Auto-Tag Results  .auto-tag-results {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;      .auto-tag-result {
+    gap: 1.5rem;
+
+    .auto-tag-result {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid #B8860B;
       border-radius: 8px;
@@ -352,10 +359,11 @@
         
         h3 {
           color: #e0c97f;
-          margin: 0;
-          font-family: 'Trajan Pro', serif;
+          margin: 0;          font-family: 'Trajan Pro', serif;
           font-weight: 600;
-        }          .confidence-score {
+        }
+
+        .confidence-score {
           background: rgba(184, 134, 11, 0.2);
           color: #DAA520;
           padding: 0.25rem 0.75rem;
@@ -422,10 +430,8 @@
       .result-actions {
         display: flex;
         gap: 1rem;
-      }
-    }
+      }    }
   }
-}
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
@@ -527,47 +533,1883 @@
   }
 }
 
-// Responsive Design
+// Comprehensive Mobile Responsive Design
 @media (max-width: 768px) {
   .smart-categorization-page {
-    padding: 1rem;
-    
-    .page-header h1 {
-      font-size: 2rem;
-    }
-    
-    .section {
-      padding: 1.5rem;
-      
-      .section-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
+    // Scrolling and Page Padding Fixes
+    padding-top: 3rem; // Account for fixed top navbar (56px) + spacing
+    padding-bottom: 3rem; // General bottom padding, will be overridden for smaller screens
+    min-height: calc(100vh - 56px); // Adjust for top navbar
+
+    .page-header {
+      p {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        word-wrap: break-word; // Help with long text lines
+        text-align: center; // Ensure subtitle text is centered
       }
     }
-    
-    .categories-grid, .sermons-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .auto-tag-results .auto-tag-result {
-      .result-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.5rem;
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center; // Center section content, including buttons
+
+      h2 { // Ensure section titles are also centered
+        text-align: center;
+        width: 100%; // Allow text to wrap if needed
+      }
+      
+      .btn, button, .button-like-link { // Target generic buttons and button-like links
+        margin-left: auto;
+        margin-right: auto;
+        display: block; 
+        min-width: 180px; // Ensure buttons have a reasonable minimum width
+        text-align: center;
         
-        .confidence-score {
-          align-self: flex-start;
+        &:not(:last-child) {
+          margin-bottom: 0.75rem; // Space out stacked buttons
         }
       }
       
-      .result-actions {
-        flex-direction: column;
+      // If buttons are wrapped, e.g., in a .button-group
+      .button-group {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap; // Allow buttons to wrap on small screens
+          gap: 0.5rem;
+          width: 100%;
+      }
+    }
+
+    // Sermon Card Content Cutoff
+    .sermons-grid { 
+      width: 100%; // Ensure grid takes full available width
+      .sermon-item { 
+        padding: 1rem; // Add more padding inside sermon cards
+        padding-bottom: 1.5rem; // Specifically more at the bottom
+        
+        .sermon-title { // Assuming class for sermon title
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+        }
+        .sermon-description, .sermon-date { // Example classes for other text
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
+        }
       }
     }
     
-    .create-category-form .form-actions {
+    // Retain existing fix for specific scrollable lists if still needed and distinct
+    // .category-list,
+    // .results-list {
+    //   padding-bottom: 5.5rem !important; 
+    // }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes for smaller screens
+    padding-top: 2.5rem; 
+    padding-bottom: 6.5rem !important; // Account for bottom nav (54px) + extra scroll space
+    min-height: calc(100vh - 110px); // Adjust for top navbar
+    overflow-y: auto; 
+    padding-left: 0.75rem; // Adjust side padding
+    padding-right: 0.75rem;
+
+    .page-header {
+      margin-bottom: 1.5rem;
+      h1.analytics-dashboard-title {
+        font-size: 1.9rem; 
+      }
+      p {
+        font-size: 0.9rem; 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem;
+      }
+    }
+
+    .section {
+      padding: 1.25rem; 
+      margin-bottom: 1.25rem;
+      
+      .btn, button, .button-like-link {
+        width: 100%; // Make buttons full width for easier tapping
+        max-width: 300px; // But not excessively wide
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        padding: 0.75rem; 
+        .sermon-title { 
+            font-size: 1rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.85rem;
+        }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem;
+    padding-bottom: 6rem !important; // Maintain bottom padding for nav
+
+    .page-header {
+      h1.analytics-dashboard-title {
+        font-size: 1.7rem; 
+      }
+      p {
+        font-size: 0.8rem; 
+        padding-left: 0.25rem; 
+        padding-right: 0.25rem;
+      }
+    }
+
+    .section {
+      padding: 1rem; 
+      margin-bottom: 1rem;
+      .btn, button, .button-like-link {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        .sermon-title { 
+            font-size: 0.95rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.8rem;
+        }
+    }
+  }
+}
+
+// ================= MOBILE LAYOUT FIXES =================
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    .page-header p {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      text-align: center;
+      word-break: break-word;
+    }
+    .section {
+      align-items: center;
+      .btn, button, .button-like-link {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        min-width: 160px;
+      }
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 2.5rem;
+      }
+    }
+  }
+}
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    .section {
+      padding: 1rem;
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 3rem;
+      }
+    }
+  }
+}
+
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .smart-categorization-page {
+    .btn:hover,
+    .category-checkbox:hover,
+    .category-list .category-item .edit-btn:hover,
+    .category-list .category-item .delete-btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    .category-list .category-item,
+    .category-checkbox span,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable category list/results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    .category-list,
+    .results-list {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+// ========== COMPREHENSIVE MOBILE RESPONSIVENESS ==========
+
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes
+    padding-top: 3rem; // Account for fixed top navbar (56px) + spacing
+    padding-bottom: 3rem; // General bottom padding, will be overridden for smaller screens
+    min-height: calc(100vh - 56px); // Adjust for top navbar
+
+    .page-header {
+      p {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        word-wrap: break-word; // Help with long text lines
+        text-align: center; // Ensure subtitle text is centered
+      }
+    }
+
+    .section {
+      display: flex;
       flex-direction: column;
+      align-items: center; // Center section content, including buttons
+
+      h2 { // Ensure section titles are also centered
+        text-align: center;
+        width: 100%; // Allow text to wrap if needed
+      }
+      
+      .btn, button, .button-like-link { // Target generic buttons and button-like links
+        margin-left: auto;
+        margin-right: auto;
+        display: block; 
+        min-width: 180px; // Ensure buttons have a reasonable minimum width
+        text-align: center;
+        
+        &:not(:last-child) {
+          margin-bottom: 0.75rem; // Space out stacked buttons
+        }
+      }
+      
+      // If buttons are wrapped, e.g., in a .button-group
+      .button-group {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap; // Allow buttons to wrap on small screens
+          gap: 0.5rem;
+          width: 100%;
+      }
+    }
+
+    // Sermon Card Content Cutoff
+    .sermons-grid { 
+      width: 100%; // Ensure grid takes full available width
+      .sermon-item { 
+        padding: 1rem; // Add more padding inside sermon cards
+        padding-bottom: 1.5rem; // Specifically more at the bottom
+        
+        .sermon-title { // Assuming class for sermon title
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+        }
+        .sermon-description, .sermon-date { // Example classes for other text
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+    
+    // Retain existing fix for specific scrollable lists if still needed and distinct
+    // .category-list,
+    // .results-list {
+    //   padding-bottom: 5.5rem !important; 
+    // }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes for smaller screens
+    padding-top: 2.5rem; 
+    padding-bottom: 6.5rem !important; // Account for bottom nav (54px) + extra scroll space
+    min-height: calc(100vh - 110px); // Adjust for top navbar
+    overflow-y: auto; 
+    padding-left: 0.75rem; // Adjust side padding
+    padding-right: 0.75rem;
+
+    .page-header {
+      margin-bottom: 1.5rem;
+      h1.analytics-dashboard-title {
+        font-size: 1.9rem; 
+      }
+      p {
+        font-size: 0.9rem; 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem;
+      }
+    }
+
+    .section {
+      padding: 1.25rem; 
+      margin-bottom: 1.25rem;
+      
+      .btn, button, .button-like-link {
+        width: 100%; // Make buttons full width for easier tapping
+        max-width: 300px; // But not excessively wide
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        padding: 0.75rem; 
+        .sermon-title { 
+            font-size: 1rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.85rem;
+        }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem;
+    padding-bottom: 6rem !important; // Maintain bottom padding for nav
+
+    .page-header {
+      h1.analytics-dashboard-title {
+        font-size: 1.7rem; 
+      }
+      p {
+        font-size: 0.8rem; 
+        padding-left: 0.25rem; 
+        padding-right: 0.25rem;
+      }
+    }
+
+    .section {
+      padding: 1rem; 
+      margin-bottom: 1rem;
+      .btn, button, .button-like-link {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        .sermon-title { 
+            font-size: 0.95rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.8rem;
+        }
+    }
+  }
+}
+
+// ================= MOBILE LAYOUT FIXES =================
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    .page-header p {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      text-align: center;
+      word-break: break-word;
+    }
+    .section {
+      align-items: center;
+      .btn, button, .button-like-link {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        min-width: 160px;
+      }
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 2.5rem;
+      }
+    }
+  }
+}
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    .section {
+      padding: 1rem;
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 3rem;
+      }
+    }
+  }
+}
+
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .smart-categorization-page {
+    .btn:hover,
+    .category-checkbox:hover,
+    .category-list .category-item .edit-btn:hover,
+    .category-list .category-item .delete-btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    .category-list .category-item,
+    .category-checkbox span,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable category list/results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    .category-list,
+    .results-list {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+// ========== COMPREHENSIVE MOBILE RESPONSIVENESS ==========
+
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes
+    padding-top: 3rem; // Account for fixed top navbar (56px) + spacing
+    padding-bottom: 3rem; // General bottom padding, will be overridden for smaller screens
+    min-height: calc(100vh - 56px); // Adjust for top navbar
+
+    .page-header {
+      p {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        word-wrap: break-word; // Help with long text lines
+        text-align: center; // Ensure subtitle text is centered
+      }
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center; // Center section content, including buttons
+
+      h2 { // Ensure section titles are also centered
+        text-align: center;
+        width: 100%; // Allow text to wrap if needed
+      }
+      
+      .btn, button, .button-like-link { // Target generic buttons and button-like links
+        margin-left: auto;
+        margin-right: auto;
+        display: block; 
+        min-width: 180px; // Ensure buttons have a reasonable minimum width
+        text-align: center;
+        
+        &:not(:last-child) {
+          margin-bottom: 0.75rem; // Space out stacked buttons
+        }
+      }
+      
+      // If buttons are wrapped, e.g., in a .button-group
+      .button-group {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap; // Allow buttons to wrap on small screens
+          gap: 0.5rem;
+          width: 100%;
+      }
+    }
+
+    // Sermon Card Content Cutoff
+    .sermons-grid { 
+      width: 100%; // Ensure grid takes full available width
+      .sermon-item { 
+        padding: 1rem; // Add more padding inside sermon cards
+        padding-bottom: 1.5rem; // Specifically more at the bottom
+        
+        .sermon-title { // Assuming class for sermon title
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+        }
+        .sermon-description, .sermon-date { // Example classes for other text
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+    
+    // Retain existing fix for specific scrollable lists if still needed and distinct
+    // .category-list,
+    // .results-list {
+    //   padding-bottom: 5.5rem !important; 
+    // }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes for smaller screens
+    padding-top: 2.5rem; 
+    padding-bottom: 6.5rem !important; // Account for bottom nav (54px) + extra scroll space
+    min-height: calc(100vh - 110px); // Adjust for top navbar
+    overflow-y: auto; 
+    padding-left: 0.75rem; // Adjust side padding
+    padding-right: 0.75rem;
+
+    .page-header {
+      margin-bottom: 1.5rem;
+      h1.analytics-dashboard-title {
+        font-size: 1.9rem; 
+      }
+      p {
+        font-size: 0.9rem; 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem;
+      }
+    }
+
+    .section {
+      padding: 1.25rem; 
+      margin-bottom: 1.25rem;
+      
+      .btn, button, .button-like-link {
+        width: 100%; // Make buttons full width for easier tapping
+        max-width: 300px; // But not excessively wide
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        padding: 0.75rem; 
+        .sermon-title { 
+            font-size: 1rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.85rem;
+        }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem;
+    padding-bottom: 6rem !important; // Maintain bottom padding for nav
+
+    .page-header {
+      h1.analytics-dashboard-title {
+        font-size: 1.7rem; 
+      }
+      p {
+        font-size: 0.8rem; 
+        padding-left: 0.25rem; 
+        padding-right: 0.25rem;
+      }
+    }
+
+    .section {
+      padding: 1rem; 
+      margin-bottom: 1rem;
+      .btn, button, .button-like-link {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        .sermon-title { 
+            font-size: 0.95rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.8rem;
+        }
+    }
+  }
+}
+
+// ================= MOBILE LAYOUT FIXES =================
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    .page-header p {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      text-align: center;
+      word-break: break-word;
+    }
+    .section {
+      align-items: center;
+      .btn, button, .button-like-link {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        min-width: 160px;
+      }
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 2.5rem;
+      }
+    }
+  }
+}
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    .section {
+      padding: 1rem;
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 3rem;
+      }
+    }
+  }
+}
+
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .smart-categorization-page {
+    .btn:hover,
+    .category-checkbox:hover,
+    .category-list .category-item .edit-btn:hover,
+    .category-list .category-item .delete-btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    .category-list .category-item,
+    .category-checkbox span,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable category list/results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    .category-list,
+    .results-list {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+// ========== COMPREHENSIVE MOBILE RESPONSIVENESS ==========
+
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes
+    padding-top: 3rem; // Account for fixed top navbar (56px) + spacing
+    padding-bottom: 3rem; // General bottom padding, will be overridden for smaller screens
+    min-height: calc(100vh - 56px); // Adjust for top navbar
+
+    .page-header {
+      p {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        word-wrap: break-word; // Help with long text lines
+        text-align: center; // Ensure subtitle text is centered
+      }
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center; // Center section content, including buttons
+
+      h2 { // Ensure section titles are also centered
+        text-align: center;
+        width: 100%; // Allow text to wrap if needed
+      }
+      
+      .btn, button, .button-like-link { // Target generic buttons and button-like links
+        margin-left: auto;
+        margin-right: auto;
+        display: block; 
+        min-width: 180px; // Ensure buttons have a reasonable minimum width
+        text-align: center;
+        
+        &:not(:last-child) {
+          margin-bottom: 0.75rem; // Space out stacked buttons
+        }
+      }
+      
+      // If buttons are wrapped, e.g., in a .button-group
+      .button-group {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap; // Allow buttons to wrap on small screens
+          gap: 0.5rem;
+          width: 100%;
+      }
+    }
+
+    // Sermon Card Content Cutoff
+    .sermons-grid { 
+      width: 100%; // Ensure grid takes full available width
+      .sermon-item { 
+        padding: 1rem; // Add more padding inside sermon cards
+        padding-bottom: 1.5rem; // Specifically more at the bottom
+        
+        .sermon-title { // Assuming class for sermon title
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+        }
+        .sermon-description, .sermon-date { // Example classes for other text
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+    
+    // Retain existing fix for specific scrollable lists if still needed and distinct
+    // .category-list,
+    // .results-list {
+    //   padding-bottom: 5.5rem !important; 
+    // }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes for smaller screens
+    padding-top: 2.5rem; 
+    padding-bottom: 6.5rem !important; // Account for bottom nav (54px) + extra scroll space
+    min-height: calc(100vh - 110px); // Adjust for top navbar
+    overflow-y: auto; 
+    padding-left: 0.75rem; // Adjust side padding
+    padding-right: 0.75rem;
+
+    .page-header {
+      margin-bottom: 1.5rem;
+      h1.analytics-dashboard-title {
+        font-size: 1.9rem; 
+      }
+      p {
+        font-size: 0.9rem; 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem;
+      }
+    }
+
+    .section {
+      padding: 1.25rem; 
+      margin-bottom: 1.25rem;
+      
+      .btn, button, .button-like-link {
+        width: 100%; // Make buttons full width for easier tapping
+        max-width: 300px; // But not excessively wide
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        padding: 0.75rem; 
+        .sermon-title { 
+            font-size: 1rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.85rem;
+        }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem;
+    padding-bottom: 6rem !important; // Maintain bottom padding for nav
+
+    .page-header {
+      h1.analytics-dashboard-title {
+        font-size: 1.7rem; 
+      }
+      p {
+        font-size: 0.8rem; 
+        padding-left: 0.25rem; 
+        padding-right: 0.25rem;
+      }
+    }
+
+    .section {
+      padding: 1rem; 
+      margin-bottom: 1rem;
+      .btn, button, .button-like-link {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        .sermon-title { 
+            font-size: 0.95rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.8rem;
+        }
+    }
+  }
+}
+
+// ================= MOBILE LAYOUT FIXES =================
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    .page-header p {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      text-align: center;
+      word-break: break-word;
+    }
+    .section {
+      align-items: center;
+      .btn, button, .button-like-link {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        min-width: 160px;
+      }
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 2.5rem;
+      }
+    }
+  }
+}
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    .section {
+      padding: 1rem;
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 3rem;
+      }
+    }
+  }
+}
+
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .smart-categorization-page {
+    .btn:hover,
+    .category-checkbox:hover,
+    .category-list .category-item .edit-btn:hover,
+    .category-list .category-item .delete-btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    .category-list .category-item,
+    .category-checkbox span,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable category list/results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    .category-list,
+    .results-list {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+// ========== COMPREHENSIVE MOBILE RESPONSIVENESS ==========
+
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes
+    padding-top: 3rem; // Account for fixed top navbar (56px) + spacing
+    padding-bottom: 3rem; // General bottom padding, will be overridden for smaller screens
+    min-height: calc(100vh - 56px); // Adjust for top navbar
+
+    .page-header {
+      p {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        word-wrap: break-word; // Help with long text lines
+        text-align: center; // Ensure subtitle text is centered
+      }
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center; // Center section content, including buttons
+
+      h2 { // Ensure section titles are also centered
+        text-align: center;
+        width: 100%; // Allow text to wrap if needed
+      }
+      
+      .btn, button, .button-like-link { // Target generic buttons and button-like links
+        margin-left: auto;
+        margin-right: auto;
+        display: block; 
+        min-width: 180px; // Ensure buttons have a reasonable minimum width
+        text-align: center;
+        
+        &:not(:last-child) {
+          margin-bottom: 0.75rem; // Space out stacked buttons
+        }
+      }
+      
+      // If buttons are wrapped, e.g., in a .button-group
+      .button-group {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap; // Allow buttons to wrap on small screens
+          gap: 0.5rem;
+          width: 100%;
+      }
+    }
+
+    // Sermon Card Content Cutoff
+    .sermons-grid { 
+      width: 100%; // Ensure grid takes full available width
+      .sermon-item { 
+        padding: 1rem; // Add more padding inside sermon cards
+        padding-bottom: 1.5rem; // Specifically more at the bottom
+        
+        .sermon-title { // Assuming class for sermon title
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+        }
+        .sermon-description, .sermon-date { // Example classes for other text
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+    
+    // Retain existing fix for specific scrollable lists if still needed and distinct
+    // .category-list,
+    // .results-list {
+    //   padding-bottom: 5.5rem !important; 
+    // }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes for smaller screens
+    padding-top: 2.5rem; 
+    padding-bottom: 6.5rem !important; // Account for bottom nav (54px) + extra scroll space
+    min-height: calc(100vh - 110px); // Adjust for top navbar
+    overflow-y: auto; 
+    padding-left: 0.75rem; // Adjust side padding
+    padding-right: 0.75rem;
+
+    .page-header {
+      margin-bottom: 1.5rem;
+      h1.analytics-dashboard-title {
+        font-size: 1.9rem; 
+      }
+      p {
+        font-size: 0.9rem; 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem;
+      }
+    }
+
+    .section {
+      padding: 1.25rem; 
+      margin-bottom: 1.25rem;
+      
+      .btn, button, .button-like-link {
+        width: 100%; // Make buttons full width for easier tapping
+        max-width: 300px; // But not excessively wide
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        padding: 0.75rem; 
+        .sermon-title { 
+            font-size: 1rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.85rem;
+        }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem;
+    padding-bottom: 6rem !important; // Maintain bottom padding for nav
+
+    .page-header {
+      h1.analytics-dashboard-title {
+        font-size: 1.7rem; 
+      }
+      p {
+        font-size: 0.8rem; 
+        padding-left: 0.25rem; 
+        padding-right: 0.25rem;
+      }
+    }
+
+    .section {
+      padding: 1rem; 
+      margin-bottom: 1rem;
+      .btn, button, .button-like-link {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        .sermon-title { 
+            font-size: 0.95rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.8rem;
+        }
+    }
+  }
+}
+
+// ================= MOBILE LAYOUT FIXES =================
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    .page-header p {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      text-align: center;
+      word-break: break-word;
+    }
+    .section {
+      align-items: center;
+      .btn, button, .button-like-link {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        min-width: 160px;
+      }
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 2.5rem;
+      }
+    }
+  }
+}
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    .section {
+      padding: 1rem;
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 3rem;
+      }
+    }
+  }
+}
+
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .smart-categorization-page {
+    .btn:hover,
+    .category-checkbox:hover,
+    .category-list .category-item .edit-btn:hover,
+    .category-list .category-item .delete-btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    .category-list .category-item,
+    .category-checkbox span,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable category list/results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    .category-list,
+    .results-list {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+// ========== COMPREHENSIVE MOBILE RESPONSIVENESS ==========
+
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes
+    padding-top: 3rem; // Account for fixed top navbar (56px) + spacing
+    padding-bottom: 3rem; // General bottom padding, will be overridden for smaller screens
+    min-height: calc(100vh - 56px); // Adjust for top navbar
+
+    .page-header {
+      p {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        word-wrap: break-word; // Help with long text lines
+        text-align: center; // Ensure subtitle text is centered
+      }
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center; // Center section content, including buttons
+
+      h2 { // Ensure section titles are also centered
+        text-align: center;
+        width: 100%; // Allow text to wrap if needed
+      }
+      
+      .btn, button, .button-like-link { // Target generic buttons and button-like links
+        margin-left: auto;
+        margin-right: auto;
+        display: block; 
+        min-width: 180px; // Ensure buttons have a reasonable minimum width
+        text-align: center;
+        
+        &:not(:last-child) {
+          margin-bottom: 0.75rem; // Space out stacked buttons
+        }
+      }
+      
+      // If buttons are wrapped, e.g., in a .button-group
+      .button-group {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap; // Allow buttons to wrap on small screens
+          gap: 0.5rem;
+          width: 100%;
+      }
+    }
+
+    // Sermon Card Content Cutoff
+    .sermons-grid { 
+      width: 100%; // Ensure grid takes full available width
+      .sermon-item { 
+        padding: 1rem; // Add more padding inside sermon cards
+        padding-bottom: 1.5rem; // Specifically more at the bottom
+        
+        .sermon-title { // Assuming class for sermon title
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+        }
+        .sermon-description, .sermon-date { // Example classes for other text
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+    
+    // Retain existing fix for specific scrollable lists if still needed and distinct
+    // .category-list,
+    // .results-list {
+    //   padding-bottom: 5.5rem !important; 
+    // }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes for smaller screens
+    padding-top: 2.5rem; 
+    padding-bottom: 6.5rem !important; // Account for bottom nav (54px) + extra scroll space
+    min-height: calc(100vh - 110px); // Adjust for top navbar
+    overflow-y: auto; 
+    padding-left: 0.75rem; // Adjust side padding
+    padding-right: 0.75rem;
+
+    .page-header {
+      margin-bottom: 1.5rem;
+      h1.analytics-dashboard-title {
+        font-size: 1.9rem; 
+      }
+      p {
+        font-size: 0.9rem; 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem;
+      }
+    }
+
+    .section {
+      padding: 1.25rem; 
+      margin-bottom: 1.25rem;
+      
+      .btn, button, .button-like-link {
+        width: 100%; // Make buttons full width for easier tapping
+        max-width: 300px; // But not excessively wide
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        padding: 0.75rem; 
+        .sermon-title { 
+            font-size: 1rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.85rem;
+        }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem;
+    padding-bottom: 6rem !important; // Maintain bottom padding for nav
+
+    .page-header {
+      h1.analytics-dashboard-title {
+        font-size: 1.7rem; 
+      }
+      p {
+        font-size: 0.8rem; 
+        padding-left: 0.25rem; 
+        padding-right: 0.25rem;
+      }
+    }
+
+    .section {
+      padding: 1rem; 
+      margin-bottom: 1rem;
+      .btn, button, .button-like-link {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        .sermon-title { 
+            font-size: 0.95rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.8rem;
+        }
+    }
+  }
+}
+
+// ================= MOBILE LAYOUT FIXES =================
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    .page-header p {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      text-align: center;
+      word-break: break-word;
+    }
+    .section {
+      align-items: center;
+      .btn, button, .button-like-link {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        min-width: 160px;
+      }
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 2.5rem;
+      }
+    }
+  }
+}
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    .section {
+      padding: 1rem;
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 3rem;
+      }
+    }
+  }
+}
+
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .smart-categorization-page {
+    .btn:hover,
+    .category-checkbox:hover,
+    .category-list .category-item .edit-btn:hover,
+    .category-list .category-item .delete-btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    .category-list .category-item,
+    .category-checkbox span,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable category list/results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    .category-list,
+    .results-list {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+// ========== COMPREHENSIVE MOBILE RESPONSIVENESS ==========
+
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes
+    padding-top: 3rem; // Account for fixed top navbar (56px) + spacing
+    padding-bottom: 3rem; // General bottom padding, will be overridden for smaller screens
+    min-height: calc(100vh - 56px); // Adjust for top navbar
+
+    .page-header {
+      p {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        word-wrap: break-word; // Help with long text lines
+        text-align: center; // Ensure subtitle text is centered
+      }
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center; // Center section content, including buttons
+
+      h2 { // Ensure section titles are also centered
+        text-align: center;
+        width: 100%; // Allow text to wrap if needed
+      }
+      
+      .btn, button, .button-like-link { // Target generic buttons and button-like links
+        margin-left: auto;
+        margin-right: auto;
+        display: block; 
+        min-width: 180px; // Ensure buttons have a reasonable minimum width
+        text-align: center;
+        
+        &:not(:last-child) {
+          margin-bottom: 0.75rem; // Space out stacked buttons
+        }
+      }
+      
+      // If buttons are wrapped, e.g., in a .button-group
+      .button-group {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap; // Allow buttons to wrap on small screens
+          gap: 0.5rem;
+          width: 100%;
+      }
+    }
+
+    // Sermon Card Content Cutoff
+    .sermons-grid { 
+      width: 100%; // Ensure grid takes full available width
+      .sermon-item { 
+        padding: 1rem; // Add more padding inside sermon cards
+        padding-bottom: 1.5rem; // Specifically more at the bottom
+        
+        .sermon-title { // Assuming class for sermon title
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+        }
+        .sermon-description, .sermon-date { // Example classes for other text
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+    
+    // Retain existing fix for specific scrollable lists if still needed and distinct
+    // .category-list,
+    // .results-list {
+    //   padding-bottom: 5.5rem !important; 
+    // }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes for smaller screens
+    padding-top: 2.5rem; 
+    padding-bottom: 6.5rem !important; // Account for bottom nav (54px) + extra scroll space
+    min-height: calc(100vh - 110px); // Adjust for top navbar
+    overflow-y: auto; 
+    padding-left: 0.75rem; // Adjust side padding
+    padding-right: 0.75rem;
+
+    .page-header {
+      margin-bottom: 1.5rem;
+      h1.analytics-dashboard-title {
+        font-size: 1.9rem; 
+      }
+      p {
+        font-size: 0.9rem; 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem;
+      }
+    }
+
+    .section {
+      padding: 1.25rem; 
+      margin-bottom: 1.25rem;
+      
+      .btn, button, .button-like-link {
+        width: 100%; // Make buttons full width for easier tapping
+        max-width: 300px; // But not excessively wide
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        padding: 0.75rem; 
+        .sermon-title { 
+            font-size: 1rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.85rem;
+        }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem;
+    padding-bottom: 6rem !important; // Maintain bottom padding for nav
+
+    .page-header {
+      h1.analytics-dashboard-title {
+        font-size: 1.7rem; 
+      }
+      p {
+        font-size: 0.8rem; 
+        padding-left: 0.25rem; 
+        padding-right: 0.25rem;
+      }
+    }
+
+    .section {
+      padding: 1rem; 
+      margin-bottom: 1rem;
+      .btn, button, .button-like-link {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        .sermon-title { 
+            font-size: 0.95rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.8rem;
+        }
+    }
+  }
+}
+
+// ================= MOBILE LAYOUT FIXES =================
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    .page-header p {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      text-align: center;
+      word-break: break-word;
+    }
+    .section {
+      align-items: center;
+      .btn, button, .button-like-link {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        min-width: 160px;
+      }
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 2.5rem;
+      }
+    }
+  }
+}
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    .section {
+      padding: 1rem;
+    }
+    .sermons-grid {
+      .sermon-card, .sermon-item {
+        padding-bottom: 3rem;
+      }
+    }
+  }
+}
+
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .smart-categorization-page {
+    .btn:hover,
+    .category-checkbox:hover,
+    .category-list .category-item .edit-btn:hover,
+    .category-list .category-item .delete-btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    .category-list .category-item,
+    .category-checkbox span,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable category list/results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    .category-list,
+    .results-list {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+// ========== COMPREHENSIVE MOBILE RESPONSIVENESS ==========
+
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes
+    padding-top: 3rem; // Account for fixed top navbar (56px) + spacing
+    padding-bottom: 3rem; // General bottom padding, will be overridden for smaller screens
+    min-height: calc(100vh - 56px); // Adjust for top navbar
+
+    .page-header {
+      p {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        word-wrap: break-word; // Help with long text lines
+        text-align: center; // Ensure subtitle text is centered
+      }
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center; // Center section content, including buttons
+
+      h2 { // Ensure section titles are also centered
+        text-align: center;
+        width: 100%; // Allow text to wrap if needed
+      }
+      
+      .btn, button, .button-like-link { // Target generic buttons and button-like links
+        margin-left: auto;
+        margin-right: auto;
+        display: block; 
+        min-width: 180px; // Ensure buttons have a reasonable minimum width
+        text-align: center;
+        
+        &:not(:last-child) {
+          margin-bottom: 0.75rem; // Space out stacked buttons
+        }
+      }
+      
+      // If buttons are wrapped, e.g., in a .button-group
+      .button-group {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap; // Allow buttons to wrap on small screens
+          gap: 0.5rem;
+          width: 100%;
+      }
+    }
+
+    // Sermon Card Content Cutoff
+    .sermons-grid { 
+      width: 100%; // Ensure grid takes full available width
+      .sermon-item { 
+        padding: 1rem; // Add more padding inside sermon cards
+        padding-bottom: 1.5rem; // Specifically more at the bottom
+        
+        .sermon-title { // Assuming class for sermon title
+          font-size: 1.1rem;
+          margin-bottom: 0.5rem;
+        }
+        .sermon-description, .sermon-date { // Example classes for other text
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
+        }
+      }
+    }
+    
+    // Retain existing fix for specific scrollable lists if still needed and distinct
+    // .category-list,
+    // .results-list {
+    //   padding-bottom: 5.5rem !important; 
+    // }
+  }
+}
+
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    // Scrolling and Page Padding Fixes for smaller screens
+    padding-top: 2.5rem; 
+    padding-bottom: 6.5rem !important; // Account for bottom nav (54px) + extra scroll space
+    min-height: calc(100vh - 110px); // Adjust for top navbar
+    overflow-y: auto; 
+    padding-left: 0.75rem; // Adjust side padding
+    padding-right: 0.75rem;
+
+    .page-header {
+      margin-bottom: 1.5rem;
+      h1.analytics-dashboard-title {
+        font-size: 1.9rem; 
+      }
+      p {
+        font-size: 0.9rem; 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem;
+      }
+    }
+
+    .section {
+      padding: 1.25rem; 
+      margin-bottom: 1.25rem;
+      
+      .btn, button, .button-like-link {
+        width: 100%; // Make buttons full width for easier tapping
+        max-width: 300px; // But not excessively wide
+        padding-top: 0.8rem;
+        padding-bottom: 0.8rem;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        padding: 0.75rem; 
+        .sermon-title { 
+            font-size: 1rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.85rem;
+        }
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem;
+    padding-bottom: 6rem !important; // Maintain bottom padding for nav
+
+    .page-header {
+      h1.analytics-dashboard-title {
+        font-size: 1.7rem; 
+      }
+      p {
+        font-size: 0.8rem; 
+        padding-left: 0.25rem; 
+        padding-right: 0.25rem;
+      }
+    }
+
+    .section {
+      padding: 1rem; 
+      margin-bottom: 1rem;
+      .btn, button, .button-like-link {
+        font-size: 0.9rem;
+      }
+    }
+    
+    .sermons-grid .sermon-item {
+        .sermon-title { 
+            font-size: 0.95rem;
+        }
+        .sermon-description, .sermon-date {
+            font-size: 0.8rem;
+        }
     }
   }
 }

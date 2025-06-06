@@ -1,70 +1,150 @@
 .user-scripture-page {
   padding: 20px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
+
 .user-scripture-error {
   color: #b00020;
   margin-bottom: 10px;
 }
+
 .user-scripture-success {
   color: #007e33;
   margin-bottom: 10px;
 }
+
 .add-scripture-form {
   margin-bottom: 30px;
   padding: 20px;
   border: 1px solid #ccc;
   border-radius: 6px;
   background: #fafbfc;
+  max-width: 100%;
 }
+
 .add-scripture-form .form-row {
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
 }
+
 .add-scripture-form label {
-  min-width: 120px;
   font-weight: 500;
+  margin-bottom: 5px;
+  width: 100%;
 }
+
 .add-scripture-form input,
 .add-scripture-form textarea {
-  margin-left: 5px;
-  padding: 5px;
+  width: 100%;
+  padding: 8px 12px;
   border: 1px solid #bbb;
   border-radius: 4px;
   font-size: 1rem;
+  box-sizing: border-box;
+  min-height: 44px; /* Touch-friendly minimum */
 }
+
 .add-scripture-form textarea {
-  width: 100%;
-  min-width: 200px;
-  max-width: 100%;
+  min-height: 80px;
+  resize: vertical;
 }
+
 .add-scripture-form button {
-  padding: 8px 15px;
+  width: 100%;
+  padding: 12px 15px;
   background: #2d7ff9;
   color: #fff;
   border: none;
   border-radius: 4px;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s;
+  min-height: 48px; /* Touch-friendly */
+  margin-top: 10px;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.add-scripture-form button:hover:not(:disabled) {
+  background: #1a6ce8;
+}
+
 .add-scripture-form button:disabled {
   background: #b0c4de;
   cursor: not-allowed;
 }
+
+.user-scripture-list {
+  max-width: 100%;
+}
+
+.user-scripture-list h2 {
+  margin-bottom: 15px;
+}
+
 .user-scripture-list ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
+
 .user-scripture-list li {
-  margin-bottom: 10px;
-  padding: 10px;
+  margin-bottom: 15px;
+  padding: 15px;
   border: 1px solid #eee;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #fff;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
+
 .user-scripture-tags {
-  margin-top: 4px;
-  font-size: 0.95em;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 0.9em;
   color: #555;
+}
+
+/* Desktop improvements */
+@media (min-width: 768px) {
+  .user-scripture-page {
+    padding: 30px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .add-scripture-form {
+    padding: 25px;
+  }
+  
+  .add-scripture-form .form-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .add-scripture-form label {
+    min-width: 140px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+  }
+  
+  .add-scripture-form input,
+  .add-scripture-form textarea {
+    flex: 1;
+  }
+  
+  .add-scripture-form button {
+    width: auto;
+    min-width: 150px;
+    margin-top: 0;
+  }
 }

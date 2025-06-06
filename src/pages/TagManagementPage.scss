@@ -1,6 +1,8 @@
 // TagManagementPage.scss
 /* Import unified theme patch for all settings pages */
 @import '../styles/theme_patch_all_pages.css';
+@import '../styles/scss/_variables.scss';
+@import '../styles/scss/_mixins.scss';
 
 // Background overlay for consistent theming with dashboard/analytics pages
 .universal-search-bg {
@@ -26,12 +28,24 @@
   padding: 2rem;
   min-height: 100vh; // Ensure it takes full viewport height
   
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+  }
+  
   // Page header styling to match analytics dashboard
   .page-header {
     text-align: center;
     margin-bottom: 2rem;
     position: relative;
     z-index: 2;
+    
+    @media (max-width: 768px) {
+      margin-bottom: 1.5rem;
+    }
     
     h1.analytics-dashboard-title {
       font-size: 2.8rem;
@@ -41,6 +55,15 @@
       letter-spacing: 1.5px;
       text-shadow: 0 2px 4px rgba(0,0,0,0.18), 0 0 15px #e0c97f99, 1px 1px 0px #4B3A1A, 2px 2px 3px rgba(0,0,0,0.7);
       margin-bottom: 18px;
+      
+      @media (max-width: 768px) {
+        font-size: 2.2rem;
+        line-height: 1.2;
+      }
+      
+      @media (max-width: 480px) {
+        font-size: 1.8rem;
+      }
     }
   }
 }
@@ -60,6 +83,11 @@
   margin-bottom: 2rem;
   text-align: center;
   
+  @media (max-width: 768px) {
+    margin-top: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
   h3 {
     font-family: 'Trajan Pro', serif;
     font-size: 1.5rem;
@@ -67,6 +95,11 @@
     margin-bottom: 1.5rem;
     font-weight: 600;
     letter-spacing: 0.5px;
+    
+    @media (max-width: 768px) {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
   }
   
   .add-tag-form {
@@ -76,21 +109,40 @@
     gap: 1rem;
     max-width: 400px;
     margin: 0 auto;
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 0.75rem;
+      max-width: 100%;
+      padding: 0 1rem;
+    }
   }
   
   input[type="text"] {
     flex: 1;
     margin-right: 0;
+    
+    @media (max-width: 768px) {
+      width: 100%;
+    }
   }
   
   .add-tag-btn {
     margin-left: 0;
+    
+    @media (max-width: 768px) {
+      width: 100%;
+    }
   }
 }
 
 .tag-list-section {
   margin-bottom: 2rem;
   text-align: center;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1.5rem;
+  }
   
   h3 {
     font-family: 'Trajan Pro', serif;
@@ -99,6 +151,11 @@
     margin-bottom: 1.5rem;
     font-weight: 600;
     letter-spacing: 0.5px;
+    
+    @media (max-width: 768px) {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
   }
 }
 
@@ -131,6 +188,7 @@
 input[type="text"] {
   margin-right: 0.5rem;
   padding: 12px 15px;
+  min-height: 44px; /* Ensure minimum touch target */
   font-size: 1rem;
   border: 1px solid #4B3A1A;
   border-radius: 8px;
@@ -139,6 +197,13 @@ input[type="text"] {
   font-weight: 500;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.3);
   transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  
+  @media (max-width: 768px) {
+    padding: 15px 18px;
+    font-size: 1.1rem;
+    min-height: 48px;
+    margin-right: 0;
+  }
 }
 
 input[type="text"]:focus {
@@ -151,7 +216,8 @@ input[type="text"]:focus {
 // Add Tag button - identical to Export CSV button
 .add-tag-btn {
   font-size: 1rem;
-  padding: 0.5rem 1.2rem;
+  padding: 0.75rem 1.2rem; /* Increased padding for better touch target */
+  min-height: 44px; /* Ensure minimum touch target */
   background: #23262e;
   color: #ffe082;
   border: 1.5px solid #3a3d44;
@@ -161,6 +227,13 @@ input[type="text"]:focus {
   transition: background 0.2s, color 0.2s, border 0.2s;
   cursor: pointer;
   margin-left: 0.5rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    min-height: 48px;
+    margin-left: 0;
+  }
 }
 
 .add-tag-btn:hover {
@@ -179,7 +252,14 @@ input[type="text"]:focus {
 
 button {
   margin-left: 0.25rem;
-  padding: 0.25rem 0.75rem;
+  padding: 0.5rem 0.75rem; /* Increased padding for better touch targets */
+  min-height: 44px; /* Ensure minimum touch target */
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    min-height: 48px;
+    margin-left: 0.5rem;
+  }
 }
 
 ul {
@@ -200,6 +280,11 @@ li {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+    gap: 1rem;
+  }
 }
 
 // Translation selection styling
@@ -216,11 +301,14 @@ li {
     margin-bottom: 0.75rem;
     font-weight: 600;
   }
-  
-  .translation-checkboxes {
+    .translation-checkboxes {
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+    
+    @media (max-width: 768px) {
+      gap: 1rem;
+    }
     
     .translation-checkbox-label {
       display: flex;
@@ -229,9 +317,17 @@ li {
       color: #f5f5f5;
       font-size: 0.9rem;
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
+      padding: 0.5rem 0.75rem; /* Increased padding for better touch targets */
+      min-height: 44px; /* Ensure minimum touch target */
       border-radius: 4px;
       transition: background-color 0.2s ease;
+      
+      @media (max-width: 768px) {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        min-height: 48px;
+        gap: 0.75rem;
+      }
       
       &:hover {
         background: rgba(255, 224, 130, 0.1);
@@ -240,6 +336,14 @@ li {
       input[type="checkbox"] {
         accent-color: #ffe082;
         transform: scale(1.1);
+        width: 16px;
+        height: 16px;
+        
+        @media (max-width: 768px) {
+          width: 20px;
+          height: 20px;
+          transform: scale(1.2);
+        }
       }
     }
   }
@@ -591,6 +695,45 @@ li {
   color: white;
 }
 
+// Styling for the new mobile text-based action buttons
+.tag-mobile-actions {
+  display: none; // Hidden by default, shown on mobile via media query
+  flex-direction: row; // Display buttons side-by-side
+  gap: 0.5rem; // Space between mobile action buttons
+  margin-top: 0.75rem; // Space below the tag and above these buttons
+  justify-content: center; // Center the buttons horizontally
+
+  .btn.mobile-edit-btn,
+  .btn.mobile-delete-btn {
+    flex: 1; // Equal width buttons
+    max-width: 80px; // Limit button width to keep them small
+    padding: 0.4rem 0.6rem; // Smaller padding for compact buttons
+    font-size: 0.8rem; // Smaller font size
+    min-height: 36px; // Smaller minimum height
+    justify-content: center; // Center text within buttons
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+  
+  .btn.mobile-edit-btn {
+    background-color: $info-color; // Blue for edit
+    color: white;
+    &:hover {
+      background-color: darken($info-color, 10%);
+    }
+  }
+  
+  .btn.mobile-delete-btn {
+    background-color: $danger-color; // Example: red for delete
+    color: white;
+    &:hover {
+      background-color: darken($danger-color, 10%);
+    }
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 1200px) {
   .tag-management-grid {
@@ -631,11 +774,24 @@ li {
     padding: 0.5rem 1rem;
     min-height: 48px;
     border-width: 1.5px;
-  }  .tag-dashboard-btn .tag-overlay .icon-btn {
+    .tag-overlay {
+      display: none !important; // Hide the icon overlay completely on mobile
+    }
+  }
+  
+  // Show mobile action buttons on mobile
+  .tag-mobile-actions {
+    display: flex !important; // Show mobile buttons on screens 700px and below
+  }
+  
+  .tag-dashboard-btn .tag-overlay .icon-btn {
     width: 34px;
     height: 34px;
     font-size: 1.1rem;
     margin: 0 4px;
+    svg {
+      stroke: #ffe082 !important; // Ensure icons are visible with a contrasting theme color
+    }
   }
   
   // Mobile translation selection adjustments
@@ -690,18 +846,74 @@ li {
   }
 }
 
-@media (max-width: 600px) {
-  .tag-crud-section .add-tag-form {
-    max-width: 100%;
-    padding: 0 1rem;
+// 1. Disable hover effects on touch devices for overlays/buttons and checkboxes
+@media (hover: none) {
+  .tag-management-page {
+    .btn:hover,
+    .tag-checkbox:hover,
+    .tag-list .tag-item .edit-btn:hover,
+    .tag-list .tag-item .delete-btn:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
   }
-  
-  .analytics-dashboard-title {
-    font-size: 2.2rem !important;
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .tag-management-page {
+    .tag-list .tag-item,
+    .tag-checkbox span,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
   }
-  
-  .tag-crud-section h3,
-  .tag-list-section h3 {
-    font-size: 1.3rem;
+}
+
+// 3. Extra bottom padding for scrollable tag list/results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .tag-management-page {
+    // Add overall page bottom padding for mobile to account for fixed bottom nav
+    padding-bottom: 7rem; // Generous padding for bottom nav + some breathing room
+
+    .tag-list,
+    .results-list {
+      padding-bottom: 5.5rem !important; // This existing rule is fine for these specific lists
+      /* Ensures space for on-screen keyboard */
+    }
+
+    // Fix for translations too close to checkboxes
+    .translation-checkboxes {
+      .translation-checkbox-label {
+        input[type="checkbox"] {
+          margin-right: 0.5rem; // Add space between checkbox and its label text
+        }
+      }
+    }
+  }
+}
+
+// Additional refinement for very small screens if the above isn't enough
+@media (max-width: 480px) {
+  .tag-management-page {
+    padding-bottom: 7.5rem; // Slightly more for very small screens
+
+    .translation-checkboxes {
+      .translation-checkbox-label {
+        input[type="checkbox"] {
+          margin-right: 0.4rem;
+        }
+        // Potentially reduce font size of label text if still cramped
+        // font-size: 0.9rem; 
+      }
+    }
   }
 }

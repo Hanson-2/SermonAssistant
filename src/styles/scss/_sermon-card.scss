@@ -13,6 +13,26 @@
       transform: translateY(-2px);
     }
   }
+  
+  @media (max-width: $breakpoint-md) {
+    // No margin bottom when buttons are present
+    margin-bottom: 0;
+    
+    // No border radius at bottom for sermon cards with active buttons
+    .sermon-card {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      margin-bottom: 0;
+    }
+    
+    // Add bottom radius to the button container instead
+    .mobile-embossed-actions {
+      border-bottom-left-radius: $radius-md;
+      border-bottom-right-radius: $radius-md;
+      overflow: hidden;
+      margin-bottom: $space-md;
+    }
+  }
 }
 
 .sermon-card {
@@ -218,3 +238,98 @@
 }
 
 // No card actions tray - using flyout buttons instead
+
+// DESKTOP & MOBILE BEHAVIOR SEPARATION
+
+// Desktop Flyout - Only on large screens
+.desktop-flyout {
+  display: none; // Hidden by default
+  
+  @media (min-width: $breakpoint-md) {
+    display: flex !important; // Show only on desktop
+  }
+  
+  @media (max-width: $breakpoint-md) {
+    display: none !important; // Never show on mobile
+  }
+}
+
+// Mobile Embossed Buttons - Only on small screens, below card when active
+.mobile-embossed-actions {
+  display: none; // Hidden by default
+  
+  @media (min-width: $breakpoint-md) {
+    display: none !important; // Never show on desktop
+  }
+  
+  @media (max-width: $breakpoint-md) {
+    display: flex !important; // Show only on mobile
+    margin: 0; // No margin - directly attached to sermon card
+    padding: 0; // No padding - edge to edge
+    gap: 0; // No gap - buttons touch each other
+    justify-content: stretch; // Stretch buttons to fill space
+    flex-wrap: nowrap; // Keep in single row
+    overflow-x: hidden; // Don't allow scrolling
+    width: 100%; // Full width
+    border-top: 1px solid rgba($gold, 0.4); // Top border to separate from card
+  }
+}
+
+.mobile-embossed-button {
+  // Edge-to-edge styling
+  color: $text-light;
+  padding: $space-1 0; // Vertical padding only
+  min-height: 40px; // Slightly smaller height
+  border-radius: 0; // No border radius - edge to edge
+  font-size: $font-size-xs; // Smaller font to fit in buttons
+  font-weight: $font-weight-medium;
+  border: none; // No border between buttons
+  border-right: 1px solid rgba($gold, 0.2); // Subtle separator between buttons
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba($dark-bg-tertiary, 0.95) 0%, rgba($dark-bg-card, 0.95) 100%);
+  box-shadow: none; // No shadow between buttons
+  transition: all 0.2s ease;
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 0; // Allow text to truncate if needed
+  overflow: hidden;
+  text-overflow: ellipsis; // Truncate text with ...
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0; // No margins
+  
+  // Use subtle colored indicators at the BOTTOM of each button
+  &.mobile-embossed-view,
+  &.mobile-embossed-edit {
+    border-bottom: 2px solid rgba(59, 130, 246, 0.6);
+  }
+  
+  &.mobile-embossed-duplicate {
+    border-bottom: 2px solid rgba(124, 58, 237, 0.6);
+  }
+  
+  &.mobile-embossed-archive {
+    border-bottom: 2px solid rgba(245, 158, 11, 0.6);
+  }
+  
+  &.mobile-embossed-delete {
+    border-bottom: 2px solid rgba(239, 68, 68, 0.6);
+  }
+  
+  // Remove right border from last button
+  &:last-child {
+    border-right: none;
+  }
+  &:active {
+    background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.3) 100%);
+    color: $gold; // Highlight text on press
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6); // Deeper inset for pressed effect
+  }
+  
+  &:hover {
+    color: $gold;
+    background-image: linear-gradient(135deg, rgba($dark-bg-tertiary, 0.8) 0%, rgba($dark-bg-card, 0.8) 100%);
+  }
+}

@@ -2,7 +2,7 @@ import React, { useEffect, useState, ChangeEvent, JSX, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { listCachedScriptureBooks } from "../services/firebaseService";
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "../utils/bookOrder";
-import { getDisplayBookFull, normalizeBookName } from "../utils/getDisplayBookAbbrev";
+import { getDisplayBookFull, getDisplayBookAbbrev, normalizeBookName } from "../utils/getDisplayBookAbbrev";
 import "./CurrentlyAddedScripturePage.css";
 import "../styles/shared-buttons.scss";
 
@@ -11,9 +11,9 @@ const CurrentlyAddedScripturePage: React.FC = () => {  const [availableBooks, se
   // Set the initial state for showOnlyAvailable to true
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
   const navigate = useNavigate();
   const bookCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
   useEffect(() => {
     async function fetchBooks(): Promise<void> {
       const fetchedBooks = await listCachedScriptureBooks();
@@ -21,6 +21,15 @@ const CurrentlyAddedScripturePage: React.FC = () => {  const [availableBooks, se
       setLoading(false);
     }
     fetchBooks();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -81,8 +90,12 @@ const CurrentlyAddedScripturePage: React.FC = () => {  const [availableBooks, se
       if (isAvailable) handleMiniCardClick(book); // Navigate to book page
     };
 
-    // Use shared full book name utility instead of abbreviation
+    // Get the appropriate book name based on mobile/desktop and name length
     const fullBookName = getDisplayBookFull(normalizeBookName(book));
+    const shouldAbbreviate = isMobile && fullBookName.length > 6;
+    const displayName = shouldAbbreviate 
+      ? getDisplayBookAbbrev(normalizeBookName(book))
+      : fullBookName;
     
     return (
       <div
@@ -91,7 +104,7 @@ const CurrentlyAddedScripturePage: React.FC = () => {  const [availableBooks, se
         onClick={handleClick}
         ref={el => { bookCardRefs.current[book] = el; }}      >
         {/* Use shared button text class for consistency */}
-        <span className="add-expository-button-shared-text">{fullBookName}</span>
+        <span className="add-expository-button-shared-text">{displayName}</span>
       </div>
     );
   };

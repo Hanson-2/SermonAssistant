@@ -73,8 +73,8 @@ body.currently-added-scripture-page {
 .book-card {
   position: relative;
   overflow: hidden;
-  padding: 0.75rem 1rem; /* Adjusted padding slightly for potentially smaller buttons */
-  font-size: 0.9rem; /* Adjusted font size for book names */
+  padding: 0.85rem 0.5rem; /* Increased height, reduced side padding */
+  font-size: 0.75rem; /* Reduced font size */
   border: 2px solid transparent;
   border-image: linear-gradient(45deg, #FFD700, #FFA500) 1;
   background: linear-gradient(135deg, #3a3a3a 0%, #000000 100%); /* Darker black gradient */
@@ -89,7 +89,7 @@ body.currently-added-scripture-page {
   align-items: center;
   justify-content: center;
   width: 100%; /* Button will take full width of its grid cell */
-  min-height: 60px; /* Ensure a minimum height for buttons */
+  min-height: 70px; /* Increased minimum height for buttons */
 }
 
 .book-card::before {
@@ -125,13 +125,9 @@ body.currently-added-scripture-page {
 .book-card-title {
   font-weight: 500; /* Adjusted from 600 to be slightly less bold if needed */
   color: #fff; /* Default color, hover is handled by .book-card:hover */
-  font-size: 0.85rem; /* Smaller font size for book names to fit */
+  font-size: 0.75rem; /* Smaller font size for book names to fit */
   text-align: center;
-  white-space: normal; /* Allow text wrapping */
-  overflow-wrap: break-word; /* Ensure long words break and wrap */
-  word-wrap: break-word; /* Older browsers */
-  -webkit-hyphens: auto; /* Safari on iOS 4.2+ */
-  hyphens: auto; /* Optional: allow hyphenation */
+  white-space: nowrap; /* Prevent text wrapping */
   display: inline-block; 
   max-width: 100%; 
 }

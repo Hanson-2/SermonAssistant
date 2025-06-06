@@ -471,22 +471,229 @@
   .categories-grid, .sermons-grid {
     grid-template-columns: 1fr;
   }
-
   .result-header {
     flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
+    align-items: center; /* Center align instead of stretch */
+    gap: 0.75rem; /* Increased gap for better spacing */
+    text-align: center;
   }
 
   .confidence-score {
-    align-self: flex-start;
+    align-self: center; /* Center the confidence score */
   }
 
   .result-actions {
     flex-direction: column;
+    align-items: center; /* Center align buttons */
+    gap: 0.5rem;
   }
-
+  
   .form-actions {
     flex-direction: column;
+    align-items: center; /* Center align form buttons */
+    gap: 0.5rem;
+  }
+}
+
+/* ========== MOBILE SCROLLING FIXES ========== */
+
+/* General mobile layout adjustments (768px and below) */
+@media (max-width: 768px) {
+  .smart-categorization-page {
+    /* Account for fixed top navbar (56px) on mobile */
+    padding-top: 3rem; /* 56px + extra spacing */
+    /* Add extra bottom padding to prevent content cutoff */
+    padding-bottom: 2rem;
+    /* Reduce horizontal padding to prevent text cutoff */
+    padding-left: 1rem;
+    padding-right: 1rem;
+    
+    /* Adjust min-height to account for fixed navigation */
+    min-height: calc(100vh - 56px); /* Subtract top navbar height */
+  }
+  
+  /* Fix title/subtitle text cutoff */
+  .smart-categorization-page .page-header h1 {
+    font-size: 2.2rem;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .smart-categorization-page .page-header p {
+    font-size: 1rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    padding: 0 0.5rem;
+  }
+  
+  /* Center section buttons and improve layout */
+  .section-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .section-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+    /* Fix sermon card content cutoff */
+  .sermon-card {
+    padding: 1rem;
+    min-height: 0; /* Changed from auto for Firefox compatibility */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .sermon-details {
+    flex: 1;
+    margin-bottom: 0.75rem;
+    overflow: visible;
+  }
+  
+  .sermon-actions {
+    margin-top: auto;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  /* Improve grid responsiveness */
+  .sermons-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .categories-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Small mobile screens with bottom navigation (480px and below) */
+@media (max-width: 480px) {
+  .smart-categorization-page {
+    /* Account for both top navbar (56px) and bottom nav (54px) */
+    padding-top: 1.5rem; /* Reduced since navbar is smaller on mobile */
+    padding-bottom: 6rem !important; /* 54px bottom nav + extra space for scrolling */
+    /* Further reduce horizontal padding */
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    
+    /* Adjust min-height to account for both fixed navigation elements */
+    min-height: calc(100vh - 110px); /* Subtract both top (56px) and bottom (54px) navbar heights */
+    
+    /* Ensure proper scrolling behavior */
+    overflow-y: auto;
+  }
+  
+  /* Smaller title for mobile */
+  .smart-categorization-page .page-header h1 {
+    font-size: 1.8rem;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+  }
+  
+  .smart-categorization-page .page-header p {
+    font-size: 0.9rem;
+    padding: 0;
+  }
+  
+  .smart-categorization-page .section {
+    /* Reduce section padding on small screens */
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .smart-categorization-page .page-header {
+    margin-bottom: 1rem;
+  }
+  
+  /* Better button sizing for touch */
+  .btn {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Improve sermon card layout on small screens */
+  .sermon-card {
+    padding: 0.75rem;
+  }
+  
+  .sermon-header h3 {
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+  
+  .sermon-details {
+    font-size: 0.8rem;
+    line-height: 1.3;
+  }
+  
+  /* Form improvements */
+  .form-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .create-category-form {
+    padding: 1rem;
+  }
+}
+
+/* Extra small screens (360px and below) */
+@media (max-width: 360px) {
+  .smart-categorization-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 1rem;
+  }
+  
+  .smart-categorization-page .section {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .smart-categorization-page .page-header h1 {
+    font-size: 1.5rem;
+    line-height: 1.1;
+  }
+  
+  .smart-categorization-page .page-header p {
+    font-size: 0.8rem;
+    line-height: 1.3;
+  }
+  
+  /* Very compact buttons for tiny screens */
+  .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    min-height: 40px;
+  }
+  
+  /* Compact sermon cards */
+  .sermon-card {
+    padding: 0.5rem;
+  }
+  
+  .sermon-header h3 {
+    font-size: 0.9rem;
+  }
+  
+  .sermon-details {
+    font-size: 0.75rem;
+  }
+  
+  /* Compact form */
+  .create-category-form {
+    padding: 0.75rem;
+  }
+  
+  .form-group input {
+    padding: 0.5rem;
+    font-size: 0.9rem;
   }
 }

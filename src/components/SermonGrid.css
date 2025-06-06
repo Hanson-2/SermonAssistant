@@ -41,4 +41,78 @@
   transform: translateX(100%) rotate(25deg);
 }
 
-/* Removed card-actions-tray in favor of flyout buttons */
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .add-expository-btn {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    min-height: 48px; /* Touch target */
+    margin-bottom: 1rem;
+  }
+  
+  /* Ensure better touch interaction */
+  .add-expository-btn:hover::before,
+  .add-expository-btn:focus::before {
+    opacity: 1;
+    transform: translateX(100%) rotate(25deg);
+  }
+  
+  /* Remove hover effects on touch devices */
+  @media (hover: none) {
+    .add-expository-btn:hover::before {
+      opacity: 0;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .add-expository-btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    border-width: 2px; /* Slightly thinner border on small screens */
+  }
+}
+
+/* Touch-friendly adjustments */
+@media (pointer: coarse) {
+  .add-expository-btn {
+    min-height: 48px;
+    padding: 1rem 1.5rem;
+  }
+}
+
+/* 1. Disable hover effects for overlays/buttons in grid items on touch devices */
+@media (hover: none) {
+  .sermon-grid .sermon-result-overlay:hover,
+  .sermon-grid .sermon-result-overlay .btn:hover {
+    background: inherit !important;
+    color: inherit !important;
+    border-color: inherit !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  .sermon-grid .sermon-result-overlay {
+    opacity: 1 !important;
+  }
+}
+
+/* 2. Font size and padding for very small screens */
+@media (max-width: 360px) {
+  .sermon-grid .sermon-result-title,
+  .sermon-grid .sermon-result-meta,
+  .sermon-grid .btn {
+    font-size: 0.95rem !important;
+  }
+  .sermon-grid .btn {
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+/* 3. Extra bottom padding for scrollable grid on mobile (for on-screen keyboard) */
+@media (max-width: 768px) {
+  .sermon-grid {
+    padding-bottom: 5.5rem !important;
+    /* Ensures space for on-screen keyboard */
+  }
+}

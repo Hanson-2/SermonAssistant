@@ -8,7 +8,7 @@
 @import '../styles/theme_patch_all_pages.css';
 
 body {
-  background: url('/Blue Wall Background.png') center center fixed no-repeat;
+  background: url('/Texas_Logo_Background.png') center center fixed no-repeat;
   background-size: cover;
 }
 
@@ -283,41 +283,208 @@ body {
   box-shadow: 0 2px 12px #ffe08244, 0 1px 0 #fffbe6;
 }
 
-// Responsive adjustments
-@include breakpoint-down(md) {
+// Comprehensive mobile responsiveness
+@media (max-width: 768px) {
   .universal-search-page {
-    padding: $space-lg;
+    padding: 1rem;
+    
+    .page-header {
+      margin-bottom: 1.5rem;
+      
+      h1.analytics-dashboard-title {
+        font-size: 2.2rem;
+        line-height: 1.2;
+      }
+      
+      p {
+        font-size: 1rem;
+        padding: 0 0.5rem;
+      }
+    }
+  }
+  
+  .universal-search-title {
+    font-size: 2.2rem !important;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
   }
   
   .search-controls-container {
     flex-direction: column;
     align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .search-bar-wrapper {
+    width: 100%;
+    
+    .search-bar {
+      padding: 1rem;
+      font-size: 1.1rem;
+      min-height: 48px;
+    }
+  }
+  
+  .search-button, 
+  .clear-filters-btn, 
+  .pagination-btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    min-height: 48px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .filter-section,
+  .translations-filter {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    
+    .filter-title {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
   }
   
   .filter-grid-layout {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .filter-group {
+    padding: 1rem;
+    
+    label {
+      font-size: 1rem;
+      padding: 0.75rem 0;
+      
+      input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+      }
+    }
   }
   
   .translation-buttons {
     justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    
+    .translation-btn {
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
+      min-height: 44px;
+      margin: 0;
+    }
+  }
+  
+  .search-results-list {
+    gap: 1rem;
+    
+    .search-result-item {
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      
+      .result-reference {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+      }
+      
+      .result-text {
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+    }
   }
 }
 
-@include breakpoint-down(sm) {
+// 1. Disable hover effects on touch devices for overlays/buttons and overlays
+@media (hover: none) {
+  .universal-search-page {
+    .btn:hover,
+    .search-bar .search-btn:hover,
+    .search-results .sermon-result-overlay .btn:hover,
+    .search-results .sermon-result-overlay:hover {
+      background: inherit !important;
+      color: inherit !important;
+      border-color: inherit !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+    .search-results .sermon-result-overlay {
+      opacity: 1 !important;
+    }
+  }
+}
+
+// 2. Font size/readability for very small screens (320px-360px)
+@media (max-width: 360px) {
+  .universal-search-page {
+    .search-bar input,
+    .search-bar .search-btn,
+    .search-results .sermon-title,
+    .search-results .sermon-meta,
+    .btn {
+      @include mobile-font-size;
+      @include mobile-btn-padding;
+      @include min-touch;
+    }
+    .page-header h1 {
+      @include mobile-header-font-size;
+    }
+  }
+}
+
+// 3. Extra bottom padding for scrollable results on mobile (for on-screen keyboard)
+@media (max-width: 768px) {
+  .universal-search-page {
+    .search-results,
+    .results-list {
+      padding-bottom: 5.5rem !important;
+      /* Ensures space for on-screen keyboard */
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .universal-search-page {
+    padding: 0.75rem;
+  }
+  
   .universal-search-title {
-    font-size: $font-size-2xl;
+    font-size: 1.8rem !important;
+  }
+  
+  .filter-section,
+  .translations-filter {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  .filter-group {
+    padding: 0.75rem;
+    
+    label {
+      font-size: 0.9rem;
+      padding: 0.6rem 0;
+    }
+  }
+  
+  .translation-btn {
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
   }
   
   .search-result-item {
-    padding: $space-lg;
-    margin-bottom: $space-lg;
-  }
-  
-  .result-reference {
-    font-size: $font-size-lg;
-  }
-  
-  .result-text {
-    font-size: $font-size-base;
+    padding: 1rem;
+    
+    .result-reference {
+      font-size: 1rem;
+    }
+    
+    .result-text {
+      font-size: 0.9rem;
+    }
   }
 }

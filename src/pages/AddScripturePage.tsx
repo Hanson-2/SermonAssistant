@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { saveScriptureVerses } from "../services/firebaseService";
 import {
   DndContext,
@@ -17,6 +17,10 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import "./AddScripturePage.css"; // Added CSS import
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { listAll, ref as storageRef, getDownloadURL } from "firebase/storage";
+import { storage } from "../lib/firebase";
+import { collection, getDocs, addDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 interface ParsedVerse {
   book: string;
@@ -199,6 +203,12 @@ export default function AddScripturePage() {
   const userTagFilterInputRef = React.useRef<HTMLInputElement>(null);
   const functions = getFunctions();
 
+  // New state for translations
+  const [translations, setTranslations] = useState<{ name: string; displayName: string }[]>([]);
+  const [showAddTranslationPrompt, setShowAddTranslationPrompt] = useState(false);
+  const [newTranslation, setNewTranslation] = useState("");
+  const [newTranslationDisplay, setNewTranslationDisplay] = useState("");
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor)
@@ -222,6 +232,59 @@ export default function AddScripturePage() {
     };
     fetchUserTags();
   }, [functions]);
+
+  // Fetch all available translations from Firestore
+  useEffect(() => {
+    async function fetchTranslations() {
+      try {
+        const translationsCol = collection(db, "translations");
+        const snapshot = await getDocs(translationsCol);
+        const list: { name: string; displayName: string }[] = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.name && data.displayName) {
+            list.push({ name: data.name, displayName: data.displayName });
+          }
+        });
+        setTranslations(list);
+      } catch (err) {
+        setTranslations([
+          { name: "esv", displayName: "ESV" },
+          { name: "kjv", displayName: "KJV" },
+          { name: "niv", displayName: "NIV" },
+          { name: "exb", displayName: "EXB" },
+        ]); // fallback
+      }
+    }
+    fetchTranslations();
+  }, []);
+
+  // Handle translation dropdown change
+  const handleTranslationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value === "__add_new__") {
+      setShowAddTranslationPrompt(true);
+    } else {
+      setTranslation(e.target.value);
+    }
+  };
+
+  // Add new translation to Firestore
+  const handleAddTranslation = async () => {
+    if (!newTranslation.trim() || !newTranslationDisplay.trim()) return;
+    const name = newTranslation.trim().toLowerCase();
+    const displayName = newTranslationDisplay.trim();
+    try {
+      const translationsCol = collection(db, "translations");
+      await addDoc(translationsCol, { name, displayName });
+      setTranslations([...translations, { name, displayName }]);
+      setTranslation(name);
+      setShowAddTranslationPrompt(false);
+      setNewTranslation("");
+      setNewTranslationDisplay("");
+    } catch (err) {
+      alert("Failed to add translation. Try again.");
+    }
+  };
 
   // Filtered user tags for display
   const filteredUserTags = userTagFilter.trim().length === 0
@@ -250,88 +313,81 @@ export default function AddScripturePage() {
 
   const handleParse = () => {
     try {
-      const lines = input.split(/\r?\n/).filter((line) => line.trim() !== "");
+      const lines = input.split(/\r?\n/).map(line => line.trim());
       const verses: ParsedVerse[] = [];
-
       let currentBook = "";
       let currentChapter = 0;
+      let verseNum = 1;
+      let lastChapterLine = false;
+      let currentVerseText = "";
+      let currentVerseNum = 1;
 
-      const firstLineMatch = lines[0].match(/^([1-3]?\s?[A-Za-z ]+)\s+(\d+)$/);
-      if (firstLineMatch) {
-        currentBook = firstLineMatch[1].trim();
-        currentChapter = parseInt(firstLineMatch[2], 10);
-        lines.shift();
-      } else {
-        setError("Start with a line like 'Acts 2'");
-        return;
-      }
-
-      let buffer = "";
-      for (let line of lines) {
-        buffer += " " + line;
-      }
-      buffer = buffer.trim();
-
-      // Parse using custom tokenizer
-      const matches: { verseNum: number; text: string }[] = [];
-      let bracketDepth = 0;
-      let token = "";
-      let currentVerseNum: number | null = null;
-
-      const flushToken = () => {
-        if (currentVerseNum !== null && token.trim()) {
-          matches.push({ verseNum: currentVerseNum, text: token.trim() });
-          token = "";
-          currentVerseNum = null;
+      const pushVerse = () => {
+        if (currentVerseText.trim()) {
+          verses.push({
+            book: currentBook,
+            book_lower: currentBook.toLowerCase(),
+            chapter: currentChapter,
+            linkedSermonID: "",
+            reference: `${currentBook} ${currentChapter}:${currentVerseNum}`,
+            tags: suggestTagsFromText(currentVerseText),
+            text: currentVerseText.trim(),
+            translation,
+            verse: currentVerseNum,
+          });
         }
       };
 
-      let i = 0;
-      while (i < buffer.length) {
-        const char = buffer[i];
-        const next4 = buffer.slice(i, i + 4);
-
-        if (char === "[" || char === "(") bracketDepth++;
-        if (char === "]" || char === ")") bracketDepth--;
-
-        // Detect possible verse start: must be outside brackets and not like 2:14
-        const verseStartMatch = buffer.slice(i).match(/^(\d{1,3})\s+/);
-        const isSafeStart = bracketDepth === 0 && !/^\d+:\d/.test(buffer.slice(i));
-
-        if (verseStartMatch && isSafeStart) {
-          flushToken();
-          currentVerseNum = parseInt(verseStartMatch[1], 10);
-          i += verseStartMatch[0].length;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        // Detect chapter heading (e.g. Genesis 1, John 3, 1 Samuel 2)
+        const chapterMatch = line.match(/^([1-3]?\s?[A-Za-z ]+)\s+(\d+)$/);
+        if (chapterMatch) {
+          // Push any pending verse before starting new chapter
+          pushVerse();
+          currentBook = chapterMatch[1].trim();
+          currentChapter = parseInt(chapterMatch[2], 10);
+          verseNum = 1;
+          currentVerseNum = 1;
+          currentVerseText = "";
+          lastChapterLine = true;
           continue;
         }
-
-        token += char;
-        i++;
+        // Skip empty lines
+        if (!line) continue;
+        // If the previous line was a chapter heading, treat this as verse 1
+        if (lastChapterLine) {
+          pushVerse();
+          currentVerseNum = 1;
+          currentVerseText = line;
+          verseNum = 2;
+          lastChapterLine = false;
+          continue;
+        }
+        // If the line starts with a number and a dot (e.g. 2. text), use that as the verse number
+        const numberedVerseMatch = line.match(/^(\d+)\.[\s·]+(.+)/);
+        if (numberedVerseMatch) {
+          // Push previous verse
+          pushVerse();
+          currentVerseNum = parseInt(numberedVerseMatch[1], 10);
+          currentVerseText = numberedVerseMatch[2].trim();
+          verseNum = currentVerseNum + 1;
+          continue;
+        }
+        // Otherwise, treat as a continuation of the current verse
+        if (currentVerseText) {
+          currentVerseText += " " + line;
+        } else {
+          currentVerseText = line;
+        }
       }
-
-      flushToken(); // Push final
-
-      if (matches.length === 0) {
-        setError("No valid verse format found.");
+      // Push the last verse if any
+      pushVerse();
+      if (!currentBook || !currentChapter || verses.length === 0) {
+        setError("No valid chapter/verse format found. Make sure to start with a chapter heading like 'Genesis 1'.");
         return;
       }
-
-      const output: ParsedVerse[] = matches.map(({ verseNum, text }) => {
-        const suggestedTags = suggestTagsFromText(text);
-        return {
-          book: currentBook,
-          book_lower: currentBook.toLowerCase(),
-          chapter: currentChapter,
-          linkedSermonID: "",
-          reference: `${currentBook} ${currentChapter}:${verseNum}`,
-          tags: suggestedTags,
-          text,
-          translation,
-          verse: verseNum,
-        };
-      });
-
-      setParsedVerses(output);
+      setParsedVerses(verses);
       setError("");
     } catch (err: any) {
       setError(err.message || "Parsing failed.");
@@ -418,22 +474,39 @@ export default function AddScripturePage() {
             <label htmlFor="translation-select" className="add-scripture-translation-label">
               Translation:
             </label>
-            <select 
-              id="translation-select" 
-              value={translation} 
-              onChange={(e) => setTranslation(e.target.value)} 
+            <select
+              id="translation-select"
+              value={translation}
+              onChange={handleTranslationChange}
               className="add-scripture-translation-dropdown"
             >
-              {TRANSLATION_GROUPS.map((group) => (
-                <optgroup label={group.label} key={group.label}>
-                  {group.options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </optgroup>
+              {translations.map((t) => (
+                <option key={t.name} value={t.name}>{t.displayName}</option>
               ))}
+              <option value="__add_new__">Add New Translation...</option>
             </select>
+            {showAddTranslationPrompt && (
+              <div className="add-translation-prompt">
+                <input
+                  type="text"
+                  placeholder="Translation code (e.g. nlt)"
+                  value={newTranslation}
+                  onChange={e => setNewTranslation(e.target.value)}
+                  maxLength={10}
+                  style={{ marginRight: 8 }}
+                />
+                <input
+                  type="text"
+                  placeholder="Display name (e.g. NLT)"
+                  value={newTranslationDisplay}
+                  onChange={e => setNewTranslationDisplay(e.target.value)}
+                  maxLength={32}
+                  style={{ marginRight: 8 }}
+                />
+                <button onClick={handleAddTranslation}>Add</button>
+                <button onClick={() => setShowAddTranslationPrompt(false)} style={{ marginLeft: 8 }}>Cancel</button>
+              </div>
+            )}
           </div>
 
           <textarea

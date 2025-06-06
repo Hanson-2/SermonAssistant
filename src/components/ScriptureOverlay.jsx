@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -19,6 +19,17 @@ function parseReference(ref, fallbackBook, fallbackChapter) {
       chapter: parseInt(chapter, 10),
       startVerse: parseInt(startVerse, 10),
       endVerse: endVerse ? parseInt(endVerse, 10) : parseInt(startVerse, 10),
+    };
+  }
+  // NEW: Match just book and chapter (e.g. 'John 3')
+  const bookChapter = ref.match(/^([1-3]?\s*[A-Za-z .]+)\s+(\d+)$/i);
+  if (bookChapter) {
+    const [, book, chapter] = bookChapter;
+    return {
+      book: normalizeBookName(book),
+      chapter: parseInt(chapter, 10),
+      startVerse: 1,
+      endVerse: 999, // Will be filtered by actual verses in Firestore
     };
   }
   // Fallback: if ref is just a chapter and verse range (e.g. '2:1-6')
@@ -65,8 +76,9 @@ function parseReference(ref, fallbackBook, fallbackChapter) {
  *  - book: string
  *  - chapter: number|string
  *  - verseRange: string ("1" or "1-3")
+ *  - defaultTranslation?: string // NEW: user's preferred translation
  */
-export default function ScriptureOverlay({ open, onClose, book, chapter, verseRange, reference }) {
+export default function ScriptureOverlay({ open, onClose, book, chapter, verseRange, reference, defaultTranslation }) {
   const [lockedProps, setLockedProps] = useState(null);
   const hasOpenedAndLocked = useRef(false); // Tracks if initial props have been locked for the current "open" session
 
@@ -205,7 +217,12 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
           };
         });
         setTranslations(list);
-        setCurrent(list[0]?.code || '');
+        // Use defaultTranslation if provided and available, else fallback
+        if (defaultTranslation && list.some(t => t.code === defaultTranslation)) {
+          setCurrent(defaultTranslation);
+        } else {
+          setCurrent(list[0]?.code || '');
+        }
         // Debug: show what will be rendered
         console.log('[Overlay] Translations list:', list);
         if (list.length > 0) {
@@ -220,94 +237,123 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
       }
     };
     fetchVerses();
-  }, [open, effective]); // Depends on 'open' and the 'effective' (potentially locked) props
+  }, [open, effective, defaultTranslation]);
 
-  const active = translations.find(t => t.code === current) || {};
+  // Ensure default translation is set on mount and when translations change
+  useEffect(() => {
+    if (translations.length > 0) {
+      if (defaultTranslation && translations.some(t => t.code === defaultTranslation)) {
+        setCurrent(defaultTranslation);
+      } else if (translations[0]?.code) { 
+        // Fallback to the first available translation if default is not found or not provided
+        setCurrent(translations[0].code);
+      }
+    } else {
+      // If translations become empty (e.g., new reference has no data yet), clear current.
+      setCurrent('');
+    }
+  }, [defaultTranslation, translations]);
+
+  const active = translations.find(t => t.code === current) || { verses: [] }; // Ensure active.verses is always an array
+  const displayBook = displayRef.book ? getDisplayBookAbbrev(displayRef.book) : 'Scripture';
 
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" style={{zIndex: 9999}}>
-          <motion.div
+        <div 
+          className="scripture-overlay-modern fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          onClick={onClose} // Close on backdrop click
+        >
+          <Motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="bg-gray-900 rounded-xl shadow-2xl w-full max-w-3xl mx-4 overflow-hidden flex flex-col md:flex-row"
-            style={{zIndex: 10000, position: 'relative'}}
+            transition={{ type: 'spring', stiffness: 300, damping: 30, duration: 0.2 }}
+            className="scripture-overlay-card flex flex-col w-full max-w-3xl rounded-xl shadow-2xl 
+                       bg-gradient-to-br from-gray-900 to-black overflow-hidden"
+            style={{
+              zIndex: 10000, 
+              position: 'relative', 
+              maxHeight: 'calc(100vh - 3rem)',
+              borderWidth: '2px', // Crucial for borderImage to show
+              borderStyle: 'solid',
+              borderColor: 'transparent', // Fallback if borderImage isn't supported or while loading
+              borderImageSlice: 1,
+              borderImageSource: 'linear-gradient(to bottom right, #b8860b, #ffd700, #b8860b)',
+            }}
+            onClick={(e) => e.stopPropagation()} // Prevent click inside from closing
           >
-            {/* Mobile Header */}
-            <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-700">
-              <span className="text-white font-semibold text-lg">
-                {getDisplayBookAbbrev(displayRef.book)} {displayRef.chapter}:{displayRef.verseRange}
-              </span>
-              <select
-                value={current}
-                onChange={e => setCurrent(e.target.value)}
-                disabled={loading}
-                className="bg-gray-800 text-white px-2 py-1 rounded"
+            {/* Header */}
+            <div className="flex items-center justify-between p-3 md:p-4 border-b border-yellow-400/20 flex-shrink-0 bg-black/20">
+              <h2 className="text-lg md:text-xl font-semibold text-yellow-400 truncate pr-2">
+                {displayRef.book ? `${displayBook} ${displayRef.chapter}:${displayRef.verseRange}` : 'Loading Reference...'}
+              </h2>
+              <button 
+                onClick={onClose} 
+                className="text-gray-400 hover:text-yellow-400 p-1 rounded-full hover:bg-gray-700/50 transition-colors"
+                aria-label="Close scripture overlay"
               >
-                {loading
-                  ? <option>Loading…</option>
-                  : translations.map(t => (
-                      <option key={t.code} value={t.code}>
-                        {t.label}
-                      </option>
-                    ))}
-              </select>
-              <button onClick={onClose} className="text-white ml-2">
-                <X size={20} />
+                <X size={22} />
               </button>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
-              {/* Sidebar on Desktop */}
-              <nav className="hidden md:flex flex-col w-40 bg-gray-800 p-4 border-r border-gray-700 space-y-2 overflow-auto">
-                {loading
-                  ? <div className="text-white">Loading…</div>
-                  : translations.map(t => (
+            {/* Content Wrapper (for consistent padding and scroll handling) */}
+            <div className="flex-grow overflow-y-auto">
+              {/* Translation Selector - Placed above scripture text */}
+              {!loading && translations.length > 1 && (
+                <div className="p-3 md:p-4 border-b border-gray-800/60 bg-gray-900/50 sticky top-0 z-10 backdrop-blur-sm">                  <div className="flex flex-wrap gap-2 justify-center">
+                    {translations.map(t => (
                       <button
                         key={t.code}
                         onClick={() => setCurrent(t.code)}
-                        className={`text-left w-full px-3 py-2 rounded transition focus:outline-none ${
-                          t.code === current
-                            ? 'bg-blue-600 text-white font-semibold'
-                            : 'text-white hover:bg-gray-700'
+                        className={`px-3 py-1.5 text-xs md:text-sm rounded-md transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-yellow-500/70 shadow-sm font-semibold
+                          ${
+                          current === t.code
+                            ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-black font-bold border border-yellow-600/80 shadow-lg transform scale-105' // Active style
+                            : 'bg-[#23232b] text-[#ffd700] border border-[#e0c97f] hover:bg-[#1a1a20] hover:text-[#fffbe6] hover:border-[#ffe082] hover:shadow-lg' // Black styling to match Universal Search
                         }`}
                       >
                         {t.label}
                       </button>
                     ))}
-              </nav>
-
-              {/* Content Area */}
-              <div className="flex-1 p-6 overflow-auto max-h-[70vh]">
-                {/* Desktop Header */}
-                <div className="hidden md:flex justify-between items-center mb-4">
-                  <span className="text-white font-semibold text-2xl">
-                    {getDisplayBookAbbrev(displayRef.book)} {displayRef.chapter}:{displayRef.verseRange}
-                  </span>
-                  <button onClick={onClose} className="text-white">
-                    <X size={24} />
-                  </button>
+                  </div>
                 </div>
+              )}
 
-                {/* Verse Text */}
-                <div className="prose prose-white space-y-4">
-                  {loading
-                    ? <p className="text-white">Loading verse…</p>
-                    : (active.verses && active.verses.length > 0)
-                        ? active.verses.map((v, i) => (
-                            <p key={i} className="leading-relaxed">
-                              <span className="font-bold">{v.verse}</span>. {v.text}
-                            </p>
-                          ))
-                        : <p className="text-white">No verse found.</p>
-                  }
-                </div>
+              {/* Scripture Text Area */}
+              <div className="p-3 md:p-4">
+                {loading ? (
+                  <div className="flex flex-col justify-center items-center h-48 text-gray-400">
+                    {/* You can add a spinner component here */}
+                    <svg className="animate-spin h-8 w-8 text-yellow-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading scripture...
+                  </div>
+                ) : (
+                  <>
+                    {active.verses && active.verses.length > 0 ? (
+                      <div className="space-y-3 text-gray-200">
+                        {active.verses.map((verse) => (
+                          <div key={verse.verse} className="flex items-start text-sm md:text-base leading-relaxed">
+                            <span className="font-semibold text-yellow-500/90 mr-2 w-7 text-right flex-shrink-0 pt-px">{verse.verse}</span>
+                            <p className="flex-1">{verse.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 text-center py-10">
+                        {translations.length === 0 && !loading ? 'No scripture text found for this reference.' :
+                         (translations.length > 0 && (!active || !active.verses || active.verses.length === 0)) ? 'No text available for the selected translation.' :
+                         'Please select a translation to view the text.'}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          </motion.div>
+          </Motion.div>
         </div>
       )}
     </AnimatePresence>

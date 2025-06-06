@@ -362,3 +362,23 @@
     @content;
   }
 }
+
+// Mixin for mobile font size
+@mixin mobile-font-size {
+  font-size: 0.95rem !important;
+}
+
+// Mixin for mobile header font size
+@mixin mobile-header-font-size {
+  font-size: 1.1rem !important;
+}
+
+// Mixin for mobile button padding
+@mixin mobile-btn-padding {
+  padding: 0.75rem 1rem !important;
+}
+
+// Mixin for minimum touch target
+@mixin min-touch {
+  min-height: 44px !important;
+}

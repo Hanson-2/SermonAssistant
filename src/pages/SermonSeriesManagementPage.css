@@ -211,6 +211,7 @@
 @media (max-width: 768px) {
   .series-management-page {
     padding: 1rem;
+    padding-bottom: 6rem;
   }
   
   .sermons-grid,
@@ -250,6 +251,7 @@
 @media (max-width: 480px) {
   .series-management-page {
     padding: 0.75rem;
+    padding-bottom: 7rem;
   }
   
   .sermons-grid,

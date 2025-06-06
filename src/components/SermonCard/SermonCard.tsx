@@ -80,8 +80,7 @@ const SermonCard: React.FC<SermonCardProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [activeCardId, sermon.id, setActiveCardId]);
-  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  }, [activeCardId, sermon.id, setActiveCardId]);  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Handle selection mode
     if (isSelectable && onSelect) {
       onSelect();
@@ -91,10 +90,23 @@ const SermonCard: React.FC<SermonCardProps> = ({
     // Handle normal card interaction
     if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button' && 
         (e.target as HTMLElement).tagName.toLowerCase() !== 'select') {
-      if (setActiveCardId) {
-        setActiveCardId(prev => (prev === sermon.id.toString() ? null : sermon.id.toString()));
+      
+      // Check if we're on mobile (screen width <= 768px)
+      const isMobile = window.innerWidth <= 768;
+      
+      if (isMobile) {
+        // On mobile, toggle embossed buttons below card (no flyout)
+        if (setActiveCardId) {
+          const newActiveId = activeCardId === sermon.id.toString() ? null : sermon.id.toString();
+          setActiveCardId(newActiveId);
+        }
+      } else {
+        // On desktop, show the flyout overlay (no embossed buttons)
+        if (setActiveCardId) {
+          setActiveCardId(prev => (prev === sermon.id.toString() ? null : sermon.id.toString()));
+        }
+        setShowOverlay(!showOverlay);
       }
-      setShowOverlay(!showOverlay);
     }
   };
 
@@ -129,7 +141,6 @@ const SermonCard: React.FC<SermonCardProps> = ({
     { label: "Archive", action: handleArchive },
     { label: "Delete", action: handleDelete },
   ];
-
   return (
     <div className="sermon-card-wrapper">      <div
         ref={cardRef}
@@ -212,16 +223,18 @@ const SermonCard: React.FC<SermonCardProps> = ({
                 ))}
               </select>
             </div>
-          )}
-        </div>        {/* Slide-In Flyout - Only show on dashboard/main pages, not on series management */}
+          )}        </div>
+  
+        
+        {/* Slide-In Flyout - Only show on desktop, hidden on mobile */}
         {!hideActions && !isSelectable && !showAddButton && !showRemoveButton && !showSeriesSelector && (
           <div
-            className={`absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-black/80 to-transparent flex items-center justify-end px-4 transition-transform duration-300 ${
+            className={`absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-black/80 to-transparent flex items-center justify-end px-4 transition-transform duration-300 desktop-flyout ${
               showOverlay ? "translate-x-0" : "translate-x-full"
             }`}
-            style={{ zIndex: 1000 }} /* Increased z-index to ensure it's always on top */
+            style={{ zIndex: 1000 }}
           >
-            <div className="flyout-actions flex gap-2 p-2">
+            <div className="flyout-actions desktop-actions flex gap-2 p-2">
               {actionButtons.map(({ label, action }) => (
                 <button
                   key={label}
@@ -234,10 +247,27 @@ const SermonCard: React.FC<SermonCardProps> = ({
                   {label}
                 </button>
               ))}
-            </div>
-          </div>
-        )}
-      </div>
+            </div>          </div>
+        )}      </div>
+      
+      {/* Mobile Embossed Buttons - Show directly attached to the bottom of card when active */}
+      {!hideActions && !isSelectable && !showAddButton && !showRemoveButton && !showSeriesSelector && 
+       activeCardId === sermon.id.toString() && (
+        <div className="mobile-embossed-actions">
+          {actionButtons.map(({ label, action }) => (
+            <button
+              key={label}
+              onClick={(e) => {
+                e.stopPropagation();
+                action();
+              }}
+              className={`mobile-embossed-button mobile-embossed-${label.toLowerCase()}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getSermon, updateSermonNotes, getScriptureVersesForChapter } from "../services/firebaseService";
+import { getSermon, updateSermonNotes, getScriptureVersesForChapter, getUserProfile } from "../services/firebaseService";
 import { Sermon } from "../components/SermonCard/SermonCard";
 import { extractScriptureReferences } from "../utils/smartParseScriptureInput";
 import EditableRichText from "../components/EditableRichText";
@@ -91,7 +91,29 @@ export default function ExpositoryDetailPage() {
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [overlayError, setOverlayError] = useState<string | null>(null);
   const [overlayTranslations, setOverlayTranslations] = useState<Array<{ code: string, label: string, text: string }>>([]);
-  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);  // --- Get user's default translation from user profile ---
+  const [defaultTranslation, setDefaultTranslation] = useState<string>('');
+  useEffect(() => {
+    // Load user's default translation from their profile
+    const loadUserPreferences = async () => {
+      try {
+        const profile = await getUserProfile();
+        if (profile?.preferences?.defaultBibleVersion) {
+          setDefaultTranslation(profile.preferences.defaultBibleVersion);
+        } else {
+          // Fallback to localStorage if profile doesn't exist yet
+          const stored = localStorage.getItem('defaultBibleVersion');
+          if (stored) setDefaultTranslation(stored);
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        // Fallback to localStorage if there's an error
+        const stored = localStorage.getItem('defaultBibleVersion');
+        if (stored) setDefaultTranslation(stored);
+      }
+    };
+    loadUserPreferences();
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -282,6 +304,7 @@ export default function ExpositoryDetailPage() {
           chapter={lockedOverlayRef.chapter}
           verseRange={lockedOverlayRef.verseRange}
           reference={lockedOverlayRef.reference}
+          defaultTranslation={defaultTranslation}
         />
       )}
 

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getSermon, updateSermon, uploadExpositoryImage, listExpositoryImages } from "../services/firebaseService";
-import "../styles/edit-expository.scss";
+import "../styles/edit-expository.css";
 import MiniSermonList from '../components/MiniSermonList';
 
 export default function EditExpositoryPage() {
@@ -89,36 +89,31 @@ export default function EditExpositoryPage() {
     });
     navigate("/dashboard");
   };
+
   if (loading) {
-    return (
-      <div className="edit-expository-page">
-        <div className="edit-expository-layout">
-          <div className="loading-message">Loading...</div>
-        </div>
-      </div>
-    );
+    return <div className="edit-expository-layout"><div className="loading-message">Loading...</div></div>;
   }
+
   if (error) {
     return (
-      <div className="edit-expository-page">
-        <div className="edit-expository-layout">
-          <div className="error-message">{error}</div>
-          <div className="existing-images-column">
-            <div className="existing-images-header" onClick={() => setShowExistingImages(!showExistingImages)}>
-              <h3>Select Existing Image</h3>
-              <span className="toggle-icon">{showExistingImages ? '▼' : '►'}</span>
-            </div>
-            <div className="horizontal-divider"></div>
-            <div className={`thumbnails-grid shifted-thumbnails ${showExistingImages ? 'show' : 'hide'}`}>
-              {existingImages.map((url, index) => (
-                <img
-                  key={index}
-                  src={url}
-                  alt={`Thumbnail ${index + 1}`}
-                  className="thumbnail-item"
-                />
-              ))}
-            </div>
+      <div className="edit-expository-layout">
+        <div className="error-message">{error}</div>
+        <div className="existing-images-column">
+          <div className="existing-images-header" onClick={() => setShowExistingImages(!showExistingImages)}>
+            <h3>Select Existing Image</h3>
+            <span className="toggle-icon">{showExistingImages ? '▼' : '►'}</span>
+          </div>
+          <div className="horizontal-divider"></div>
+          <div className="inner-divider-line blue-divider"></div>
+          <div className={`thumbnails-grid shifted-thumbnails ${showExistingImages ? 'show' : 'hide'}`}>
+            {existingImages.map((url, index) => (
+              <img
+                key={index}
+                src={url}
+                alt={`Thumbnail ${index + 1}`}
+                className="thumbnail-item"
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -126,12 +121,11 @@ export default function EditExpositoryPage() {
   }
 
   return (
-    <div className="edit-expository-page">
-      <div className="edit-expository-layout">
+    <div className="edit-expository-layout">
       <div className="mini-dashboard-panel">
         <MiniSermonList />
       </div>
-      <div className="vertical-divider left-of-form blue-divider desktop-only-element"></div>
+      <div className="vertical-divider left-of-form blue-divider"></div>
       <div className="form-and-preview-stack">
         <form className="edit-expository-form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
           <label htmlFor="titleInput" className="form-label">Expository Title</label>
@@ -172,26 +166,29 @@ export default function EditExpositoryPage() {
             <img src={imagePreview} alt="Selected preview" className="preview-image-large" />
           ) : (
             <div className="empty-preview-placeholder">No Image Selected</div>
-          )}        </div>
+          )}
+        </div>
       </div>
+      <div className="vertical-divider blue-divider"></div>
 
-      <div className="vertical-divider blue-divider desktop-only-element"></div><div className="existing-images-column mobile-no-border">
+      <div className="existing-images-column">
         <div className="existing-images-header" onClick={() => setShowExistingImages(!showExistingImages)}>
           <h3>Select Existing Image</h3>
           <span className="toggle-icon">{showExistingImages ? '▼' : '►'}</span>
         </div>
-        <div className="horizontal-divider mobile-show"></div>
+        <div className="horizontal-divider"></div>
+        <div className="inner-divider-line blue-divider"></div>
         <div className={`thumbnails-grid shifted-thumbnails ${showExistingImages ? 'show' : 'hide'}`}>
           {existingImages.map((url, index) => (
             <img
               key={index}
               src={url}
               alt={`Thumbnail ${index + 1}`}
-              className="thumbnail-item"              onClick={() => handleImageSelect(url)}
+              className="thumbnail-item"
+              onClick={() => handleImageSelect(url)}
             />
           ))}
         </div>
-      </div>
       </div>
     </div>
   );

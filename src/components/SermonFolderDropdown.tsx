@@ -34,7 +34,6 @@ export default function SermonFolderDropdown({ folders, value, onChange }: Sermo
       : value === "__unassigned__"
       ? "Unassigned"
       : folders.find((f) => f.id === value)?.name || "Unknown";
-
   return (
     <div className="custom-folder-dropdown" style={{ position: "relative", width: "100%" }}>
       <button
@@ -42,23 +41,21 @@ export default function SermonFolderDropdown({ folders, value, onChange }: Sermo
         className="custom-folder-dropdown-btn"
         type="button"
         aria-haspopup="listbox"
-        aria-expanded={open}
+        aria-expanded={open ? "true" : "false"}
         onClick={() => setOpen((v) => !v)}
-      >
-        <span>{selectedLabel}</span>
-        <span className="custom-folder-dropdown-arrow" aria-hidden>▼</span>
+      ><span>{selectedLabel}</span>
+        <span className="custom-folder-dropdown-arrow" aria-hidden="true">▼</span>
       </button>
-      {open && (
-        <div
+      {open && (        <div
           ref={listRef}
           className="custom-folder-dropdown-list"
           role="listbox"
-          tabIndex={-1}
+          aria-label="Folder selection"          tabIndex={-1}
         >
           <div
             className={`custom-folder-dropdown-option${value === null ? " selected" : ""}`}
             role="option"
-            aria-selected={value === null ? true : false}
+            aria-selected={value === null ? "true" : "false"}
             tabIndex={0}
             onClick={() => {
               onChange(null);
@@ -70,7 +67,7 @@ export default function SermonFolderDropdown({ folders, value, onChange }: Sermo
           <div
             className={`custom-folder-dropdown-option${value === "__unassigned__" ? " selected" : ""}`}
             role="option"
-            aria-selected={value === "__unassigned__" ? true : false}
+            aria-selected={value === "__unassigned__" ? "true" : "false"}
             tabIndex={0}
             onClick={() => {
               onChange("__unassigned__");
@@ -78,13 +75,12 @@ export default function SermonFolderDropdown({ folders, value, onChange }: Sermo
             }}
           >
             Unassigned
-          </div>
-          {folders.map((folder) => (
+          </div>          {folders.map((folder) => (
             <div
               key={folder.id}
               className={`custom-folder-dropdown-option${value === folder.id ? " selected" : ""}`}
               role="option"
-              aria-selected={value === folder.id}
+              aria-selected={value === folder.id ? "true" : "false"}
               tabIndex={0}
               onClick={() => {
                 onChange(folder.id);

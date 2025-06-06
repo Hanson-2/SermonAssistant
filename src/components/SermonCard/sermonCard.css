@@ -21,6 +21,17 @@
   border-image: linear-gradient(90deg, #910000, #ff9800) 1;
   overflow: hidden; /* Ensure nothing breaks out of the card boundaries */
   /* Remove background properties from base class - let inline styles handle it */
+  
+  @media (max-width: 768px) {
+    height: auto;
+    min-height: 200px; /* Taller on mobile to accommodate button layout */
+    padding: 1.25rem;
+  }
+  
+  @media (max-width: 480px) {
+    min-height: 180px;
+    padding: 1rem;
+  }
 }
 
 /* Ensure inline styles override any global styles */
@@ -62,12 +73,27 @@
 .sermon-card-title {
   font-size: 2rem;
   font-weight: bold;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.25rem;
+  }
 }
 
 .sermon-card-date {
   font-size: 0.875rem;
   margin-top: 0.25rem;
   color: #919292;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-top: 0.5rem;
+  }
 }
 
 .flyout-actions {
@@ -81,21 +107,13 @@
   transform: none !important;
 }
 
-@media (max-width: 640px) {
-  .flyout-actions {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .flyout-actions button {
-    padding: 0.15rem 0.25rem;
-    font-size: 0.65rem;
-  }
-}
+/* Remove mobile flyout styles - mobile uses embossed buttons below cards instead */
 
 /* Sermon Card Action Button Styles */
 .sermon-action-button {
   color: white;
   padding: 0.5rem 1rem;
+  min-height: 44px; /* Ensure minimum touch target */
   border-radius: 0.25rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
@@ -104,6 +122,12 @@
   border: none;
   cursor: pointer;
   background: linear-gradient(to right, #9a3412, #c2410c); /* Rusty Orange Gradient */
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    min-height: 44px;
+  }
 }
 
 .sermon-action-button:hover {
@@ -112,14 +136,11 @@
 }
 
 @media (max-width: 640px) {
-  .flyout-actions {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
   .sermon-action-button {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.65rem;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
     width: 100%;
+    min-height: 44px;
   }
 }
 
@@ -160,4 +181,153 @@
 
 .sermon-folder-select:focus {
   outline: 2px solid #ffd700;
+}
+
+/* Desktop Flyout - Only on large screens */
+.desktop-flyout {
+  display: none; /* Hidden by default */
+}
+
+@media (min-width: 769px) {
+  .desktop-flyout {
+    display: flex !important; /* Show only on desktop */
+  }
+  
+  /* Ensure mobile embossed buttons are NEVER shown on desktop */
+  .mobile-embossed-actions {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {  
+  .desktop-flyout {
+    display: none !important; /* Never show on mobile */
+  }
+}
+
+/* Mobile Embossed Buttons - Only on small screens, below card when active */
+.mobile-embossed-actions {
+  display: none; /* Hidden by default */
+}
+
+@media (max-width: 768px) {
+  .mobile-embossed-actions {
+    display: flex !important; /* Show only on mobile */
+    margin-top: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    background: linear-gradient(135deg, rgba(42, 42, 42, 0.95) 0%, rgba(30, 30, 30, 0.9) 100%);
+    border: 1px solid rgba(224, 201, 127, 0.3);
+    border-radius: 0.5rem;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4), 
+                inset 0 1px 0px rgba(255, 255, 255, 0.05);
+    gap: 0.5rem;
+    justify-content: space-between;
+    flex-wrap: nowrap; /* Keep in single row */
+    overflow-x: auto; /* Allow horizontal scroll if needed */
+    width: 100%;
+  }
+  
+  .mobile-embossed-button {
+    padding: 0.6rem 0.8rem !important;
+    min-height: 48px !important; /* Better touch target on mobile */
+    font-size: 0.9rem !important;
+    flex: 1 1 auto;
+    max-width: none;
+  }
+}
+
+.mobile-embossed-button {
+  /* Match the desktop button styling for consistency */
+  color: white;
+  padding: 0.5rem 1rem;
+  min-height: 44px; /* Touch-friendly size */
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(to right, #9a3412, #c2410c); /* Same rusty orange as desktop */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 
+              inset 0 1px 0px rgba(255, 255, 255, 0.1); /* Embossed effect */
+  transition: all 0.2s ease;
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 0; /* Allow text to truncate if needed */
+}
+
+.mobile-embossed-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
+              inset 0 2px 4px rgba(0, 0, 0, 0.3); /* Deeper inset for pressed effect */
+  background: linear-gradient(to right, #7c2d12, #9a3412); /* Darker on press */
+}
+
+.mobile-embossed-button:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+/* Remove old responsive overrides since we're keeping single row */
+
+
+
+/* 1. Disable hover effects on touch devices */
+@media (hover: none) {
+  .sermon-card:hover,
+  .sermon-action-button:hover,
+  .flyout-actions button:hover {
+    transform: none !important;
+    filter: none !important;
+    background: inherit !important;
+    border-color: inherit !important;
+    box-shadow: inherit !important;
+  }
+}
+
+/* 2. Font size and button adjustments for very small screens */
+@media (max-width: 360px) {
+  .sermon-card-title {
+    font-size: 1.1rem !important;
+  }
+  
+  .sermon-card-date,
+  .sermon-card p {
+    font-size: 0.8rem !important;
+  }
+}
+
+/* 3. Extra bottom padding for mobile cards when in scrollable containers */
+@media (max-width: 768px) {
+  .sermon-card-wrapper {
+    margin-bottom: 1.5rem !important;
+    /* Extra space for on-screen keyboards and easier scrolling */
+  }
+  
+  .sermon-card {
+    padding-bottom: 1.5rem !important;
+    /* Ensure actions have enough space */
+  }
+}
+
+/* 5. Better desktop flyout behavior for touch devices */
+@media (max-width: 768px) {
+  /* Ensure action buttons are properly contained within card */
+  .sermon-card-content {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Touch-friendly active states */
+@media (pointer: coarse) {
+  .sermon-action-button:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+  
+  .mobile-embossed-button:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.1s ease !important;
+  }
 }
