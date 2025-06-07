@@ -10,8 +10,8 @@
   font-size: 0.8rem;
   border: 2px solid transparent;
   border-image: linear-gradient(45deg, #FFD700, #FFA500) 1;
-  background: linear-gradient(135deg, #3a3a3a 0%, #000000 100%);
-  color: #fff;
+  background: linear-gradient(135deg, #3a3a3a 0%, #000000 100%) !important;
+  color: #fff !important;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4);
   transition: transform 0.12s, color 0.18s, box-shadow 0.18s;

@@ -1,4 +1,3 @@
-/* Import unified theme patch for all settings pages */
 @import '../styles/theme_patch_all_pages.css';
 
 /* Background overlay for consistent theming with dashboard/analytics pages */

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
-import { db } from "../lib/firebase"; // adjust path
+import { db } from "../lib/firebase.js"; // adjust path for explicit file extension
 import { debounce } from "lodash";
 
 // Export bookAliases from useScriptureAutocomplete for use in other files
-export const bookAliases = {
+export type BookAliasesType = { [key: string]: string };
+export const bookAliases: BookAliasesType = {
   gen: "Genesis", ge: "Genesis", gn: "Genesis",
   ex: "Exodus", exo: "Exodus",
   lev: "Leviticus", lv: "Leviticus",

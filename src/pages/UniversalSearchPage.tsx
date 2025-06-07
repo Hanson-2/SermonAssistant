@@ -463,15 +463,22 @@ const UniversalSearchPage: React.FC = () => {
         
         {currentResults.length > 0 && (
           <>
-            <h2 className="results-title">Search Results ({totalHits})</h2>
+            <div className="results-title-with-icon">
+              <h2 className="results-title" style={{ display: 'inline', verticalAlign: 'middle', margin: 0 }}>
+                Search Results ({totalHits})
+              </h2>
+              <img src="/Algolia-mark-blue.png" alt="Results Icon" style={{ height: 32, width: 32, marginLeft: 10, verticalAlign: 'middle', display: 'inline-block' }} />
+            </div>
             <ul className="search-results-list">
               {currentResults.map((verse) => (
                 <li key={verse.objectID} className="search-result-item">
+                  {/* Removed logo image from each result */}
                   <h3 
                     className="result-reference" 
                     dangerouslySetInnerHTML={{
                       __html: verse._highlightResult?.reference?.value || `${verse.reference} (${verse.translation})`
                     }}
+                    style={{ display: 'inline', marginLeft: 0 }}
                   />
                   {editingVerseId === verse.objectID ? (
                     <>

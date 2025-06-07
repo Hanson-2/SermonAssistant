@@ -1,5 +1,6 @@
-/* Refactored Sermon Series Page to match Universal Search Page */
 @import '../styles/theme_patch_all_pages.css';
+
+/* Refactored Sermon Series Page to match Universal Search Page */
 
 /* Background styling to match other pages */
 .series-management-page {

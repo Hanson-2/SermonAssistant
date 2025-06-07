@@ -1,6 +1,17 @@
 /* Global Theme Variables System */
 /* This file defines all CSS custom properties for the global theming system */
 
+/* === IMPORTS === */
+/* Importing Google Fonts - Adjust the font weights and styles as needed */
+/* Note: Actual @import statements are commented out to avoid issues with CSS parsing in this environment */
+/* Uncomment and modify the following lines based on your project setup */
+
+/* @import url('https://fonts.googleapis.com/css2?family=OpenDyslexic&display=swap'); */
+/* @import url('https://fonts.googleapis.com/css2?family=Georgia:wght@400;700&display=swap'); */
+/* @import url('https://fonts.googleapis.com/css2?family=Trajan+Pro&display=swap'); */
+/* @import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap'); */
+
+/* === THEME VARIABLES === */
 :root {
   /* === THEME MODE VARIABLES === */
   --theme-mode: 'dark'; /* 'light', 'dark', 'auto' */

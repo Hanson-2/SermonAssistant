@@ -30,13 +30,13 @@
 .add-expository-btn {
   position: relative;
   overflow: hidden;
-  background-color: #000;
-  color: $gold;
+  background: linear-gradient(135deg, #3a3a3a 0%, #000000 100%) !important;
+  color: $gold !important;
   padding: $space-md $space-xl;
   border-radius: $radius-md;
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  border: 3px solid $gold;
+  border: 3px solid $gold !important;
   cursor: pointer;
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;

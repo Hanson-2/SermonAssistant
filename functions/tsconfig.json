@@ -14,10 +14,12 @@
   },
   "compileOnSave": true,
   "include": [
-    "src"
+    "src",
+    "../src/utils/smartParseScriptureInput.ts",
+    "../src/utils/bookOrder.ts", 
+    "../src/hooks/useScriptureAutocomplete.ts"
   ],
   "exclude": [
-    "../src",
     "../node_modules",
     "../web",
     "../public"

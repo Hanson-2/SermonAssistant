@@ -283,6 +283,27 @@ body {
   box-shadow: 0 2px 12px #ffe08244, 0 1px 0 #fffbe6;
 }
 
+// Results title with icon
+.results-title-with-icon {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.results-title-with-icon .results-title {
+  margin: 0;
+  font-size: 1.5em;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.results-title-with-icon img {
+  height: 32px;
+  width: 32px;
+  margin-left: 10px;
+  margin-right: 0;
+}
+
 // Comprehensive mobile responsiveness
 @media (max-width: 768px) {
   .universal-search-page {

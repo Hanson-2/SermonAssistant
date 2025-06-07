@@ -1,3 +1,7 @@
+/* Importing Google Fonts - Move to the top for best practices */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Trajan+Pro:wght@400;700;900&display=swap');
+
 /* Layout for Scripture Book Page */
 .scripture-book-layout {
   min-height: 100vh;

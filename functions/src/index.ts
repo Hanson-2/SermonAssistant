@@ -25,7 +25,7 @@ import {
     batchUpdateTagsByCriteriaHandler
 } from "./universalSearch";
 // Import scripture reference extraction utility
-import { extractScriptureReferences } from '../../src/utils/smartParseScriptureInput';
+import { extractScriptureReferences } from '../../src/utils/smartParseScriptureInput.js';
 
 // Remove v2 imports
 // import { onCall, CallableRequest } from "firebase-functions/v2/https";
