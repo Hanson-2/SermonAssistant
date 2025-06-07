@@ -559,6 +559,8 @@ li {
   text-overflow: ellipsis;
   display: inline-block;
   max-width: 100%;
+  background: transparent !important;
+  color: #fff !important;
 }
 
 .tag-dashboard-btn .tag-overlay {

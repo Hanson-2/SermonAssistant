@@ -278,6 +278,7 @@ export default function ExpositoryDetailPage() {
   // --- Per-slide titles ---
   const [slideTitles, setSlideTitles] = useState<string[]>([]);
   const [editingTitleIdx, setEditingTitleIdx] = useState<number | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   useEffect(() => {
     // For each slide, extract and normalize scripture refs
     const refsBySlide = slides.map(slideText => {
@@ -305,6 +306,32 @@ export default function ExpositoryDetailPage() {
   // Editable sidebar title logic
   function handleTitleDoubleClick(idx: number) {
     setEditingTitleIdx(idx);
+  }
+  function handleTitleMouseDown(idx: number) {
+    const timer = setTimeout(() => {
+      setEditingTitleIdx(idx);
+      setLongPressTimer(null);
+    }, 500); // 500ms long press
+    setLongPressTimer(timer);
+  }
+  function handleTitleMouseUp() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }
+  function handleTitleTouchStart(idx: number) {
+    const timer = setTimeout(() => {
+      setEditingTitleIdx(idx);
+      setLongPressTimer(null);
+    }, 500); // 500ms long press
+    setLongPressTimer(timer);
+  }
+  function handleTitleTouchEnd() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
   }
   function handleTitleChange(idx: number, value: string) {
     setSlideTitles(titles => titles.map((t, i) => (i === idx ? value : t)));
@@ -349,14 +376,11 @@ export default function ExpositoryDetailPage() {
         {(slideScriptureRefs[activeSlide] || []).map((ref, i) => (
           <ScriptureMiniCard key={i} verse={ref} />
         ))}
-      </div>
-
-      <div className="expository-main-layout" style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', width: '100%' }}>
-        <div style={{ minWidth: 180, maxWidth: 240, background: 'rgba(24,24,24,0.92)', borderRight: '1px solid #232b3e', padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: 0, height: '100%', overflowY: 'auto' }}>
-          {/* Sidebar page list, below mini cards */}
-          <nav className="expository-page-list">
-            {slides.map((slide, idx) => (
-              <div key={idx} style={{ width: '100%' }}>
+      </div>      <div className="expository-main-layout">
+        <div className="expository-page-list">
+          {/* Page list navigation */}
+          <nav style={{ display: 'contents' }}>            {slides.map((slide, idx) => (
+              <div key={idx}>
                 {editingTitleIdx === idx ? (
                   <input
                     className="expository-page-list-item editing"
@@ -365,35 +389,17 @@ export default function ExpositoryDetailPage() {
                     onChange={e => handleTitleChange(idx, e.target.value)}
                     onBlur={() => handleTitleBlur(idx)}
                     onKeyDown={e => handleTitleKeyDown(e, idx)}
-                    style={{ width: '90%', fontSize: '1rem', padding: '0.5rem', borderRadius: 4, border: '1px solid #ffd700', background: '#232b3e', color: '#ffd700', fontWeight: 700 }}
                     placeholder={`Enter title for Page ${idx + 1}`}
                     title={`Slide title input for Page ${idx + 1}`}
-                  />
-                ) : (
+                  />                ) : (
                   <button
                     className={`expository-page-list-item${activeSlide === idx ? ' active' : ''}`}
-                    style={{
-                      background: activeSlide === idx ? 'linear-gradient(90deg,#ffd70022,#232b3e)' : 'none',
-                      color: activeSlide === idx ? '#ffd700' : '#fff',
-                      fontWeight: activeSlide === idx ? 700 : 400,
-                      border: 'none',
-                      borderLeft: activeSlide === idx ? '4px solid #ffd700' : '4px solid transparent',
-                      textAlign: 'left',
-                      padding: '0.7rem 1.2rem',
-                      cursor: 'pointer',
-                      fontSize: '1rem',
-                      outline: 'none',
-                      transition: 'background 0.18s, color 0.18s',
-                      borderRadius: 0,
-                      width: '100%',
-                      borderBottom: '1px solid #232b3e',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
                     onClick={() => setActiveSlide(idx)}
                     onDoubleClick={() => handleTitleDoubleClick(idx)}
-                    onTouchStart={e => { e.preventDefault(); handleTitleDoubleClick(idx); }}
+                    onMouseDown={() => handleTitleMouseDown(idx)}
+                    onMouseUp={handleTitleMouseUp}
+                    onTouchStart={() => handleTitleTouchStart(idx)}
+                    onTouchEnd={handleTitleTouchEnd}
                     tabIndex={0}
                     title={slideTitles[idx] || `Page ${idx + 1}`}
                   >
@@ -401,11 +407,10 @@ export default function ExpositoryDetailPage() {
                   </button>
                 )}
               </div>
-            ))}
-          </nav>
+            ))}          </nav>
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="expository-main-content">
           {overlayOpen && lockedOverlayRef && (
             (() => {
               console.log('[ExpositoryDetailPage] Rendering ScriptureOverlay with defaultTranslation:', defaultTranslation);

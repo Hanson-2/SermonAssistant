@@ -87,10 +87,9 @@ export default function NavBar() {
           <span className="navbar-separator">|</span>
           <CustomNavDropdown label="Admin">
             <Link to="/sermon-folder-management" className="custom-folder-dropdown-option" role="menuitem">Sermon Folder Management</Link>
-            <div className="border-t border-gray-600 my-1" role="separator"></div>
-            <span className="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wide" role="presentation">Advanced Features</span>
+            <div className="border-t border-gray-600 my-1" role="separator"></div>            <span className="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wide" role="presentation">Advanced Features</span>
             <Link to="/smart-categorization" className="custom-folder-dropdown-option" role="menuitem">Smart Categorization</Link>
-            <Link to="/advanced-search" className="custom-folder-dropdown-option" role="menuitem">Advanced Search</Link>
+            <Link to="/advanced-search" className="custom-folder-dropdown-option" role="menuitem">Search Expositions</Link>
             <Link to="/sermon-series-management" className="custom-folder-dropdown-option" role="menuitem">Series Management</Link>
             <Link to="/analytics-dashboard" className="custom-folder-dropdown-option" role="menuitem">Analytics Dashboard</Link>
             <div className="border-t border-gray-600 my-1 mx-4" role="separator"></div>
@@ -158,10 +157,9 @@ export default function NavBar() {
                   <span className="mobile-label">Admin</span>
                   <Link to="/sermon-folder-management" onClick={closeMenu} className="mobile-sub">Sermon Folder Management</Link>
                   
-                  <div className="mobile-divider"></div>
-                  <span className="mobile-label mobile-label-sm">Advanced Features</span>
+                  <div className="mobile-divider"></div>                  <span className="mobile-label mobile-label-sm">Advanced Features</span>
                   <Link to="/smart-categorization" onClick={closeMenu} className="mobile-sub">Smart Categorization</Link>
-                  <Link to="/advanced-search" onClick={closeMenu} className="mobile-sub">Advanced Search</Link>
+                  <Link to="/advanced-search" onClick={closeMenu} className="mobile-sub">Search Expositions</Link>
                   <Link to="/sermon-series-management" onClick={closeMenu} className="mobile-sub">Series Management</Link>
                   <Link to="/analytics-dashboard" onClick={closeMenu} className="mobile-sub">Analytics Dashboard</Link>
                   
