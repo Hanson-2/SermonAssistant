@@ -22,8 +22,6 @@ function CustomNavDropdown({ label, children }) {
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
   }, [open]);
-
-  // Inject onClick to close dropdown into each child if it's a valid React element
   const enhancedChildren = React.Children.map(children, (child) => {
     if (React.isValidElement(child)) {
       const el = child;
@@ -77,7 +75,7 @@ export default function NavBar() {
         </div>
 
         {/* Desktop Nav */}
-        <div className="navbar-center hidden md:flex space-x-4 items-center">
+        <div className="navbar-center">
           <Link to="/">Dashboard</Link>
           <span className="navbar-separator">|</span>
           <CustomNavDropdown label="Scripture">
@@ -110,76 +108,97 @@ export default function NavBar() {
           <span className="navbar-separator">|</span>
           <Link to="/about">About</Link>
         </div>
-        <div className="navbar-right hidden md:flex items-center space-x-4">
+        <div className="navbar-right">
           <span className="navbar-separator">|</span>
           <Link to="/new-sermon" className="new-expository-link">New Expository</Link>
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Hamburger menu button */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="navbar-mobile-menu-btn"
           aria-label="Toggle menu"
         >
-          ☰
-        </button>
-
-        {/* Mobile Full-Screen Menu Panel */}
+          <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+            <rect x="4" y="8" width="24" height="3" rx="1" />
+            <rect x="4" y="15" width="24" height="3" rx="1" />
+            <rect x="4" y="22" width="24" height="3" rx="1" />
+          </svg>
+        </button>        {/* Mobile Menu Panel */}
         {menuOpen && (
-          <div className="navbar-mobile-menu-panel">
-            <button className="close-btn" aria-label="Close menu" onClick={closeMenu}>&times;</button>
-            <Link to="/" onClick={closeMenu}>Dashboard</Link>
-            {/* Scripture Group */}
-            <div className="mobile-group">
-              <span className="mobile-label">Scripture</span>
-              <Link to="/add-scripture" onClick={closeMenu} className="mobile-sub">Add Scripture</Link>
-              <Link to="/scripture-search" onClick={closeMenu} className="mobile-sub">Search All Scripture</Link>
-              <Link to="/currently-added-scripture" onClick={closeMenu} className="mobile-sub">Currently Added Scripture</Link>
-              <Link to="/themes-and-topics" onClick={closeMenu} className="mobile-sub">Themes & Topics</Link>
+          <>
+            {/* Overlay for closing menu */}
+            <div className="mobile-menu-overlay" onClick={closeMenu}></div>
+            
+            {/* Mobile Menu Panel */}
+            <div className="navbar-mobile-menu-panel">
+              {/* Header */}
+              <div className="mobile-menu-header">
+                <h3 className="mobile-menu-title">Navigation</h3>
+                <button className="close-btn" aria-label="Close menu" onClick={closeMenu}>
+                  &times;
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="mobile-menu-content">
+                <Link to="/" onClick={closeMenu}>Dashboard</Link>
+                
+                {/* Scripture Group */}
+                <div className="mobile-group">
+                  <span className="mobile-label">Scripture</span>
+                  <Link to="/add-scripture" onClick={closeMenu} className="mobile-sub">Add Scripture</Link>
+                  <Link to="/scripture-search" onClick={closeMenu} className="mobile-sub">Search All Scripture</Link>
+                  <Link to="/currently-added-scripture" onClick={closeMenu} className="mobile-sub">Currently Added Scripture</Link>
+                  <Link to="/themes-and-topics" onClick={closeMenu} className="mobile-sub">Themes & Topics</Link>
+                </div>
+
+                {/* Admin Group */}
+                <div className="mobile-group">
+                  <span className="mobile-label">Admin</span>
+                  <Link to="/sermon-folder-management" onClick={closeMenu} className="mobile-sub">Sermon Folder Management</Link>
+                  
+                  <div className="mobile-divider"></div>
+                  <span className="mobile-label mobile-label-sm">Advanced Features</span>
+                  <Link to="/smart-categorization" onClick={closeMenu} className="mobile-sub">Smart Categorization</Link>
+                  <Link to="/advanced-search" onClick={closeMenu} className="mobile-sub">Advanced Search</Link>
+                  <Link to="/sermon-series-management" onClick={closeMenu} className="mobile-sub">Series Management</Link>
+                  <Link to="/analytics-dashboard" onClick={closeMenu} className="mobile-sub">Analytics Dashboard</Link>
+                  
+                  <div className="mobile-divider"></div>
+                  <span className="mobile-label mobile-label-sm">Data Management</span>
+                  <Link to="/tag-management" onClick={closeMenu} className="mobile-sub">Tag Management</Link>
+                  <Link to="/import-export" onClick={closeMenu} className="mobile-sub">Import/Export</Link>
+                </div>
+
+                {/* Settings Group */}
+                <div className="mobile-group">
+                  <span className="mobile-label">Settings</span>
+                  <Link to="/user-profile" onClick={closeMenu} className="mobile-sub">User Profile</Link>
+                  
+                  <div className="mobile-divider"></div>
+                  <span className="mobile-label mobile-label-sm">Theme Options</span>
+                  <Link to="/theme-settings" onClick={closeMenu} className="mobile-sub">Theme Settings</Link>
+                </div>
+
+                <Link to="/about" onClick={closeMenu}>About</Link>
+                
+                {/* Primary Action */}
+                <Link to="/new-sermon" onClick={closeMenu} className="mobile-action-primary">
+                  New Expository
+                </Link>
+              </div>
             </div>
-            {/* Admin Group */}
-            <div className="mobile-group">
-              <span className="mobile-label">Admin</span>
-              <Link to="/sermon-folder-management" onClick={closeMenu} className="mobile-sub">Sermon Folder Management</Link>
-              <div className="mobile-divider"></div>
-              <span className="mobile-label mobile-label-sm">Advanced Features</span>
-              <Link to="/smart-categorization" onClick={closeMenu} className="mobile-sub">Smart Categorization</Link>
-              <Link to="/advanced-search" onClick={closeMenu} className="mobile-sub">Advanced Search</Link>
-              <Link to="/sermon-series-management" onClick={closeMenu} className="mobile-sub">Series Management</Link>
-              <Link to="/analytics-dashboard" onClick={closeMenu} className="mobile-sub">Analytics Dashboard</Link>
-              <div className="mobile-divider"></div>
-              <span className="mobile-label mobile-label-sm">Data Management</span>
-              <Link to="/tag-management" onClick={closeMenu} className="mobile-sub">Tag Management</Link>
-              <Link to="/import-export" onClick={closeMenu} className="mobile-sub">Import/Export</Link>
-            </div>
-            {/* Settings Group */}
-            <div className="mobile-group">
-              <span className="mobile-label">Settings</span>
-              <Link to="/user-profile" onClick={closeMenu} className="mobile-sub">User Profile</Link>
-              <div className="mobile-divider"></div>
-              <span className="mobile-label mobile-label-sm">Theme Options</span>
-              <Link to="/theme-settings" onClick={closeMenu} className="mobile-sub">Theme Settings</Link>
-            </div>
-            <Link to="/about" onClick={closeMenu}>About</Link>
-            <Link to="/new-sermon" onClick={closeMenu}>New Expository</Link>
-          </div>
+          </>
         )}
       </nav>
 
       {/* Sticky bottom nav for very small screens */}
-      <div className="navbar-bottom-nav md:hidden">
-        <Link to="/">
-          <span className="bottomnav-icon" aria-label="Home">🏠</span>
-        </Link>
-        <Link to="/scripture-search">
-          <span className="bottomnav-icon" aria-label="Search">🔍</span>
-        </Link>
-        <Link to="/new-sermon">
-          <span className="bottomnav-icon" aria-label="Add Expository">➕</span>
-        </Link>
-        <Link to="/user-profile">
-          <span className="bottomnav-icon" aria-label="Settings">⚙️</span>
-        </Link>
+      <div className="navbar-bottom-nav">
+        <Link to="/"><span role="img" aria-label="Home">🏠</span></Link>
+        <Link to="/scripture-search"><span role="img" aria-label="Search">🔍</span></Link>
+        <Link to="/new-sermon"><span role="img" aria-label="Add">➕</span></Link>
+        <Link to="/user-profile"><span role="img" aria-label="Settings">⚙️</span></Link>
       </div>
     </>
   );

@@ -23,9 +23,7 @@ export default function SplashScreen({ onFinish }) {
           alt="Expository Notes Logo"
           className={`splash-logo${exiting ? " exit" : ""}`}
         />
-        <h1 className={`splash-title${exiting ? " exit" : ""}`}>
-          Expository Notes
-        </h1>
+        {/* Title removed for minimalist splash */}
       </div>
     </div>
   );

@@ -299,23 +299,25 @@
   align-items: center;
   justify-content: center;
   margin: 0; // No margins
+    // Use subtle colored indicators at the BOTTOM of each button
+  &.mobile-embossed-view {
+    border-bottom: 2px solid rgba(16, 185, 129, 0.6); // Green
+  }
   
-  // Use subtle colored indicators at the BOTTOM of each button
-  &.mobile-embossed-view,
   &.mobile-embossed-edit {
-    border-bottom: 2px solid rgba(59, 130, 246, 0.6);
+    border-bottom: 2px solid rgba(59, 130, 246, 0.6); // Blue
   }
   
   &.mobile-embossed-duplicate {
-    border-bottom: 2px solid rgba(124, 58, 237, 0.6);
+    border-bottom: 2px solid rgba(245, 158, 11, 0.6); // Amber
   }
   
   &.mobile-embossed-archive {
-    border-bottom: 2px solid rgba(245, 158, 11, 0.6);
+    border-bottom: 2px solid rgba(139, 92, 246, 0.6); // Purple
   }
   
   &.mobile-embossed-delete {
-    border-bottom: 2px solid rgba(239, 68, 68, 0.6);
+    border-bottom: 2px solid rgba(239, 68, 68, 0.6); // Red
   }
   
   // Remove right border from last button

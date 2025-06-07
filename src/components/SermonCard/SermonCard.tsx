@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, Dispatch, SetStateAction } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { archiveSermon, deleteSermon, createSermon, assignSermonToFolder, getSermonFolders } from "../../services/firebaseService";
 import "../../styles/scss/main.scss";
 
@@ -65,6 +65,8 @@ const SermonCard: React.FC<SermonCardProps> = ({
   const [showOverlay, setShowOverlay] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const prevLocationRef = useRef(location.pathname);
 
   // Add click outside handler to close card
   useEffect(() => {
@@ -79,8 +81,9 @@ const SermonCard: React.FC<SermonCardProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [activeCardId, sermon.id, setActiveCardId]);  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    };  }, [activeCardId, sermon.id, setActiveCardId]);
+
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Handle selection mode
     if (isSelectable && onSelect) {
       onSelect();
@@ -141,10 +144,111 @@ const SermonCard: React.FC<SermonCardProps> = ({
     { label: "Archive", action: handleArchive },
     { label: "Delete", action: handleDelete },
   ];
+  
+  // Utility: detect mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;  // Native DOM mobile action bar positioned under the card
+  useEffect(() => {
+    if (!hideActions && !isSelectable && !showAddButton && !showRemoveButton && !showSeriesSelector &&
+        isMobile && activeCardId === sermon.id.toString() && cardRef.current) {
+      
+      // Create the action bar container
+      const actionBar = document.createElement('div');
+      actionBar.className = 'mobile-embossed-actions';      actionBar.style.cssText = `
+        position: relative;
+        left: 0;
+        right: 0;
+        width: 100%;
+        display: flex;
+        background: #23232b;
+        border-top: 1px solid #ffe082;
+        border-bottom: 3px solid #c2410c;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        z-index: 1000;
+        pointer-events: auto;
+        margin-top: 0;
+      `;
+        // Define specific colors for each action button
+      const buttonColors = {
+        'view': '#10b981',    // green
+        'edit': '#3b82f6',    // blue  
+        'duplicate': '#f59e0b', // amber
+        'archive': '#8b5cf6',   // purple
+        'delete': '#ef4444'     // red
+      };
+
+      // Create action buttons
+      actionButtons.forEach((buttonData, idx) => {
+        const button = document.createElement('button');
+        button.textContent = buttonData.label;
+        button.className = `mobile-embossed-button mobile-embossed-${buttonData.label.toLowerCase()}`;
+        
+        const buttonColor = buttonColors[buttonData.label.toLowerCase() as keyof typeof buttonColors] || '#ffe082';
+        
+        button.style.cssText = `
+          flex: 1;
+          border: none;
+          background: transparent;
+          color: ${buttonColor};
+          padding: 12px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          pointer-events: auto;
+          z-index: 1001;
+          ${idx !== actionButtons.length - 1 ? 'border-right: 1px solid #444;' : ''}
+        `;
+        
+        // Add hover/active states with the specific button color
+        button.addEventListener('mouseenter', () => {
+          button.style.background = `${buttonColor}20`; // 20% opacity
+        });
+        button.addEventListener('mouseleave', () => {
+          button.style.background = 'transparent';
+        });
+        button.addEventListener('mousedown', () => {
+          button.style.background = `${buttonColor}40`; // 40% opacity
+        });
+        button.addEventListener('mouseup', () => {
+          button.style.background = `${buttonColor}20`; // 20% opacity
+        });
+        
+        // Add click handler
+        const handleClick = (e: Event) => {
+          e.preventDefault();
+          e.stopPropagation();
+          buttonData.action();
+        };
+        
+        button.addEventListener('click', handleClick);
+        button.addEventListener('touchstart', handleClick);
+        
+        actionBar.appendChild(button);
+      });
+      
+      // Always append to the card wrapper to maintain document flow
+      const cardWrapper = cardRef.current.parentElement;
+      if (cardWrapper && cardWrapper.classList.contains('sermon-card-wrapper')) {
+        // Append to the card wrapper (as a sibling to the card, in normal flow)
+        cardWrapper.appendChild(actionBar);
+      } else {
+        // Fallback: append to the card itself
+        cardRef.current.appendChild(actionBar);
+      }
+      
+      // Cleanup function
+      return () => {
+        if (actionBar.parentNode) {
+          actionBar.parentNode.removeChild(actionBar);
+        }
+      };
+    }
+  }, [isMobile, activeCardId, sermon.id, hideActions, isSelectable, showAddButton, showRemoveButton, showSeriesSelector]);
   return (
-    <div className="sermon-card-wrapper">      <div
+    <div className="sermon-card-wrapper">
+      <div
         ref={cardRef}
-        onClick={handleCardClick}        className={`sermon-card relative ${className || ''} ${
+        onClick={handleCardClick}
+        className={`sermon-card relative ${className || ''} ${
           activeCardId === sermon.id.toString() ? 'active' : ''
         } ${isSelectable ? 'selectable' : ''} ${isSelected ? 'selected' : ''}`}
         style={{
@@ -155,6 +259,11 @@ const SermonCard: React.FC<SermonCardProps> = ({
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           backgroundBlendMode: 'overlay',
+          pointerEvents:
+            !hideActions && !isSelectable && !showAddButton && !showRemoveButton && !showSeriesSelector &&
+            activeCardId === sermon.id.toString()
+              ? 'none'
+              : 'auto',
         }}
       >        <div className="sermon-card-gradient-overlay"></div>
         
@@ -249,25 +358,6 @@ const SermonCard: React.FC<SermonCardProps> = ({
               ))}
             </div>          </div>
         )}      </div>
-      
-      {/* Mobile Embossed Buttons - Show directly attached to the bottom of card when active */}
-      {!hideActions && !isSelectable && !showAddButton && !showRemoveButton && !showSeriesSelector && 
-       activeCardId === sermon.id.toString() && (
-        <div className="mobile-embossed-actions">
-          {actionButtons.map(({ label, action }) => (
-            <button
-              key={label}
-              onClick={(e) => {
-                e.stopPropagation();
-                action();
-              }}
-              className={`mobile-embossed-button mobile-embossed-${label.toLowerCase()}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 };

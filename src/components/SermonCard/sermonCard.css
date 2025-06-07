@@ -59,6 +59,7 @@
   width: 50%;
   background: linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
   z-index: 1;
+  pointer-events: none !important; /* allow clicks to go through! */
 }
 
 .sermon-card-content {
@@ -225,6 +226,8 @@
     flex-wrap: nowrap; /* Keep in single row */
     overflow-x: auto; /* Allow horizontal scroll if needed */
     width: 100%;
+    z-index: 5000 !important; /* ensure it's on top */
+    pointer-events: auto !important;
   }
   
   .mobile-embossed-button {
@@ -254,6 +257,8 @@
   text-align: center;
   white-space: nowrap;
   min-width: 0; /* Allow text to truncate if needed */
+  z-index: 5001 !important;
+  pointer-events: auto !important;
 }
 
 .mobile-embossed-button:active {

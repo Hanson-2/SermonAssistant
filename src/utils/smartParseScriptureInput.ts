@@ -2,7 +2,7 @@
 // Utility to extract scripture references (full names or abbreviations) from text.
 
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "./bookOrder.js";
-import { bookAliases, BookAliasesType } from "../hooks/useScriptureAutocomplete.js";
+import { bookAliases } from "../hooks/useScriptureAutocomplete.js";
 
 export type ScriptureReference = {
   book: string;
