@@ -61,8 +61,7 @@ const SermonCard: React.FC<SermonCardProps> = ({
   showSeriesSelector = false,
   seriesList = [],
   onSeriesSelect
-}) => {
-  const [showOverlay, setShowOverlay] = useState(false);
+}) => {  const [showOverlay, setShowOverlay] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,7 +81,6 @@ const SermonCard: React.FC<SermonCardProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };  }, [activeCardId, sermon.id, setActiveCardId]);
-
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Handle selection mode
     if (isSelectable && onSelect) {
@@ -90,31 +88,35 @@ const SermonCard: React.FC<SermonCardProps> = ({
       return;
     }
     
-    // Handle normal card interaction
-    if ((e.target as HTMLElement).tagName.toLowerCase() !== 'button' && 
-        (e.target as HTMLElement).tagName.toLowerCase() !== 'select') {
-      
-      // Check if we're on mobile (screen width <= 768px)
-      const isMobile = window.innerWidth <= 768;
-      
-      if (isMobile) {
-        // On mobile, toggle embossed buttons below card (no flyout)
-        if (setActiveCardId) {
-          const newActiveId = activeCardId === sermon.id.toString() ? null : sermon.id.toString();
-          setActiveCardId(newActiveId);
-        }
-      } else {
-        // On desktop, show the flyout overlay (no embossed buttons)
-        if (setActiveCardId) {
-          setActiveCardId(prev => (prev === sermon.id.toString() ? null : sermon.id.toString()));
-        }
-        setShowOverlay(!showOverlay);
-      }
+    // Don't handle clicks on buttons, selects, or flyout elements
+    const target = e.target as HTMLElement;
+    if (target.tagName.toLowerCase() === 'button' || 
+        target.tagName.toLowerCase() === 'select' ||
+        target.closest('.flyout-actions') ||
+        target.closest('.desktop-flyout')) {
+      return;
     }
-  };
-
-  const handleView = () => navigate(`/expository/${sermon.id}`);
+    
+    // Handle normal card interaction
+    // Check if we're on mobile (screen width <= 768px)
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+      // On mobile, toggle embossed buttons below card (no flyout)
+      if (setActiveCardId) {
+        const newActiveId = activeCardId === sermon.id.toString() ? null : sermon.id.toString();
+        setActiveCardId(newActiveId);
+      }
+    } else {
+      // On desktop, show the flyout overlay (no embossed buttons)
+      if (setActiveCardId) {
+        setActiveCardId(prev => (prev === sermon.id.toString() ? null : sermon.id.toString()));
+      }
+      setShowOverlay(!showOverlay);
+    }
+  };  const handleView = () => navigate(`/expository/${sermon.id}`);
   const handleEdit = () => navigate(`/edit-expository/${sermon.id}`);
+  const handlePresentation = () => navigate(`/presentation/${sermon.id}`);
   const handleDuplicate = async () => {
     const { id, ...copyData } = sermon;
     // Ensure required fields for NewSermonData are present
@@ -140,6 +142,7 @@ const SermonCard: React.FC<SermonCardProps> = ({
   };  const actionButtons = [
     { label: "View", action: handleView },
     { label: "Edit", action: handleEdit },
+    { label: "Presentation", action: handlePresentation },
     { label: "Duplicate", action: handleDuplicate },
     { label: "Archive", action: handleArchive },
     { label: "Delete", action: handleDelete },
@@ -166,18 +169,22 @@ const SermonCard: React.FC<SermonCardProps> = ({
         z-index: 1000;
         pointer-events: auto;
         margin-top: 0;
-      `;
-        // Define specific colors for each action button
+      `;      // Define specific colors for each action button
       const buttonColors = {
         'view': '#10b981',    // green
         'edit': '#3b82f6',    // blue  
+        'presentation': '#8b5cf6', // purple
         'duplicate': '#f59e0b', // amber
-        'archive': '#8b5cf6',   // purple
+        'archive': '#6b7280',   // gray
         'delete': '#ef4444'     // red
       };
 
-      // Create action buttons
-      actionButtons.forEach((buttonData, idx) => {
+      // Separate buttons into main actions and presentation
+      const mainButtons = actionButtons.filter(btn => btn.label !== 'Presentation');
+      const presentationButton = actionButtons.find(btn => btn.label === 'Presentation');
+
+      // Create main action buttons
+      mainButtons.forEach((buttonData, idx) => {
         const button = document.createElement('button');
         button.textContent = buttonData.label;
         button.className = `mobile-embossed-button mobile-embossed-${buttonData.label.toLowerCase()}`;
@@ -195,7 +202,7 @@ const SermonCard: React.FC<SermonCardProps> = ({
           cursor: pointer;
           pointer-events: auto;
           z-index: 1001;
-          ${idx !== actionButtons.length - 1 ? 'border-right: 1px solid #444;' : ''}
+          ${idx !== mainButtons.length - 1 ? 'border-right: 1px solid #444;' : ''}
         `;
         
         // Add hover/active states with the specific button color
@@ -225,20 +232,90 @@ const SermonCard: React.FC<SermonCardProps> = ({
         actionBar.appendChild(button);
       });
       
+      // Create presentation button on separate row
+      const presentationBar = document.createElement('div');
+      presentationBar.className = 'mobile-embossed-actions';
+      presentationBar.style.cssText = `
+        position: relative;
+        left: 0;
+        right: 0;
+        width: 100%;
+        display: flex;
+        background: #23232b;
+        border-top: 1px solid #ffe082;
+        border-bottom: 3px solid #c2410c;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        z-index: 1000;
+        pointer-events: auto;
+        margin-top: 0.5rem;
+      `;
+
+      if (presentationButton) {
+        const button = document.createElement('button');
+        button.textContent = presentationButton.label;
+        button.className = `mobile-embossed-button mobile-embossed-presentation`;
+        
+        const buttonColor = buttonColors['presentation'];
+        
+        button.style.cssText = `
+          flex: 1;
+          border: none;
+          background: transparent;
+          color: ${buttonColor};
+          padding: 12px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          pointer-events: auto;
+          z-index: 1001;
+        `;
+        
+        // Add hover/active states
+        button.addEventListener('mouseenter', () => {
+          button.style.background = `${buttonColor}20`;
+        });
+        button.addEventListener('mouseleave', () => {
+          button.style.background = 'transparent';
+        });
+        button.addEventListener('mousedown', () => {
+          button.style.background = `${buttonColor}40`;
+        });
+        button.addEventListener('mouseup', () => {
+          button.style.background = `${buttonColor}20`;
+        });
+        
+        // Add click handler
+        const handleClick = (e: Event) => {
+          e.preventDefault();
+          e.stopPropagation();
+          presentationButton.action();
+        };
+        
+        button.addEventListener('click', handleClick);
+        button.addEventListener('touchstart', handleClick);
+        
+        presentationBar.appendChild(button);
+      }      
       // Always append to the card wrapper to maintain document flow
       const cardWrapper = cardRef.current.parentElement;
       if (cardWrapper && cardWrapper.classList.contains('sermon-card-wrapper')) {
-        // Append to the card wrapper (as a sibling to the card, in normal flow)
+        // Append main action bar to the card wrapper
         cardWrapper.appendChild(actionBar);
+        // Append presentation bar to the card wrapper
+        cardWrapper.appendChild(presentationBar);
       } else {
         // Fallback: append to the card itself
         cardRef.current.appendChild(actionBar);
+        cardRef.current.appendChild(presentationBar);
       }
       
       // Cleanup function
       return () => {
         if (actionBar.parentNode) {
           actionBar.parentNode.removeChild(actionBar);
+        }
+        if (presentationBar.parentNode) {
+          presentationBar.parentNode.removeChild(presentationBar);
         }
       };
     }
@@ -250,8 +327,7 @@ const SermonCard: React.FC<SermonCardProps> = ({
         onClick={handleCardClick}
         className={`sermon-card relative ${className || ''} ${
           activeCardId === sermon.id.toString() ? 'active' : ''
-        } ${isSelectable ? 'selectable' : ''} ${isSelected ? 'selected' : ''}`}
-        style={{
+        } ${isSelectable ? 'selectable' : ''} ${isSelected ? 'selected' : ''}`}        style={{
           backgroundImage: sermon.imageUrl
             ? `url("${sermon.imageUrl}")`
             : 'linear-gradient(90deg, #1e293b 0%, #374151 100%)',
@@ -259,11 +335,6 @@ const SermonCard: React.FC<SermonCardProps> = ({
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           backgroundBlendMode: 'overlay',
-          pointerEvents:
-            !hideActions && !isSelectable && !showAddButton && !showRemoveButton && !showSeriesSelector &&
-            activeCardId === sermon.id.toString()
-              ? 'none'
-              : 'auto',
         }}
       >        <div className="sermon-card-gradient-overlay"></div>
         
@@ -277,8 +348,8 @@ const SermonCard: React.FC<SermonCardProps> = ({
               title="Select sermon for bulk actions"
               onClick={(e) => e.stopPropagation()}
             />
-          </div>
-        )}
+          </div>        )}
+          {/* Presentation button moved out of the card - will be rendered below */}
         
         <div className="sermon-card-content">
           <h2 className="sermon-card-title">{sermon.title}</h2>
@@ -334,14 +405,14 @@ const SermonCard: React.FC<SermonCardProps> = ({
             </div>
           )}        </div>
   
-        
-        {/* Slide-In Flyout - Only show on desktop, hidden on mobile */}
+          {/* Slide-In Flyout - Only show on desktop, hidden on mobile */}
         {!hideActions && !isSelectable && !showAddButton && !showRemoveButton && !showSeriesSelector && (
           <div
             className={`absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-black/80 to-transparent flex items-center justify-end px-4 transition-transform duration-300 desktop-flyout ${
               showOverlay ? "translate-x-0" : "translate-x-full"
             }`}
             style={{ zIndex: 1000 }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flyout-actions desktop-actions flex gap-2 p-2">
               {actionButtons.map(({ label, action }) => (
@@ -354,11 +425,8 @@ const SermonCard: React.FC<SermonCardProps> = ({
                   className={`sermon-action-button sermon-action-${label.toLowerCase()}`}
                 >
                   {label}
-                </button>
-              ))}
-            </div>          </div>
-        )}      </div>
-    </div>
+                </button>              ))}
+            </div>          </div>        )}</div>    </div>
   );
 };
 

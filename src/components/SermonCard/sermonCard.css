@@ -1,6 +1,9 @@
 .sermon-card-wrapper {
   position: relative;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .sermon-card {
@@ -102,6 +105,8 @@
   gap: 0.5rem;
   transform: translateX(40%);
   transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: auto; /* Ensure clicks work */
+  z-index: 1001; /* Above the card */
 }
 
 .translate-x-0 .flyout-actions {
@@ -272,10 +277,6 @@
   transform: scale(1.02);
   filter: brightness(1.1);
 }
-
-/* Remove old responsive overrides since we're keeping single row */
-
-
 
 /* 1. Disable hover effects on touch devices */
 @media (hover: none) {

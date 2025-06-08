@@ -1,0 +1,751 @@
+@import '../styles/scss/variables';
+@import '../styles/scss/mixins';
+
+.presentation-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: $dark-bg-primary;
+  color: $text-color-primary;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;  &.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background: $dark-bg-primary;
+
+    .presentation-header {
+      display: none;
+    }
+
+    .presentation-main {
+      flex: 1;
+      padding-top: 0;
+      padding-bottom: calc($space-lg + 60px); // Smaller bottom padding in fullscreen
+      
+      @include breakpoint-down(md) {
+        padding-bottom: calc($space-md + 60px);
+      }
+    }
+
+    .presentation-footer {
+      background: rgba($dark-bg-primary, 0.9);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+  }
+}
+
+// Background overlay with gold theme
+.presentation-bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba($primary-gold, 0.05) 0%,
+    rgba($light-gold, 0.03) 25%,
+    transparent 50%,
+    rgba($focus-gold, 0.02) 75%,
+    rgba($primary-gold, 0.05) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+// Header
+.presentation-header {
+  position: relative;
+  z-index: 10;
+  background: rgba($dark-bg-primary, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba($primary-gold, 0.2);
+  padding: $space-md $space-lg;
+
+  @include breakpoint-down(md) {
+    padding: $space-sm $space-md;
+  }
+}
+
+.presentation-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.presentation-title-area {
+  flex: 1;
+  min-width: 0;
+  .presentation-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $primary-gold;
+    margin: 0;
+    line-height: 1.2;
+    @include text-shadow;
+
+    @include breakpoint-down(md) {
+      font-size: 1.5rem;
+    }
+
+    @include breakpoint-down(sm) {
+      font-size: 1.25rem;
+    }
+  }
+
+  .presentation-date {
+    font-size: 0.875rem;
+    color: $text-secondary;
+    margin: $space-xs 0 0 0;
+    font-weight: 500;
+  }
+}
+
+.presentation-controls {
+  display: flex;
+  gap: $space-sm;
+}
+
+.presentation-control-btn {
+  @include btn-base;
+  @include btn-ghost;
+  padding: $space-sm;
+  border-radius: $radius-md;
+  color: $primary-gold;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba($primary-gold, 0.1);
+    color: $light-gold;
+    transform: translateY(-1px);
+  }
+  &.presentation-close-btn {
+    color: $error-border;
+
+    &:hover {
+      background: rgba($error-border, 0.1);
+      color: lighten($error-border, 10%);
+    }
+  }
+}
+
+// Main presentation area
+.presentation-main {
+  flex: 1;
+  position: relative;
+  z-index: 5;
+  padding: $space-lg;
+  padding-bottom: calc($space-lg + 80px); // Add bottom padding to clear footer
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  @include breakpoint-down(lg) {
+    padding: $space-md;
+    padding-bottom: calc($space-md + 80px); // Account for footer on tablet and mobile
+  }
+  
+  @include breakpoint-down(sm) {
+    padding-bottom: calc($space-md + 100px); // Extra space for mobile navbar + footer
+  }
+}
+
+.presentation-slide-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-lg;
+  min-height: 0;
+
+  @include breakpoint-down(md) {
+    grid-template-columns: 1fr;
+    gap: $space-md;
+  }
+}
+
+// Slide area
+.presentation-slide-area {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba($dark-bg-tertiary, 0.8);
+  border-radius: $radius-lg;
+  border: 1px solid rgba($primary-gold, 0.2);
+  @include glass-effect;
+  overflow: hidden;
+  min-height: 400px;
+  max-height: calc(100vh - 200px); // Ensure it doesn't exceed viewport minus header/footer space
+
+  @include breakpoint-down(lg) {
+    min-height: 300px;
+    max-height: calc(100vh - 180px);
+  }
+  
+  @include breakpoint-down(sm) {
+    max-height: calc(100vh - 220px); // Account for mobile navbar + footer
+  }
+}
+
+.presentation-slide {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-xl;
+  overflow-y: auto; // Allow scrolling for very long content
+
+  @include breakpoint-down(md) {
+    padding: $space-lg;
+  }
+}
+
+.presentation-slide-content {
+  width: 100%;
+  max-width: 800px;
+  text-align: center;
+  color: $text-color-primary;
+  line-height: 1.6;
+
+  h1, h2, h3, h4, h5, h6 {
+    color: $primary-gold;
+    margin-bottom: $space-md;
+    @include text-shadow;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    @include breakpoint-down(md) {
+      font-size: 2rem;
+    }
+  }
+
+  h2 {
+    font-size: 2rem;
+    @include breakpoint-down(md) {
+      font-size: 1.75rem;
+    }
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    @include breakpoint-down(md) {
+      font-size: 1.25rem;
+    }
+  }    p {
+      font-size: 1.125rem;
+      margin-bottom: $space-md;
+      color: $text-color-primary;
+
+      @include breakpoint-down(md) {
+        font-size: 1rem;
+      }
+    }
+
+  ul, ol {
+    text-align: left;
+    max-width: 600px;
+    margin: 0 auto $space-md;
+
+    li {
+      margin-bottom: $space-sm;
+      font-size: 1.125rem;
+
+      @include breakpoint-down(md) {
+        font-size: 1rem;
+      }
+    }
+  }
+  blockquote {
+    border-left: 4px solid $primary-gold;
+    padding-left: $space-md;
+    margin: $space-lg 0;
+    font-style: italic;
+    color: $light-gold;
+    background: rgba($primary-gold, 0.05);
+    padding: $space-md;
+    border-radius: $radius-md;
+  }
+
+  strong, b {
+    color: $primary-gold;
+    font-weight: 600;
+  }
+
+  em, i {
+    color: $light-gold;
+  }
+}
+
+// Navigation buttons
+.presentation-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  @include btn-base;
+  background: rgba($dark-bg-primary, 0.8);
+  color: $primary-gold;
+  border: 1px solid rgba($primary-gold, 0.3);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+
+  &:hover:not(:disabled) {
+    background: rgba($primary-gold, 0.1);
+    border-color: $primary-gold;
+    color: $light-gold;
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  &.presentation-nav-prev {
+    left: $space-md;
+  }
+
+  &.presentation-nav-next {
+    right: $space-md;
+  }
+
+  @include breakpoint-down(md) {
+    width: 50px;
+    height: 50px;
+
+    &.presentation-nav-prev {
+      left: $space-sm;
+    }
+
+    &.presentation-nav-next {
+      right: $space-sm;
+    }
+  }
+}
+
+// Scripture list styling moved to scripture banner section above
+
+.presentation-scripture-ref {
+  background: linear-gradient(135deg, rgba($primary-gold, 0.1) 0%, rgba($primary-gold, 0.05) 100%);
+  color: $light-gold;
+  padding: $space-sm $space-md;
+  border-radius: $radius-md;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid rgba($primary-gold, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  
+  // Mini-card styling for all screens (consistent look)
+  min-width: 100px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 2px solid transparent;
+  border-image: linear-gradient(45deg, $primary-gold, $light-gold) 1;
+  background: linear-gradient(135deg, rgba($dark-bg-secondary, 0.9) 0%, rgba($dark-bg-primary, 0.95) 100%);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+
+  @include breakpoint-down(md) {
+    padding: $space-xs $space-sm;
+    font-size: 0.75rem;
+    min-width: 90px;
+    min-height: 50px;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, rgba($primary-gold, 0.2) 0%, rgba($primary-gold, 0.1) 100%);
+    border-color: rgba($primary-gold, 0.4);
+    color: $primary-gold;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($primary-gold, 0.2);
+    
+    @include breakpoint-down(md) {
+      background: linear-gradient(135deg, rgba($primary-gold, 0.15) 0%, rgba($dark-bg-secondary, 0.9) 100%);
+      transform: scale(1.02);
+      box-shadow: 
+        0 4px 12px rgba($primary-gold, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+    
+    @include breakpoint-down(md) {
+      transform: scale(0.98);
+    }
+  }
+}
+
+// Scripture banner (above content area)
+.presentation-scripture-banner {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba($dark-bg-tertiary, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba($primary-gold, 0.2);
+  padding: $space-md $space-lg;
+  margin-bottom: $space-md;
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $text-color-primary;
+    margin: 0 0 $space-sm 0;
+    text-align: center;
+    
+    @include breakpoint-down(md) {
+      font-size: 0.9rem;
+      margin-bottom: $space-xs;
+    }
+  }
+
+  .presentation-scripture-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: $space-sm;
+    
+    @include breakpoint-down(md) {
+      flex-direction: row;
+      overflow-x: auto;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      gap: $space-xs;
+      padding-bottom: $space-xs;
+      
+      // Scrollbar styling
+      &::-webkit-scrollbar {
+        height: 4px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: rgba($dark-bg-primary, 0.3);
+        border-radius: 2px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: rgba($primary-gold, 0.4);
+        border-radius: 2px;
+        
+        &:hover {
+          background: rgba($primary-gold, 0.6);
+        }
+      }
+    }
+  }
+}
+
+// Footer
+// Footer
+.presentation-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000; // Much higher than navbar to ensure it's above
+  background: rgba($dark-bg-tertiary, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba($primary-gold, 0.2);
+  padding: $space-sm $space-md; // Reduced padding for smaller footer
+  
+  @include breakpoint-down(lg) {
+    padding: $space-xs $space-sm; // Even smaller on tablet and mobile
+    padding-bottom: calc($space-sm + 60px); // Account for mobile navbar height
+  }
+  
+  @include breakpoint-down(sm) {
+    padding: $space-xs;
+    padding-bottom: calc($space-xs + 60px);
+  }
+}
+
+.presentation-footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  @include breakpoint-down(sm) {
+    flex-direction: column;
+    gap: $space-sm;
+  }
+}
+
+// Slide indicators - redesigned as embossed squares with page numbers
+.presentation-slide-indicators {
+  display: flex;
+  gap: 0; // Remove gap since buttons touch each other
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.presentation-slide-indicator {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: linear-gradient(135deg, rgba($dark-bg-secondary, 0.9) 0%, rgba($dark-bg-primary, 0.95) 100%);
+  color: $text-secondary;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  
+  // Embossed effect with shadows
+  box-shadow: 
+    inset 2px 2px 4px rgba(255, 255, 255, 0.1),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+  
+  // Create touching edges - no border radius on adjacent sides
+  &:first-child {
+    border-radius: $radius-md 0 0 $radius-md;
+  }
+  
+  &:last-child {
+    border-radius: 0 $radius-md $radius-md 0;
+  }
+  
+  &:only-child {
+    border-radius: $radius-md;
+  }
+  
+  // Middle buttons have no border radius
+  &:not(:first-child):not(:last-child) {
+    border-radius: 0;
+  }
+
+  .slide-number {
+    display: block;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  &:hover:not(.active) {
+    background: linear-gradient(135deg, rgba($primary-gold, 0.1) 0%, rgba($dark-bg-secondary, 0.9) 100%);
+    color: $text-color-primary;
+    box-shadow: 
+      inset 2px 2px 4px rgba(255, 255, 255, 0.15),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.25),
+      0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, $primary-gold 0%, $light-gold 100%);
+    color: $dark-bg-primary;
+    font-weight: 700;
+    box-shadow: 
+      inset -2px -2px 4px rgba(255, 255, 255, 0.3),
+      inset 2px 2px 4px rgba(0, 0, 0, 0.2),
+      0 0 12px rgba($primary-gold, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+    
+    // Pressed/active state
+    transform: translateY(1px);
+  }
+
+  @include breakpoint-down(sm) {
+    width: 36px;
+    height: 36px;
+    font-size: 0.7rem;
+  }
+}
+
+// Footer controls
+.presentation-footer-controls {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+}
+
+.presentation-slide-counter {
+  font-size: 0.875rem;
+  color: $text-secondary;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.presentation-fullscreen-controls {
+  display: flex;
+  gap: $space-sm;
+}
+
+// Loading and error states
+.presentation-loading,
+.presentation-error {
+  display: flex;
+  flex-direction: column;  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: $dark-bg-primary;
+  color: $text-color-primary;
+  text-align: center;
+  padding: $space-lg;
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba($primary-gold, 0.2);
+    border-top-color: $primary-gold;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: $space-md;
+  }
+
+  p {
+    font-size: 1.125rem;
+    color: $text-secondary;
+    margin-bottom: $space-lg;
+  }
+
+  .btn-primary {
+    @include button-primary;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive adjustments
+@include breakpoint-down(lg) {
+  .presentation-slide-container {
+    grid-template-columns: 1fr;
+  }
+
+  .presentation-scripture-sidebar {
+    width: 100%;
+    order: -1;
+  }
+}
+
+@include breakpoint-down(md) {
+  .presentation-page {
+    &.fullscreen {
+      .presentation-footer {
+        padding: $space-xs $space-sm;
+      }
+    }
+  }
+
+  .presentation-slide-content {
+    h1 {
+      font-size: 1.75rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+    }
+
+    p, li {
+      font-size: 1rem;
+    }
+  }
+}
+
+@include breakpoint-down(sm) {
+  .presentation-slide {
+    padding: $space-md;
+  }
+
+  .presentation-slide-content {
+    h1 {
+      font-size: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    h3 {
+      font-size: 1.125rem;
+    }
+
+    p, li {
+      font-size: 0.9375rem;
+    }
+  }
+
+  .presentation-nav-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+// Dark mode adjustments (if needed for theme switching)
+@media (prefers-color-scheme: dark) {
+  .presentation-page {
+    // Already optimized for dark theme - no additional styles needed
+    background: $dark-bg-primary;
+  }
+}
+
+// Print styles for presentation mode
+@media print {
+  .presentation-page {
+    .presentation-header,
+    .presentation-footer,
+    .presentation-nav-btn,
+    .presentation-scripture-sidebar {
+      display: none !important;
+    }
+
+    .presentation-main {
+      padding: 0;
+      height: 100vh;
+    }
+
+    .presentation-slide-area {
+      border: none;
+      background: white;
+      color: black;
+    }
+
+    .presentation-slide-content {
+      color: black;
+
+      h1, h2, h3, h4, h5, h6 {
+        color: #333;
+      }
+    }
+  }
+}

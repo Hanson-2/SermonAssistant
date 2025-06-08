@@ -14,6 +14,7 @@ import DashboardPage from "./pages/DashboardPage";
 import NewExpositoryPage from "./pages/NewExpositoryPage";
 import EditExpositoryPage from "./pages/EditExpositoryPage";
 import ExpositoryDetailPage from "./pages/ExpositoryDetailPage";
+import PresentationPage from "./pages/PresentationPage";
 import AddScripturePage from "./pages/AddScripturePage";
 import CurrentlyAddedScripturePage from "./pages/CurrentlyAddedScripturePage";
 import ScriptureBookPage from "./pages/ScriptureBookPage";
@@ -63,6 +64,7 @@ function App() {
             <Route path="/new-sermon" element={<NewExpositoryPage />} />
             <Route path="/edit-expository/:id" element={<EditExpositoryPage />} />
             <Route path="/expository/:id" element={<ExpositoryDetailPage />} />
+            <Route path="/presentation/:id" element={<PresentationPage />} />
 
             {/* Scripture Management */}
             <Route path="/add-scripture" element={<AddScripturePage />} />

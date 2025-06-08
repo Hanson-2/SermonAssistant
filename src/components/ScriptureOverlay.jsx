@@ -207,43 +207,62 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
         console.log('Query:', { bookLower, chapterNum, startVerse: startV, endVerse: endV });
         console.log('Fetched verses:', docs.map(d => `${d.book} ${d.chapter}:${d.verse} ${d.text?.slice(0,20)}`));
         console.log('Docs:', docs.map(d => ({ book: d.book, chapter: d.chapter, verse: d.verse })));
-        docs.sort((a, b) => a.verse - b.verse);
-        const translationMap = {};
+        docs.sort((a, b) => a.verse - b.verse);        const translationMap = {};
         for (const d of docs) {
           const code = d.translation;
           if (!translationMap[code]) {
-            translationMap[code] = { code, label: code, text: '', verses: [] };
+            translationMap[code] = { code, label: code.toUpperCase(), text: '', verses: [] };
           }
           translationMap[code].verses.push({ verse: d.verse, text: d.text.trim() });
-        }
-        const list = Object.values(translationMap).map(t => {
+        }        const list = Object.values(translationMap).map(t => {
           t.verses.sort((a, b) => a.verse - b.verse);
           return {
             code: t.code,
-            label: t.label,
+            label: t.label.toUpperCase(), // Ensure label is always uppercase
             text: t.verses.map(v => v.text).join('\n'), // legacy
             verses: t.verses,
-          };
-        });        
-        // Normalize codes for robust comparison
+          };        });// Normalize codes for robust comparison
         const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, '');
+        
+        console.log('[Overlay] Before reordering, list:', list.map(t => t.code));
+        console.log('[Overlay] Default translation provided:', defaultTranslation);
+        
         let preferredIdx = -1;
+        let preferredTranslation = null;
+        
         if (defaultTranslation) {
           preferredIdx = list.findIndex(t => norm(t.code) === norm(defaultTranslation));
+          console.log('[Overlay] Found preferred translation at index:', preferredIdx);
+          if (preferredIdx !== -1) {
+            preferredTranslation = list[preferredIdx];
+            console.log('[Overlay] Preferred translation object:', preferredTranslation);
+          }
         }
-        if (preferredIdx !== -1) {
-          const preferred = list[preferredIdx];
-          const rest = list.filter((_, i) => i !== preferredIdx).sort((a, b) => norm(a.code).localeCompare(norm(b.code)));
-          list.splice(0, list.length, preferred, ...rest);
+          if (preferredIdx !== -1 && preferredTranslation) {
+          // Remove preferred from list and put it first
+          const preferred = list.splice(preferredIdx, 1)[0];
+          const rest = list.sort((a, b) => norm(a.code).localeCompare(norm(b.code)));
+          const reorderedList = [preferred, ...rest];
+          console.log('[Overlay] Reordered list:', reorderedList.map(t => t.code));
+          
+          // Set both translations and current translation together to avoid race condition
+          setTranslations(reorderedList);
+          setCurrent(preferred.code);
+          console.log('[Overlay] Setting current to preferred translation:', preferred.code);
         } else {
+          // Sort alphabetically if no preferred translation
           list.sort((a, b) => norm(a.code).localeCompare(norm(b.code)));
-        }
-        setTranslations(list);
-        // Always set current to preferred if available, else first in list
-        if (preferredIdx !== -1) {
-          setCurrent(list[0].code);
-        } else {
-          setCurrent(list[0]?.code || '');
+          console.log('[Overlay] No preferred translation, sorted list:', list.map(t => t.code));
+          
+          // Set both translations and current translation together
+          setTranslations(list);
+          if (list[0]?.code) {
+            setCurrent(list[0].code);
+            console.log('[Overlay] No preferred translation found, using first available:', list[0].code);
+          } else {
+            setCurrent('');
+            console.log('[Overlay] No translations available');
+          }
         }
         // Debug: show what will be rendered
         console.log('[Overlay] Translations list:', list);
@@ -256,10 +275,10 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
         setCurrent('');
       } finally {
         setLoading(false);
-      }
-    };
+      }    };
     fetchVerses();
   }, [open, effective, defaultTranslation]);  // Ensure default translation is set on mount and when translations change
+  
   useEffect(() => {
     console.log('[ScriptureOverlay] Translation selection effect triggered:', {
       defaultTranslation,
@@ -269,13 +288,28 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
     });
     
     if (translations.length > 0) {
-      if (defaultTranslation && translations.some(t => t.code === defaultTranslation)) {
-        console.log('[ScriptureOverlay] Setting current translation to defaultTranslation:', defaultTranslation);
-        setCurrent(defaultTranslation);
-      } else if (translations[0]?.code && !current) { 
-        // Fallback to the first available translation if default is not found or not provided
-        console.log('[ScriptureOverlay] No valid defaultTranslation, falling back to first translation:', translations[0].code);
-        setCurrent(translations[0].code);
+      // Normalize for comparison
+      const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, '');
+      
+      // Only set current if it's not already set or invalid
+      if (!current || !translations.some(t => norm(t.code) === norm(current))) {
+        // Try to set to preferred translation first
+        if (defaultTranslation) {
+          const preferredTranslation = translations.find(t => norm(t.code) === norm(defaultTranslation));
+          if (preferredTranslation) {
+            console.log('[ScriptureOverlay] Setting current translation to preferred (fallback):', preferredTranslation.code);
+            setCurrent(preferredTranslation.code);
+            return;
+          }
+        }
+        
+        // Fallback to first translation if no preferred or current translation is invalid
+        if (translations[0]?.code) {
+          console.log('[ScriptureOverlay] Falling back to first translation:', translations[0].code);
+          setCurrent(translations[0].code);
+        }
+      } else {
+        console.log('[ScriptureOverlay] Current translation is valid, keeping:', current);
       }
     } else {
       // If translations become empty (e.g., new reference has no data yet), clear current.

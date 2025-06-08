@@ -53,6 +53,11 @@
   text-shadow: 0 0 6px rgba($color, 0.4);
 }
 
+// Text shadow mixin
+@mixin text-shadow {
+  text-shadow: $text-shadow-gold;
+}
+
 // Card/Panel Styling
 @mixin glass-card {
   background: linear-gradient(135deg, $dark-bg-tertiary 0%, $dark-bg-card 100%);
@@ -381,4 +386,31 @@
 // Mixin for minimum touch target
 @mixin min-touch {
   min-height: 44px !important;
+}
+
+// Button base and variants for presentations
+@mixin btn-base {
+  @include button-base;
+}
+
+@mixin btn-ghost {
+  background: transparent;
+  border: 1px solid rgba($primary-gold, 0.3);
+  color: $primary-gold;
+  
+  &:hover {
+    background: rgba($primary-gold, 0.1);
+    border-color: $primary-gold;
+  }
+}
+
+// Glass effect mixin
+@mixin glass-effect {
+  background: linear-gradient(135deg, rgba($dark-bg-tertiary, 0.8) 0%, rgba($dark-bg-card, 0.9) 100%);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba($primary-gold, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
