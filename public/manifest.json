@@ -1,0 +1,42 @@
+{
+"name": "Bible Expository Notes",
+"short_name": "BibleNotes",
+"start_url": "/?source=pwa",
+"display": "standalone",
+"description": "A comprehensive tool for managing, organizing, and searching bible expository notes with advanced features for pastors and church members.",
+"lang": "en-US",
+"dir": "auto",
+"theme_color": "#f8d77f",
+"background_color": "#000000",
+"orientation": "any",
+"icons": [
+    {
+        "src": "manifest-icon-512.maskable.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+    },
+    {
+        "src": "manifest-icon-192.maskable.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any"
+    }
+],
+"screenshots": [
+    {
+        "src": "Dashboard.png",
+        "sizes": "1280x720",
+        "type": "image/png",
+        "description": "Dashboard Overview"
+    }
+],
+"prefer_related_applications": false,
+"shortcuts": [
+    {
+        "name":"New Sermon Note",
+        "url":"/new-sermon?source=shortcut",
+        "description":"Create a new sermon note"
+    }
+]
+}

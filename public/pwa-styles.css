@@ -1,0 +1,81 @@
+/* PWA Window Controls Overlay Styles */
+@media (display-mode: window-controls-overlay) {
+  /* Titlebar area styling */
+  .titlebar {
+    position: fixed;
+    top: 0;
+    left: env(titlebar-area-x, 0);
+    width: env(titlebar-area-width, 100%);
+    height: env(titlebar-area-height, 33px);
+    background-color: #f8d77f;
+    -webkit-app-region: drag;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  .titlebar h1 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+    -webkit-app-region: no-drag;
+  }
+
+  /* Main content should account for titlebar */
+  body {
+    padding-top: env(titlebar-area-height, 33px);
+  }
+
+  /* Navigation buttons in titlebar should not be draggable */
+  .titlebar button,
+  .titlebar a,
+  .titlebar input {
+    -webkit-app-region: no-drag;
+  }
+}
+
+/* Default standalone mode */
+@media (display-mode: standalone) {
+  body {
+    /* No additional padding needed */
+  }
+}
+
+/* Handle landscape orientation */
+@media (orientation: landscape) {
+  .app-container {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .sidebar {
+    min-width: 250px;
+    max-width: 300px;
+  }
+
+  .main-content {
+    flex: 1;
+    overflow: auto;
+  }
+}
+
+/* Enhanced app appearance with new theme colors */
+:root {
+  --theme-color: #f8d77f;
+  --background-color: #000000;
+  --text-color-on-theme: #000000;
+  --text-color-on-background: #ffffff;
+}
+
+.app-header {
+  background-color: var(--theme-color);
+  color: var(--text-color-on-theme);
+}
+
+.app-background {
+  background-color: var(--background-color);
+  color: var(--text-color-on-background);
+}

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Service Worker Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🔧 PWA Service Worker Test</h1>
+    <p>This page tests the service worker registration and PWA functionality for the Bible Expository Notes app.</p>
+    
+    <div id="results"></div>
+    
+    <button class="btn-primary" onclick="testServiceWorker()">🔄 Test Service Worker</button>
+    <button class="btn-success" onclick="testPWAInstallability()">📱 Test PWA Install</button>
+    
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+        
+        async function testServiceWorker() {
+            clearResults();
+            addResult('🧪 Starting Service Worker Tests...', 'info');
+            
+            // Test 1: Check if service workers are supported
+            if ('serviceWorker' in navigator) {
+                addResult('✅ Service Workers are supported in this browser', 'success');
+            } else {
+                addResult('❌ Service Workers are NOT supported in this browser', 'error');
+                return;
+            }
+            
+            try {
+                // Test 2: Register service worker with timeout
+                addResult('🔄 Attempting to register service worker...', 'info');
+                
+                const registrationPromise = navigator.serviceWorker.register('/service-worker.js', {
+                    scope: '/'
+                });
+                
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Service Worker registration timeout after 10 seconds')), 10000);
+                });
+                
+                const registration = await Promise.race([registrationPromise, timeoutPromise]);
+                addResult(`✅ Service Worker registered successfully! Scope: ${registration.scope}`, 'success');
+                
+                // Test 3: Check service worker state
+                if (registration.installing) {
+                    addResult('🔄 Service Worker is installing...', 'info');
+                } else if (registration.waiting) {
+                    addResult('⏳ Service Worker is waiting...', 'warning');
+                } else if (registration.active) {
+                    addResult('✅ Service Worker is active and running', 'success');
+                }
+                
+                // Test 4: Check for existing controller
+                if (navigator.serviceWorker.controller) {
+                    addResult('✅ Page is currently controlled by a service worker', 'success');
+                } else {
+                    addResult('⚠️ Page is not yet controlled by a service worker (normal for first load)', 'warning');
+                }
+                
+                // Test 5: Test cache functionality
+                if ('caches' in window) {
+                    addResult('✅ Cache API is available', 'success');
+                    
+                    try {
+                        const cacheNames = await caches.keys();
+                        if (cacheNames.length > 0) {
+                            addResult(`✅ Found ${cacheNames.length} cache(s): ${cacheNames.join(', ')}`, 'success');
+                        } else {
+                            addResult('ℹ️ No caches found yet (normal for first load)', 'info');
+                        }
+                    } catch (error) {
+                        addResult(`⚠️ Error checking caches: ${error.message}`, 'warning');
+                    }
+                } else {
+                    addResult('❌ Cache API is not available', 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Service Worker registration failed: ${error.message}`, 'error');
+                
+                if (error.message.includes('timeout')) {
+                    addResult('💡 Suggestion: Check if service-worker.js file exists and is valid', 'info');
+                }
+            }
+        }
+        
+        async function testPWAInstallability() {
+            clearResults();
+            addResult('🧪 Starting PWA Installability Tests...', 'info');
+            
+            // Test 1: Check if beforeinstallprompt is supported
+            let installPrompt = null;
+            
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                installPrompt = e;
+                addResult('✅ PWA install prompt is available!', 'success');
+            });
+            
+            // Test 2: Check manifest
+            try {
+                const manifestLink = document.querySelector('link[rel="manifest"]');
+                if (manifestLink) {
+                    addResult(`✅ Manifest link found: ${manifestLink.href}`, 'success');
+                    
+                    const manifestResponse = await fetch(manifestLink.href);
+                    const manifest = await manifestResponse.json();
+                    addResult(`✅ Manifest loaded successfully`, 'success');
+                    addResult(`<pre>${JSON.stringify(manifest, null, 2)}</pre>`, 'info');
+                } else {
+                    addResult('❌ No manifest link found in document head', 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error loading manifest: ${error.message}`, 'error');
+            }
+            
+            // Test 3: Check HTTPS/localhost
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                addResult('✅ Running on secure context (HTTPS or localhost)', 'success');
+            } else {
+                addResult('❌ PWA requires HTTPS or localhost', 'error');
+            }
+            
+            // Test 4: Trigger install if available
+            setTimeout(() => {
+                if (installPrompt) {
+                    addResult('🎉 PWA is installable! Click below to install:', 'success');
+                    const installBtn = document.createElement('button');
+                    installBtn.className = 'btn-success';
+                    installBtn.innerHTML = '📱 Install PWA';
+                    installBtn.onclick = async () => {
+                        installPrompt.prompt();
+                        const result = await installPrompt.userChoice;
+                        if (result.outcome === 'accepted') {
+                            addResult('✅ PWA installation accepted!', 'success');
+                        } else {
+                            addResult('❌ PWA installation declined', 'warning');
+                        }
+                    };
+                    resultsDiv.appendChild(installBtn);
+                } else {
+                    addResult('ℹ️ PWA install prompt not triggered yet. This is normal and may appear after meeting PWA criteria.', 'info');
+                }
+            }, 2000);
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testServiceWorker();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

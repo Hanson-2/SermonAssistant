@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" href="/apple-icon-180.png" />
+    <link rel="manifest" href="/manifest-pwa.json" />
+    <link rel="stylesheet" href="/pwa-styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Google Fonts for theme system -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +24,85 @@
       @font-face { font-family: 'Nunito'; src: local('Nunito'); font-display: swap; }
       @font-face { font-family: 'Playfair Display'; src: local('Playfair Display'); font-display: swap; }
     </style>
-    <title>Vite + React</title>
+    <script>
+      // Robust service worker registration with timeout and error handling
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            // Registration with timeout
+            const registrationPromise = navigator.serviceWorker.register('/service-worker.js', {
+              scope: '/'
+            });
+            
+            // Add timeout wrapper
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Service Worker registration timeout')), 10000);
+            });
+            
+            const registration = await Promise.race([registrationPromise, timeoutPromise]);
+            
+            console.log('✅ Service Worker registered successfully:', registration.scope);
+            
+            // Register for background sync
+            if ('sync' in window.ServiceWorkerRegistration.prototype) {
+              try {
+                await registration.sync.register('sermon-notes-sync');
+                console.log('🔄 Background sync registered');
+              } catch (error) {
+                console.warn('⚠️ Background sync registration failed:', error);
+              }
+            }
+            
+            // Register for periodic background sync
+            if ('periodicSync' in window.ServiceWorkerRegistration.prototype) {
+              try {
+                const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+                if (status.state === 'granted') {
+                  await registration.periodicSync.register('sermon-notes-update', {
+                    minInterval: 24 * 60 * 60 * 1000 // 24 hours
+                  });
+                  console.log('⏰ Periodic sync registered');
+                }
+              } catch (error) {
+                console.warn('⚠️ Periodic sync registration failed:', error);
+              }
+            }
+            
+            // Request notification permission
+            if ('Notification' in window && 'serviceWorker' in navigator) {
+              if (Notification.permission === 'default') {
+                try {
+                  const permission = await Notification.requestPermission();
+                  console.log('📱 Notification permission:', permission);
+                } catch (error) {
+                  console.warn('⚠️ Notification permission request failed:', error);
+                }
+              }
+            }
+            
+            // Handle updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('🔄 New Service Worker available');
+                    // Optionally notify user about update
+                  }
+                });
+              }
+            });
+            
+          } catch (error) {
+            console.warn('⚠️ Service Worker registration failed:', error.message);
+            // App continues to work without SW
+          }
+        });
+      } else {
+        console.warn('⚠️ Service Workers not supported in this browser');
+      }
+    </script> 
+    <title>Bible Expository Notes</title>
   </head>
   <body>
     <div id="root" class="full-size"></div>
