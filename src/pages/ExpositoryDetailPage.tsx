@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getSermon, updateSermonNotes, getScriptureVersesForChapter, getUserProfile } from "../services/firebaseService";
 import { Sermon } from "../components/SermonCard/SermonCard";
 import { extractScriptureReferences } from "../utils/smartParseScriptureInput";
-import EditableRichText from "../components/EditableRichText";
+import CustomRichTextEditor from "../components/CustomRichTextEditor";
 import ScriptureMiniCard from "../components/ScriptureMiniCard";
 import ScriptureOverlay from "../components/ScriptureOverlay";
 import debounce from "lodash.debounce";
@@ -156,9 +156,12 @@ export default function ExpositoryDetailPage() {
   const debouncedPersistSlides = useCallback(debounce(persistSlides, 500), [persistSlides]);
 
   function updateSlideContent(newHtml: string) {
-    const updatedSlides = [...slides];
-    updatedSlides[activeSlide] = newHtml;
-    setSlides(updatedSlides);
+    setSlides((prevSlides) => {
+      // Use a functional update for activeSlide to avoid stale closure
+      return prevSlides.map((slide, idx) =>
+        idx === activeSlide ? newHtml : slide
+      );
+    });
     debouncedPersistSlides();
     setSaveStatus("");
     // Note: Scripture refs are updated via useEffect watching 'slides'
@@ -182,19 +185,26 @@ export default function ExpositoryDetailPage() {
   }
 
   function addSlide() {
-    const updatedSlides = [...slides];
-    updatedSlides.splice(activeSlide + 1, 0, "");
-    setSlides(updatedSlides);
-    setActiveSlide(activeSlide + 1);
-    debouncedPersistSlides();
+    setSlides(prevSlides => {
+      const updatedSlides = [...prevSlides];
+      const newIndex = activeSlide + 1;
+      updatedSlides.splice(newIndex, 0, "");
+      // Batch update activeSlide after slides update
+      setActiveSlide(newIndex);
+      debouncedPersistSlides();
+      return updatedSlides;
+    });
   }
 
   function deleteSlide() {
     if (slides.length <= 1) return;
-    const updatedSlides = slides.filter((_, idx) => idx !== activeSlide);
-    setSlides(updatedSlides);
-    setActiveSlide(Math.max(activeSlide - 1, 0));
-    debouncedPersistSlides();
+    setSlides(prevSlides => {
+      const updatedSlides = prevSlides.filter((_, idx) => idx !== activeSlide);
+      // Batch update activeSlide after slides update
+      setActiveSlide(prev => Math.max(prev - 1, 0));
+      debouncedPersistSlides();
+      return updatedSlides;
+    });
   }
 
   function goToPreviousSlide() {
@@ -356,6 +366,13 @@ export default function ExpositoryDetailPage() {
     debouncedSetRefs(rawRefs); // debouncedSetRefs now handles normalization internally
   }, [slides, debouncedSetRefs, overlayOpen, lockedOverlayRef]);
 
+  // Memoized html for the current slide, always valid
+  const currentSlideHtml = useMemo(() => {
+    if (!Array.isArray(slides) || slides.length === 0) return "";
+    if (activeSlide < 0 || activeSlide >= slides.length) return "";
+    return slides[activeSlide] || "";
+  }, [slides, activeSlide]);
+
   if (!sermon) {
     return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   }
@@ -430,10 +447,11 @@ export default function ExpositoryDetailPage() {
 
           <div className="slide-editor-vertical-layout">
             <div className="slide-editor-notes-area">
-              <EditableRichText
-                html={slides[activeSlide]}
+              <CustomRichTextEditor
+                html={currentSlideHtml}
                 onHtmlChange={updateSlideContent}
                 onRefsChange={handleRefsChange}
+                activeSlide={activeSlide}
               />
               <div className="expository-slide-status">
                 {saving ? <span className="saving">Saving...</span> : saveStatus && <span className="saved">{saveStatus}</span>}

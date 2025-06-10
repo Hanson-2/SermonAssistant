@@ -32,10 +32,13 @@ html, body {
 // Create a page-specific background wrapper
 .edit-expository-page {
   min-height: 100vh;
-  width: 100vw;
+  min-width: 100%;
+  width: auto;
   background: #111827 url('/Texas_Logo_Wallpaper.png') no-repeat center center fixed;
   background-size: cover;
   position: relative;
+  overflow-x: auto;
+  max-width: 100vw;
   
   // Add overlay to darken the background
   &::before {
@@ -43,8 +46,8 @@ html, body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: rgba(17, 24, 39, 0.45); // Match dashboard opacity
     z-index: 0;
     pointer-events: none;
@@ -132,26 +135,29 @@ html, body {
 /* Layout */
 .edit-expository-layout {
   display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: flex-start;
   gap: 3rem;
   padding: 4rem;
   min-height: 100vh;
+  width: 100vw;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
   position: relative;
-  z-index: 1; // Above the background overlay
-  
-  // Ensure all content is above the background
+  z-index: 1;
+
   > * {
     position: relative;
     z-index: 2;
   }
-  
-  // Add a subtle box shadow to content sections to help them stand out from background
-  .mini-dashboard-panel,
-  .edit-expository-form,
-  .large-preview-panel,
-  .existing-images-column {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+  @media (max-width: $mobile-breakpoint) {
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+    align-items: stretch;
   }
 }
 
@@ -752,5 +758,102 @@ html, body {
   .file-upload-input {
     min-height: 44px; // iOS recommended minimum
     touch-action: manipulation;
+  }
+}
+
+/* Make the text editor toolbar horizontally scrollable if needed */
+.editor-toolbar-scroll {
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100vw;
+  white-space: nowrap;
+}
+
+/* Prevent the main editor area from overflowing the viewport horizontally */
+.editor-area-wrapper {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.expository-main-layout {
+  display: flex;
+  align-items: stretch;
+  width: 100vw;
+  max-width: 100vw;
+  height: calc(100vh - 10.5rem); // Adjust for header/banner height
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.expository-page-list {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.slide-editor-vertical-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.slide-editor-notes-area {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  max-height: none;
+  overflow: hidden;
+}
+
+.editor-flex-container, .editor-area-wrapper, .rich-note-editor, .editor-container, .editor-content-wrapper {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-content {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  background: transparent;
+}
+
+.editor-toolbar-scroll, .toolbar {
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  max-width: 100vw;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .expository-main-layout {
+    height: calc(100vh - 7.5rem);
+  }
+}
+@media (max-width: 768px) {
+  .expository-main-layout {
+    height: calc(100vh - 5.5rem);
   }
 }

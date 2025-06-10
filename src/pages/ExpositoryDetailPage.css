@@ -184,8 +184,8 @@
   display: flex;
   flex-direction: column;
   height: calc(100vh - 10.5rem); /* adjust for banners */
-  width: 100vw;
-  max-width: 100vw;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   background: radial-gradient(circle at 60% 40%, #545455 0%, #1e293b 60%, #1e293b 100%);
   border-radius: 1.1rem;
@@ -193,6 +193,7 @@
   outline: 2px solid #424242;
   outline-offset: 2px;
   position: relative;
+  box-sizing: border-box;
 }
 .slide-editor-notes-area {
   flex: 1 1 auto;
@@ -201,6 +202,11 @@
   justify-content: stretch;
   position: relative;
   padding: .8rem 1.5rem 0 .8rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  min-height: 400px;
 }
 .slide-editor-textarea {
   width: 100%;
@@ -466,6 +472,9 @@
 .expository-main-content {
   flex: 1;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .expository-page-list {
@@ -733,19 +742,16 @@
     font-weight: 700 !important;
     font-size: 0.85rem !important;
   }
-  
-  /* Adjust text editor to fit mobile viewport and fix toolbar clipping */
+    /* Adjust text editor to fit mobile viewport and fix toolbar clipping */
   .slide-editor-vertical-layout {
     /* Adjust height calculation for mobile - account for banners and page list */
     height: calc(100vh - 12rem); /* Increased from 10.5rem to account for page list */
     min-height: 300px;
     max-height: calc(100vh - 12rem);
-    width: 100vw;
-    max-width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    margin-right: calc(-50vw + 50%);
-    left: 0;
-    right: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    box-sizing: border-box;
   }
   
   .slide-editor-notes-area {

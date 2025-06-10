@@ -31,6 +31,7 @@ import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import ImportExportPage from "./pages/ImportExportPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import ThemeSettingsPage from "./pages/ThemeSettingsPage";
+import SimpleTestEditorPage from "./pages/SimpleTestEditorPage";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -89,6 +90,7 @@ function App() {
             <Route path="/sermon-series-management" element={<SermonSeriesManagementPage />} />
             <Route path="/analytics-dashboard" element={<AnalyticsDashboardPage />} />
             <Route path="/import-export" element={<ImportExportPage />} />
+            <Route path="/simple-test-editor" element={<SimpleTestEditorPage />} />
           </Routes>
         </main>
       </div>

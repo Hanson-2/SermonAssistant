@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Editor } from "@tinymce/tinymce-react";
 import { extractScriptureReferences } from "../utils/smartParseScriptureInput";
 import "./EditableRichText.css";
+import "../styles/edit-expository.scss";
 
 interface Props {
   html: string;
@@ -20,14 +21,16 @@ export default function EditableRichText({ html, onHtmlChange, onRefsChange }: P
     const refs = extractScriptureReferences(text);
     onRefsChange(refs);
   };
-
   return (
     <div className="editor-flex-container">
-      <div className="rich-note-toolbar">
-        {/* Removed AI action and custom prompt input */}
+      <div className="editor-toolbar-scroll">
+        <div className="rich-note-toolbar">
+          {/* Removed AI action and custom prompt input */}
+        </div>
       </div>
 
-      <div className="rich-note-editor">
+      <div className="editor-area-wrapper">
+        <div className="rich-note-editor">
         <Editor
           apiKey="duekh96r3p6tu822g4q168eyjs443yoz42cfbmgc6ycori7u"
           value={html}
@@ -139,8 +142,8 @@ export default function EditableRichText({ html, onHtmlChange, onRefsChange }: P
                 );
               });
             },
-          }}
-        />
+          }}        />
+        </div>
       </div>
 
       <div className="ai-result-panel">

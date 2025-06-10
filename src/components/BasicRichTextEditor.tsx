@@ -1,0 +1,965 @@
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import './CustomRichTextEditor.css';
+
+interface BasicRTEProps {
+  html: string;
+  onHtmlChange: (html: string) => void;
+  onRefsChange?: (refs: any[]) => void;
+}
+
+function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const lastSetHtml = useRef<string>('');
+  const [isComposing, setIsComposing] = useState(false);
+  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
+  const [currentHeading, setCurrentHeading] = useState<string>('p');
+  const [currentFontSize, setCurrentFontSize] = useState<string>('16');
+  const [currentFontFamily, setCurrentFontFamily] = useState<string>('Arial');
+
+  // Handle content changes
+  const handleContentChange = useCallback(() => {
+    if (isComposing || !editorRef.current) return;
+    
+    const currentHtml = editorRef.current.innerHTML;
+    if (currentHtml !== lastSetHtml.current) {
+      onHtmlChange(currentHtml);
+      
+      // Extract scripture references if callback provided
+      if (onRefsChange) {
+        try {
+          const textContent = editorRef.current.textContent || '';
+          import('../utils/smartParseScriptureInput').then(({ extractScriptureReferences }) => {
+            const refs = extractScriptureReferences(textContent);
+            onRefsChange(refs);
+          }).catch(() => {
+            onRefsChange([]);
+          });
+        } catch (error) {
+          console.warn('Error extracting scripture references:', error);
+          onRefsChange([]);
+        }
+      }
+    }
+  }, [onHtmlChange, onRefsChange, isComposing]);
+
+  // Check what formatting is active at cursor position
+  const updateActiveFormats = useCallback(() => {
+    const formats = new Set<string>();
+    
+    try {
+      if (document.queryCommandState('bold')) formats.add('bold');
+      if (document.queryCommandState('italic')) formats.add('italic');
+      if (document.queryCommandState('underline')) formats.add('underline');
+      if (document.queryCommandState('strikeThrough')) formats.add('strikeThrough');
+      if (document.queryCommandState('superscript')) formats.add('superscript');
+      if (document.queryCommandState('subscript')) formats.add('subscript');
+      if (document.queryCommandState('insertUnorderedList')) formats.add('insertUnorderedList');
+      if (document.queryCommandState('insertOrderedList')) formats.add('insertOrderedList');
+      if (document.queryCommandState('justifyLeft')) formats.add('justifyLeft');
+      if (document.queryCommandState('justifyCenter')) formats.add('justifyCenter');
+      if (document.queryCommandState('justifyRight')) formats.add('justifyRight');
+      if (document.queryCommandState('justifyFull')) formats.add('justifyFull');
+      
+      // Check for heading and list context
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        let element: Node | null = selection.getRangeAt(0).commonAncestorContainer;
+        
+        while (element && element !== editorRef.current) {
+          if (element.nodeType === Node.ELEMENT_NODE) {
+            const tagName = (element as Element).tagName.toLowerCase();
+            if (tagName === 'ul') formats.add('insertUnorderedList');
+            if (tagName === 'ol') formats.add('insertOrderedList');
+          }
+          element = element.parentNode as Node | null;
+        }
+      }
+    } catch (e) {
+      // Some browsers may not support all query commands
+    }
+    
+    setActiveFormats(formats);
+  }, []);
+
+  // Get current heading level for dropdown
+  const getCurrentHeading = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return 'p';
+    
+    let element: Node | null = selection.getRangeAt(0).commonAncestorContainer;
+    
+    while (element && element !== editorRef.current) {
+      if (element.nodeType === Node.ELEMENT_NODE) {
+        const tagName = (element as Element).tagName.toLowerCase();
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(tagName)) {
+          return tagName;
+        }
+      }
+      element = element.parentNode as Node | null;
+    }
+    
+    return 'p';
+  }, []);
+
+  // Update current heading state
+  const updateCurrentHeading = useCallback(() => {
+    const heading = getCurrentHeading();
+    setCurrentHeading(heading);
+  }, [getCurrentHeading]);
+
+  // Custom heading application
+  const applyHeading = useCallback((tagName: string) => {
+    const selection = window.getSelection();
+    if (!selection || !editorRef.current) return;
+
+    const range = selection.getRangeAt(0);
+    let element: Node | null = range.commonAncestorContainer;
+    
+    // Find the block element containing the selection
+    while (element && element.nodeType !== Node.ELEMENT_NODE) {
+      element = element.parentNode as Node | null;
+    }
+    
+    while (element && element !== editorRef.current && 
+           !['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DIV'].includes((element as Element).tagName)) {
+      element = element.parentNode as Node | null;
+    }
+
+    if (element && element !== editorRef.current) {
+      const newElement = document.createElement(tagName.toUpperCase());
+      newElement.innerHTML = (element as Element).innerHTML;
+      element.parentNode?.replaceChild(newElement, element);
+      
+      // Restore selection
+      const newRange = document.createRange();
+      newRange.selectNodeContents(newElement);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    } else {
+      // If no block element found, wrap selection in new element
+      const content = range.extractContents();
+      const newElement = document.createElement(tagName.toUpperCase());
+      newElement.appendChild(content);
+      range.insertNode(newElement);
+      
+      // Restore selection
+      const newRange = document.createRange();
+      newRange.selectNodeContents(newElement);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+  }, []);  // Custom list implementation
+  const toggleList = useCallback((listType: 'ul' | 'ol') => {
+    const selection = window.getSelection();
+    if (!selection || !editorRef.current) return;
+
+    // Focus editor if needed
+    if (!editorRef.current.contains(selection.anchorNode)) {
+      editorRef.current.focus();
+    }
+
+    // Ensure we have a range
+    if (selection.rangeCount === 0) {
+      const range = document.createRange();
+      range.selectNodeContents(editorRef.current);
+      range.collapse(false);
+      selection.addRange(range);
+    }
+
+    const range = selection.getRangeAt(0);
+    let currentElement: Node | null = range.startContainer;
+    
+    // Find if we're inside a list or list item
+    let existingList: Element | null = null;
+    let existingListItem: Element | null = null;
+    
+    while (currentElement && currentElement !== editorRef.current) {
+      if (currentElement.nodeType === Node.ELEMENT_NODE) {
+        const element = currentElement as Element;
+        const tagName = element.tagName.toLowerCase();
+        
+        if (tagName === 'li' && !existingListItem) {
+          existingListItem = element;
+        }
+        if ((tagName === 'ul' || tagName === 'ol') && !existingList) {
+          existingList = element;
+          break;
+        }
+      }
+      currentElement = currentElement.parentNode;
+    }
+
+    if (existingList) {
+      // We're in a list, handle conversion or removal
+      if (existingList.tagName.toLowerCase() === listType) {
+        // Same type list, remove list formatting
+        const items = Array.from(existingList.children);
+        const fragment = document.createDocumentFragment();
+        
+        items.forEach(item => {
+          const p = document.createElement('p');
+          p.innerHTML = item.innerHTML || '&nbsp;';
+          fragment.appendChild(p);
+        });
+        
+        if (existingList.parentNode) {
+          existingList.parentNode.replaceChild(fragment, existingList);
+        }
+      } else {
+        // Different type list, convert it
+        const newList = document.createElement(listType);
+        newList.innerHTML = existingList.innerHTML;
+        if (existingList.parentNode) {
+          existingList.parentNode.replaceChild(newList, existingList);
+        }
+      }
+    } else {
+      // Not in a list, create one
+      let content = '';
+      
+      if (range.collapsed) {        // No selection, get the current line/paragraph content
+        let currentNode = range.startContainer;
+        if (currentNode.nodeType === Node.TEXT_NODE) {
+          currentNode = currentNode.parentNode as Node;
+        }
+        
+        // Check if we're in a paragraph
+        if (currentNode && (currentNode as Element).tagName?.toLowerCase() === 'p') {
+          content = (currentNode as Element).innerHTML || '&nbsp;';
+          // Replace the paragraph with a list
+          const listElement = document.createElement(listType);
+          const listItem = document.createElement('li');
+          listItem.innerHTML = content;
+          listElement.appendChild(listItem);
+          
+          if (currentNode.parentNode) {
+            currentNode.parentNode.replaceChild(listElement, currentNode);
+          }
+          
+          // Position cursor in the list item
+          const newRange = document.createRange();
+          newRange.setStart(listItem, listItem.childNodes.length);
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        } else {
+          // Create new list with empty item
+          content = '&nbsp;';
+          const listElement = document.createElement(listType);
+          const listItem = document.createElement('li');
+          listItem.innerHTML = content;
+          listElement.appendChild(listItem);
+          
+          range.insertNode(listElement);
+          
+          // Position cursor in the list item
+          const newRange = document.createRange();
+          newRange.selectNodeContents(listItem);
+          newRange.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        }
+      } else {
+        // Get selected content
+        const selectedContent = range.extractContents();
+        const tempDiv = document.createElement('div');
+        tempDiv.appendChild(selectedContent);
+        content = tempDiv.innerHTML || '&nbsp;';
+        
+        // Create the list structure
+        const listElement = document.createElement(listType);
+        const listItem = document.createElement('li');
+        listItem.innerHTML = content;
+        listElement.appendChild(listItem);
+        
+        // Insert the list
+        range.insertNode(listElement);
+        
+        // Position cursor at end of the list item
+        const newRange = document.createRange();
+        newRange.selectNodeContents(listItem);
+        newRange.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+    }
+    
+    // Trigger content change and update
+    setTimeout(() => {
+      handleContentChange();
+      updateActiveFormats();
+    }, 10);
+  }, [handleContentChange, updateActiveFormats]);
+  // Format commands using document.execCommand
+  const execCommand = useCallback((command: string, value?: string) => {
+    if (command === 'formatBlock') {
+      applyHeading(value || 'p');
+    } else if (command === 'insertUnorderedList') {
+      toggleList('ul');
+    } else if (command === 'insertOrderedList') {
+      toggleList('ol');
+    } else if (command === 'fontSize') {
+      document.execCommand('fontSize', false, '7'); // Large size, then apply custom
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const span = document.createElement('span');
+        span.style.fontSize = value + 'px';
+        try {
+          range.surroundContents(span);
+        } catch (e) {
+          // If surroundContents fails, use insertNode
+          span.appendChild(range.extractContents());
+          range.insertNode(span);
+        }
+      }
+      setCurrentFontSize(value || '16');
+    } else if (command === 'fontName') {
+      // Use simple execCommand approach
+      document.execCommand('fontName', false, value);
+      setCurrentFontFamily(value || 'Arial');
+    } else if (command === 'foreColor') {
+      document.execCommand('foreColor', false, value);
+    } else if (command === 'backColor' || command === 'hiliteColor') {
+      document.execCommand('backColor', false, value);
+    } else if (command === 'indent') {
+      document.execCommand('indent', false);
+    } else if (command === 'outdent') {
+      document.execCommand('outdent', false);
+    } else if (['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'].includes(command)) {      // Enhanced alignment handling for lists with proper state clearing
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        let element = range.commonAncestorContainer;
+        
+        // Find if we're in a list
+        while (element && element !== editorRef.current) {
+          if (element.nodeType === Node.ELEMENT_NODE) {
+            const tagName = (element as Element).tagName.toLowerCase();
+            if (tagName === 'ul' || tagName === 'ol') {
+              // Apply alignment to the list itself with proper state clearing
+              const listElement = element as HTMLElement;
+              
+              // Clear ALL previous alignment styles first
+              listElement.style.removeProperty('text-align');
+              listElement.style.removeProperty('list-style-position');
+              listElement.style.removeProperty('padding-left');
+              listElement.style.removeProperty('margin-left');
+              listElement.style.removeProperty('margin-right');
+              listElement.style.removeProperty('display');
+              listElement.style.removeProperty('width');
+              
+              // Clear existing alignment classes from list items
+              const listItems = listElement.querySelectorAll('li');
+              listItems.forEach(li => {
+                (li as HTMLElement).style.removeProperty('text-align');
+                (li as HTMLElement).style.removeProperty('list-style-position');
+                (li as HTMLElement).style.removeProperty('margin-left');
+                (li as HTMLElement).style.removeProperty('padding-left');
+              });
+              
+              // Apply new alignment
+              if (command === 'justifyCenter') {
+                listElement.style.setProperty('text-align', 'center', 'important');
+                listElement.style.setProperty('list-style-position', 'inside', 'important');
+                listElement.style.setProperty('padding-left', '0', 'important');
+                listElement.style.setProperty('margin-left', 'auto', 'important');
+                listElement.style.setProperty('margin-right', 'auto', 'important');
+                listElement.style.setProperty('display', 'block', 'important');
+                listElement.style.setProperty('width', 'fit-content', 'important');
+                
+                listItems.forEach(li => {
+                  (li as HTMLElement).style.setProperty('text-align', 'center', 'important');
+                  (li as HTMLElement).style.setProperty('list-style-position', 'inside', 'important');
+                });
+              } else if (command === 'justifyRight') {
+                listElement.style.setProperty('text-align', 'right', 'important');
+                listElement.style.setProperty('list-style-position', 'inside', 'important');
+                listElement.style.setProperty('padding-left', '0', 'important');
+                listElement.style.setProperty('margin-left', 'auto', 'important');
+                listElement.style.setProperty('display', 'block', 'important');
+                listElement.style.setProperty('width', 'fit-content', 'important');
+                
+                listItems.forEach(li => {
+                  (li as HTMLElement).style.setProperty('text-align', 'right', 'important');
+                  (li as HTMLElement).style.setProperty('list-style-position', 'inside', 'important');
+                });
+              } else {
+                // Left or justify - restore default list styling
+                listElement.style.setProperty('text-align', 'left', 'important');
+                listElement.style.setProperty('list-style-position', 'outside', 'important');
+                listElement.style.setProperty('padding-left', '2rem', 'important');
+                
+                listItems.forEach(li => {
+                  (li as HTMLElement).style.setProperty('text-align', 'left', 'important');
+                  (li as HTMLElement).style.setProperty('list-style-position', 'outside', 'important');
+                });
+              }
+              
+              handleContentChange();
+              return;
+            }
+          }
+          element = element.parentNode as Node;
+        }
+      }
+      
+      // Not in a list, use standard alignment
+      document.execCommand(command, false, value);
+    } else {
+      document.execCommand(command, false, value);
+    }
+    editorRef.current?.focus();
+    updateActiveFormats();
+    updateCurrentHeading();
+    handleContentChange();
+  }, [applyHeading, toggleList, updateActiveFormats, updateCurrentHeading, handleContentChange]);
+  // Handle font size change
+  const handleFontSizeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value) {
+      execCommand('fontSize', value);
+    }
+  }, [execCommand]);
+
+  // Enhanced font family change handler for multi-line selections and list items
+  const handleFontFamilyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const fontFamily = e.target.value;
+    setCurrentFontFamily(fontFamily);
+    
+    if (!editorRef.current) return;
+    
+    const selection = window.getSelection();
+    if (!selection) return;
+    
+    try {
+      const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+      
+      if (!range || range.collapsed) {
+        // No selection - apply to current block element
+        let currentNode = range ? range.startContainer : editorRef.current.firstChild;
+        if (currentNode?.nodeType === Node.TEXT_NODE) {
+          currentNode = currentNode.parentNode as Node;
+        }
+        
+        // Find the nearest block element
+        while (currentNode && currentNode !== editorRef.current) {
+          if ((currentNode as Element).tagName && 
+              ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'].includes((currentNode as Element).tagName)) {
+            (currentNode as HTMLElement).style.setProperty('font-family', fontFamily, 'important');
+            break;
+          }
+          currentNode = currentNode.parentNode as Node;
+        }
+      } else {
+        // Has selection - use a robust text node approach
+        const startContainer = range.startContainer;
+        const endContainer = range.endContainer;
+        
+        // Store selection details for restoration
+        const startOffset = range.startOffset;
+        const endOffset = range.endOffset;
+        
+        // Create a list of all text nodes that are partially or fully selected
+        const textNodesToWrap: Array<{node: Text, startOffset?: number, endOffset?: number}> = [];
+        
+        // Use TreeWalker to find all text nodes in the range
+        const walker = document.createTreeWalker(
+          range.commonAncestorContainer,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: (node) => {
+              if (range.intersectsNode(node)) {
+                return NodeFilter.FILTER_ACCEPT;
+              }
+              return NodeFilter.FILTER_REJECT;
+            }
+          }
+        );
+        
+        let textNode;
+        while (textNode = walker.nextNode()) {
+          const textElement = textNode as Text;
+          if (textElement.textContent && textElement.textContent.trim()) {
+            const isStartNode = textElement === startContainer;
+            const isEndNode = textElement === endContainer;
+            
+            if (isStartNode && isEndNode) {
+              // Single text node selection
+              textNodesToWrap.push({
+                node: textElement,
+                startOffset: startOffset,
+                endOffset: endOffset
+              });
+            } else if (isStartNode) {
+              // First text node in multi-node selection
+              textNodesToWrap.push({
+                node: textElement,
+                startOffset: startOffset
+              });
+            } else if (isEndNode) {
+              // Last text node in multi-node selection
+              textNodesToWrap.push({
+                node: textElement,
+                endOffset: endOffset
+              });
+            } else {
+              // Full text node in the middle
+              textNodesToWrap.push({
+                node: textElement
+              });
+            }
+          }
+        }
+        
+        // Apply font to each text node
+        let lastSpan: HTMLSpanElement | null = null;
+        
+        textNodesToWrap.forEach(({node, startOffset, endOffset}) => {
+          try {
+            const parent = node.parentNode;
+            if (!parent) return;
+            
+            // Check if we're in a list item - if so, be more careful
+            let isInListItem = false;
+            let checkParent: Node | null = parent;
+            while (checkParent && checkParent !== editorRef.current) {
+              if ((checkParent as Element).tagName?.toLowerCase() === 'li') {
+                isInListItem = true;
+                break;
+              }
+              checkParent = checkParent.parentNode;
+            }
+            
+            const text = node.textContent || '';
+            const startPos = startOffset ?? 0;
+            const endPos = endOffset ?? text.length;
+            
+            if (startPos === 0 && endPos === text.length) {
+              // Wrap entire text node
+              const span = document.createElement('span');
+              span.style.setProperty('font-family', fontFamily, 'important');
+              span.textContent = text;
+              
+              // For list items, add special class to prevent structural issues
+              if (isInListItem) {
+                span.setAttribute('data-list-text', 'true');
+              }
+              
+              parent.replaceChild(span, node);
+              lastSpan = span;
+            } else {
+              // Partial text node - split it
+              const beforeText = text.substring(0, startPos);
+              const selectedText = text.substring(startPos, endPos);
+              const afterText = text.substring(endPos);
+              
+              // Remove original text node
+              parent.removeChild(node);
+              
+              // Add parts back
+              if (beforeText) {
+                parent.appendChild(document.createTextNode(beforeText));
+              }
+              
+              if (selectedText) {
+                const span = document.createElement('span');
+                span.style.setProperty('font-family', fontFamily, 'important');
+                span.textContent = selectedText;
+                
+                if (isInListItem) {
+                  span.setAttribute('data-list-text', 'true');
+                }
+                
+                parent.appendChild(span);
+                lastSpan = span;
+              }
+              
+              if (afterText) {
+                parent.appendChild(document.createTextNode(afterText));
+              }
+            }
+          } catch (error) {
+            console.warn('Error applying font to text node:', error);
+          }
+        });
+        
+        // Restore selection to the last processed span
+        if (lastSpan) {
+          try {
+            const newRange = document.createRange();
+            newRange.selectNodeContents(lastSpan);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+          } catch (error) {
+            console.warn('Could not restore selection:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Font family change failed:', error);
+      // Fallback to execCommand if all else fails
+      try {
+        document.execCommand('fontName', false, fontFamily);
+      } catch (cmdError) {
+        console.warn('execCommand fontName also failed:', cmdError);
+      }
+    }
+    
+    // Force updates
+    setTimeout(() => {
+      handleContentChange();
+      updateActiveFormats();
+    }, 10);
+  }, [handleContentChange, updateActiveFormats]);
+
+  // Handle color changes
+  const handleColorChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, type: 'foreColor' | 'backColor') => {
+    const value = e.target.value;
+    execCommand(type, value);
+  }, [execCommand]);
+
+  // Handle heading dropdown change
+  const handleHeadingChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value) {
+      execCommand('formatBlock', value);
+    }
+  }, [execCommand]);
+
+  // Set HTML content when prop changes
+  useEffect(() => {
+    if (!editorRef.current || isComposing) return;
+    
+    const currentHtml = editorRef.current.innerHTML;
+    
+    if (html !== currentHtml && html !== lastSetHtml.current) {
+      const selection = window.getSelection();
+      const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+      const cursorOffset = range ? range.startOffset : 0;
+      const anchorNode = range ? range.startContainer : null;
+      
+      lastSetHtml.current = html;
+      editorRef.current.innerHTML = html || '';
+      
+      if (anchorNode && editorRef.current.contains(anchorNode)) {
+        try {
+          const newRange = document.createRange();
+          newRange.setStart(anchorNode, Math.min(cursorOffset, anchorNode.textContent?.length || 0));
+          newRange.collapse(true);
+          selection?.removeAllRanges();
+          selection?.addRange(newRange);
+        } catch (e) {
+          editorRef.current.focus();
+        }
+      }
+    }
+  }, [html, isComposing]);
+
+  // Handle composition events (for IME input)
+  const handleCompositionStart = useCallback(() => {
+    setIsComposing(true);
+  }, []);
+
+  const handleCompositionEnd = useCallback(() => {
+    setIsComposing(false);
+    setTimeout(handleContentChange, 0);
+  }, [handleContentChange]);
+
+  // Handle input events
+  const handleInput = useCallback((e: React.FormEvent) => {
+    if (!isComposing) {
+      handleContentChange();
+      updateActiveFormats();
+      updateCurrentHeading();
+    }
+  }, [handleContentChange, updateActiveFormats, updateCurrentHeading, isComposing]);
+
+  // Handle selection change to update active formats
+  const handleSelectionChange = useCallback(() => {
+    updateActiveFormats();
+    updateCurrentHeading();
+  }, [updateActiveFormats, updateCurrentHeading]);
+
+  // Add event listeners for selection change
+  useEffect(() => {
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [handleSelectionChange]);
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          execCommand('bold');
+          break;
+        case 'i':
+          e.preventDefault();
+          execCommand('italic');
+          break;
+        case 'u':
+          e.preventDefault();
+          execCommand('underline');
+          break;
+        case '=':
+          if (e.shiftKey) { // Ctrl+Shift+= for superscript
+            e.preventDefault();
+            execCommand('superscript');
+          }
+          break;
+        case '-':
+          if (e.shiftKey) { // Ctrl+Shift+- for subscript
+            e.preventDefault();
+            execCommand('subscript');
+          }
+          break;
+        case 'z':
+          if (e.shiftKey) {
+            e.preventDefault();
+            execCommand('redo');
+          } else {
+            e.preventDefault();
+            execCommand('undo');
+          }
+          break;
+        case ']':
+          e.preventDefault();
+          execCommand('indent');
+          break;
+        case '[':
+          e.preventDefault();
+          execCommand('outdent');
+          break;
+        default:
+          break;
+      }
+    }
+  }, [execCommand]);
+
+  // Handle paste events to clean up pasted content
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+    handleContentChange();
+  }, [handleContentChange]);
+
+  // Toolbar button configurations
+  const toolbarButtons = [
+    // Font Controls Group
+    { key: 'fontFamily', dropdown: true, type: 'fontFamily', title: 'Font Family' },
+    { key: 'fontSize', dropdown: true, type: 'fontSize', title: 'Font Size' },
+    { key: 'sep1', separator: true },
+    
+    // Text Formatting Group
+    { key: 'bold', command: 'bold', icon: '𝐁', title: 'Bold (Ctrl+B)' },
+    { key: 'italic', command: 'italic', icon: '𝐼', title: 'Italic (Ctrl+I)' },
+    { key: 'underline', command: 'underline', icon: '𝐔', title: 'Underline (Ctrl+U)' },
+    { key: 'strikethrough', command: 'strikeThrough', icon: 'S̶', title: 'Strikethrough' },
+    { key: 'superscript', command: 'superscript', icon: 'X²', title: 'Superscript' },
+    { key: 'subscript', command: 'subscript', icon: 'X₂', title: 'Subscript' },
+    { key: 'removeFormat', command: 'removeFormat', icon: '✗', title: 'Clear Formatting' },
+    { key: 'sep2', separator: true },
+    
+    // Color Controls Group
+    { key: 'fontColor', color: true, type: 'foreColor', icon: '🎨', title: 'Font Color' },
+    { key: 'backgroundColor', color: true, type: 'backColor', icon: '🖍', title: 'Background Color' },
+    { key: 'sep3', separator: true },
+    
+    // Paragraph Group
+    { key: 'heading', dropdown: true, type: 'heading', title: 'Paragraph Style' },
+    { key: 'sep4', separator: true },
+      // List and Alignment Group
+    { key: 'ul', command: 'insertUnorderedList', icon: '•', title: 'Bullet List' },
+    { key: 'ol', command: 'insertOrderedList', icon: '1.', title: 'Numbered List' },
+    { key: 'sep5', separator: true },
+      // Alignment Group
+    { key: 'left', command: 'justifyLeft', icon: '◧', title: 'Align Left' },
+    { key: 'center', command: 'justifyCenter', icon: '▬', title: 'Align Center' },
+    { key: 'right', command: 'justifyRight', icon: '◨', title: 'Align Right' },
+    { key: 'justify', command: 'justifyFull', icon: '▦', title: 'Justify' },
+    { key: 'sep6', separator: true },
+    
+    // Indentation Group
+    { key: 'outdent', command: 'outdent', icon: '⇤', title: 'Decrease Indent' },
+    { key: 'indent', command: 'indent', icon: '⇥', title: 'Increase Indent' },
+    { key: 'sep7', separator: true },
+    
+    // Action Group
+    { key: 'undo', command: 'undo', icon: '↶', title: 'Undo (Ctrl+Z)' },
+    { key: 'redo', command: 'redo', icon: '↷', title: 'Redo (Ctrl+Shift+Z)' },
+  ] as const;
+
+  return (
+    <div className="basic-rte-container">
+      {/* Toolbar */}
+      <div className="basic-rte-toolbar">
+        {toolbarButtons.map((button) => {
+          if ('separator' in button) {
+            return <div key={button.key} className="toolbar-separator" />;
+          }
+          
+          if ('dropdown' in button) {
+            if (button.type === 'fontFamily') {              return (
+                <select
+                  key={button.key}
+                  className="toolbar-dropdown toolbar-font-family"
+                  onChange={handleFontFamilyChange}
+                  title={button.title}
+                  value={currentFontFamily}
+                >
+                  <option value="Arial">Arial</option>
+                  <option value="Helvetica">Helvetica</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Verdana">Verdana</option>
+                  <option value="Courier New">Courier New</option>
+                  <option value="Trebuchet MS">Trebuchet MS</option>
+                  <option value="Tahoma">Tahoma</option>
+                  <option value="Comic Sans MS">Comic Sans MS</option>
+                  <option value="Impact">Impact</option>
+                  <option value="'Roboto', sans-serif">Roboto</option>
+                  <option value="'Open Sans', sans-serif">Open Sans</option>
+                  <option value="'Lato', sans-serif">Lato</option>
+                  <option value="'Montserrat', sans-serif">Montserrat</option>
+                  <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+                  <option value="'Oswald', sans-serif">Oswald</option>
+                  <option value="'Raleway', sans-serif">Raleway</option>
+                  <option value="'PT Sans', sans-serif">PT Sans</option>
+                  <option value="'Ubuntu', sans-serif">Ubuntu</option>
+                  <option value="'Nunito', sans-serif">Nunito</option>
+                  <option value="'Playfair Display', serif">Playfair Display</option>
+                  <option value="'Merriweather', serif">Merriweather</option>
+                  <option value="'Crimson Text', serif">Crimson Text</option>
+                  <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+                  <option value="'Lora', serif">Lora</option>
+                  <option value="'PT Serif', serif">PT Serif</option>
+                  <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                  <option value="'Fira Code', monospace">Fira Code</option>
+                  <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                  <option value="'Inconsolata', monospace">Inconsolata</option>
+                </select>
+              );
+            }
+            
+            if (button.type === 'fontSize') {
+              return (
+                <select
+                  key={button.key}
+                  className="toolbar-dropdown toolbar-font-size"
+                  onChange={handleFontSizeChange}
+                  title={button.title}
+                  value={currentFontSize}
+                >
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                  <option value="14">14</option>
+                  <option value="16">16</option>
+                  <option value="18">18</option>
+                  <option value="20">20</option>
+                  <option value="24">24</option>
+                  <option value="28">28</option>
+                  <option value="32">32</option>
+                  <option value="36">36</option>
+                  <option value="48">48</option>
+                  <option value="72">72</option>
+                </select>
+              );
+            }
+            
+            if (button.type === 'heading') {
+              return (
+                <select
+                  key={button.key}
+                  className="toolbar-dropdown toolbar-heading"
+                  onChange={handleHeadingChange}
+                  title={button.title}
+                  value={currentHeading}
+                >
+                  <option value="p">Normal Text</option>
+                  <option value="h1">Heading 1</option>
+                  <option value="h2">Heading 2</option>
+                  <option value="h3">Heading 3</option>
+                  <option value="h4">Heading 4</option>
+                  <option value="h5">Heading 5</option>
+                  <option value="h6">Heading 6</option>
+                </select>
+              );
+            }
+          }
+          
+          if ('color' in button) {
+            return (
+              <div key={button.key} className="toolbar-color-group">
+                <label className="toolbar-color-button" title={button.title}>
+                  <span className="color-icon">{button.icon}</span>
+                  <input
+                    type="color"
+                    className="color-input"
+                    onChange={(e) => handleColorChange(e, button.type as 'foreColor' | 'backColor')}
+                  />
+                </label>
+              </div>
+            );
+          }
+            const isActive = activeFormats.has(button.command);
+          
+          return (
+            <button
+              key={button.key}
+              type="button"
+              className={`toolbar-button ${isActive ? 'active' : ''}`}
+              onClick={() => {
+                if (button.command === 'insertUnorderedList') {
+                  toggleList('ul');
+                } else if (button.command === 'insertOrderedList') {
+                  toggleList('ol');
+                } else {
+                  execCommand(button.command);
+                }
+              }}
+              title={button.title}
+            >
+              {button.icon}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Editor */}
+      <div
+        ref={editorRef}
+        className="basic-rte-editor"
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        onKeyDown={handleKeyDown}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
+        onPaste={handlePaste}
+        data-placeholder="Start typing your sermon notes..."
+        style={{
+          minHeight: '200px',
+          padding: '1rem',
+          border: '1px solid #333',
+          borderRadius: '4px',
+          backgroundColor: '#1e293b',
+          color: '#f3f4f6',
+          fontSize: '1rem',
+          lineHeight: '1.5',
+          outline: 'none',
+          overflowY: 'auto',
+        }}
+      />
+    </div>
+  );
+}
+
+export default BasicRTE;
