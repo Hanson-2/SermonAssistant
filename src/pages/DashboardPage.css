@@ -6,7 +6,7 @@
   height: 100vh;
   z-index: 0; /* Between background and content */
   pointer-events: none;
-  background: #111827;
+  background: var(--bg-primary);
   background-size: cover;
   opacity: 0.45;
   display: block;
@@ -41,12 +41,12 @@
   position: relative !important;
   overflow: hidden !important;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
-  border: 1px solid #4B3A1A;
-  border-left: 5px solid #e0c97f;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 5px solid var(--primary-color);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5),
+  box-shadow: var(--shadow-lg),
               inset 0 1px 0px rgba(255, 255, 255, 0.02),
               inset 0 0 10px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
@@ -55,9 +55,9 @@
 /* Removed card-actions-tray in favor of flyout buttons */
 
 .add-expository-btn {
-  border: 3px solid #ffd700 !important;
-  background: linear-gradient(135deg, #3a3a3a 0%, #000000 100%) !important;
-  color: #ffd700 !important;
+  border: 3px solid var(--primary-color) !important;
+  background: var(--bg-card) !important;
+  color: var(--primary-color) !important;
   padding: 0.75rem 1.5rem;
   border-radius: 0.375rem;
   font-size: 1.1rem;
@@ -65,7 +65,7 @@
   cursor: pointer;
   background-clip: padding-box, border-box;
   background-origin: padding-box, border-box;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   opacity: 0.75;
   position: relative;
@@ -90,5 +90,50 @@
 .add-expository-btn:focus::before {
   opacity: 1;
   transform: translateX(100%) rotate(25deg);
+}
+
+/* Dashboard greeting header */
+.dashboard-greeting-header {
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  padding: 1rem 0 0.5rem 0;
+}
+
+.dashboard-greeting-text {
+  font-size: 2.5rem;
+  font-family: 'Trajan Pro', Georgia, serif;
+  font-weight: 700;
+  color: var(--primary-color);
+  letter-spacing: 1.5px;
+  text-shadow: var(--text-shadow-gold);
+  margin: 0;
+  animation: fadeInGreeting 1s ease-in-out;
+}
+
+@keyframes fadeInGreeting {
+  from { 
+    opacity: 0; 
+    transform: translateY(-20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Responsive styling for greeting */
+@media (max-width: 768px) {
+  .dashboard-greeting-text {
+    font-size: 2rem;
+    letter-spacing: 1px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-greeting-text {
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+  }
 }
 

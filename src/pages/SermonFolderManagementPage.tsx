@@ -82,7 +82,7 @@ const SermonFolderManagementPage: React.FC = () => {
     <>
       <div className="sermon-folder-management-page">
         <div className="folder-management-container">
-          <h1>Sermon Folders</h1>
+          <h1>Expository Folders</h1>
           <div className="add-folder-row">
             <input
               type="text"

@@ -115,6 +115,166 @@
   gap: $space-sm;
 }
 
+// Animation Selection Dropdown
+.presentation-animation-selector {
+  display: flex;
+  align-items: center;
+  margin: 0 $space-lg;
+  
+  @include breakpoint-down(md) {
+    margin: 0 $space-md;
+  }
+  
+  @include breakpoint-down(sm) {
+    margin: 0 $space-sm;
+  }
+}
+
+.animation-dropdown-container {
+  position: relative;
+}
+
+.animation-dropdown-trigger {
+  @include btn-base;
+  background: rgba($dark-bg-tertiary, 0.9);
+  border: 1px solid rgba($primary-gold, 0.3);
+  border-radius: $radius-md;
+  padding: $space-sm $space-md;
+  color: $primary-gold;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: $space-xs;
+  min-width: 140px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+  &:hover {
+    background: rgba($primary-gold, 0.1);
+    border-color: $primary-gold;
+    color: $light-gold;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($primary-gold, 0.2);
+  }
+  
+  .animation-label {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .dropdown-icon {
+    transition: transform 0.3s ease;
+    
+    &.open {
+      transform: rotate(180deg);
+    }
+  }
+  
+  @include breakpoint-down(md) {
+    padding: $space-xs $space-sm;
+    font-size: 0.8rem;
+    min-width: 120px;
+  }
+  
+  @include breakpoint-down(sm) {
+    padding: $space-xs;
+    font-size: 0.75rem;
+    min-width: 100px;
+  }
+}
+
+.animation-dropdown-menu {
+  position: absolute;
+  top: calc(100% + $space-xs);
+  left: 0;
+  right: 0;
+  background: rgba($dark-bg-secondary, 0.98);
+  border: 1px solid rgba($primary-gold, 0.3);
+  border-radius: $radius-md;
+  overflow: hidden;
+  z-index: 1000;  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 4px 16px rgba($primary-gold, 0.1);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  
+  @include breakpoint-down(sm) {
+    position: fixed;
+    top: auto;
+    bottom: 120px;
+    left: $space-sm;
+    right: $space-sm;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+}
+
+.animation-option {
+  @include btn-base;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba($primary-gold, 0.1);
+  padding: $space-md;
+  text-align: left;
+  color: $text-color-primary;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background: rgba($primary-gold, 0.1);
+    color: $light-gold;
+  }
+  
+  &.active {
+    background: rgba($primary-gold, 0.2);
+    color: $primary-gold;
+    border-left: 3px solid $primary-gold;
+  }
+  
+  .option-content {
+    display: flex;
+    flex-direction: column;
+    gap: $space-xs;
+  }
+  
+  .option-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: inherit;
+  }
+  
+  .option-description {
+    font-size: 0.75rem;
+    color: $text-secondary;
+    opacity: 0.8;
+  }
+  
+  @include breakpoint-down(md) {
+    padding: $space-sm;
+    
+    .option-label {
+      font-size: 0.8rem;
+    }
+    
+    .option-description {
+      font-size: 0.7rem;
+    }
+  }
+  
+  @include breakpoint-down(sm) {
+    padding: $space-sm $space-md;
+  }
+}
+
 .presentation-control-btn {
   @include btn-base;
   @include btn-ghost;
@@ -134,6 +294,93 @@
     &:hover {
       background: rgba($error-border, 0.1);
       color: lighten($error-border, 10%);
+    }
+  }
+  
+  // Back to Edit button specific styles
+  &.back-to-edit-btn {
+    background: rgba($primary-gold, 0.1);
+    border: 1px solid rgba($primary-gold, 0.3);
+    color: $primary-gold;
+    font-weight: 500;
+    padding: $space-sm $space-md;
+    display: flex;
+    align-items: center;
+    gap: $space-xs;
+    
+    .back-btn-text {
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+    
+    &:hover {
+      background: rgba($primary-gold, 0.2);
+      border-color: $primary-gold;
+      color: $light-gold;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba($primary-gold, 0.2);
+    }
+    
+    @include breakpoint-down(md) {
+      padding: $space-xs $space-sm;
+      
+      .back-btn-text {
+        font-size: 0.8rem;
+      }
+    }
+      @include breakpoint-down(sm) {
+      padding: $space-xs;
+      
+      .back-btn-text {
+        font-size: 0.75rem;
+      }
+    }
+  }
+  
+  // Export to PowerPoint button specific styles
+  &.export-ppt-btn {
+    background: rgba($primary-gold, 0.15);
+    border: 1px solid rgba($primary-gold, 0.4);
+    color: $primary-gold;
+    font-weight: 500;
+    padding: $space-sm $space-md;
+    display: flex;
+    align-items: center;
+    gap: $space-xs;
+    
+    .export-btn-text {
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+    
+    &:hover {
+      background: rgba($primary-gold, 0.25);
+      border-color: $light-gold;
+      color: $light-gold;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba($primary-gold, 0.3);
+    }
+    
+    &:active {
+      background: rgba($primary-gold, 0.3);
+      transform: translateY(0);
+    }
+    
+    @include breakpoint-down(md) {
+      padding: $space-xs $space-sm;
+      
+      .export-btn-text {
+        font-size: 0.8rem;
+      }
+    }
+    
+    @include breakpoint-down(sm) {
+      padding: $space-xs;
+      
+      .export-btn-text {
+        font-size: 0.75rem;
+        display: none; // Hide text on very small screens, keep icon only
+      }
     }
   }
 }
@@ -185,14 +432,14 @@
   overflow: hidden;
   min-height: 400px;
   max-height: calc(100vh - 200px); // Ensure it doesn't exceed viewport minus header/footer space
+  z-index: 1; // Much lower than navigation buttons to ensure buttons are visible
 
   @include breakpoint-down(lg) {
     min-height: 300px;
     max-height: calc(100vh - 180px);
   }
-  
   @include breakpoint-down(sm) {
-    max-height: calc(100vh - 220px); // Account for mobile navbar + footer
+    max-height: calc(100vh - 260px); // Account for mobile navbar + larger footer
   }
 }
 
@@ -289,9 +536,9 @@
 
 // Navigation buttons
 .presentation-nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
   @include btn-base;
   background: rgba($dark-bg-primary, 0.8);
   color: $primary-gold;
@@ -302,34 +549,55 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease, opacity 0.4s ease-in-out, transform 0.3s ease; // Added opacity transition
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  z-index: 10;
+  z-index: 500 !important; // Much higher than footer to ensure visibility
+  opacity: 1; // Base opacity
+  
+  // Fade animation keyframes
+  animation: fadeInNavButton 0.6s ease-in-out;
 
   &:hover:not(:disabled) {
     background: rgba($primary-gold, 0.1);
     border-color: $primary-gold;
     color: $light-gold;
     transform: translateY(-50%) scale(1.05);
+    opacity: 1;
   }
 
   &:disabled {
-    opacity: 0.3;
+    opacity: 0.2 !important;
     cursor: not-allowed;
+    transform: translateY(-50%) scale(0.9);
+    transition: all 0.3s ease;
   }
 
   &.presentation-nav-prev {
-    left: $space-md;
+    left: $space-md !important;
   }
 
   &.presentation-nav-next {
-    right: $space-md;
+    right: $space-md !important;
   }
-
-  @include breakpoint-down(md) {
+  
+  // Fade out animation class for transitions
+  &.fade-out {
+    opacity: 0 !important;
+    transform: translateY(-50%) scale(0.8) !important;
+    transition: all 0.2s ease-in !important;
+  }
+  
+  // Fade in animation class for transitions
+  &.fade-in {
+    opacity: 1 !important;
+    transform: translateY(-50%) scale(1) !important;
+    transition: all 0.3s ease-out 0.1s !important; // Slight delay for smooth transition
+  }@include breakpoint-down(md) {
     width: 50px;
     height: 50px;
+    // Move buttons much higher to avoid footer overlap
+    top: 30% !important;
 
     &.presentation-nav-prev {
       left: $space-sm;
@@ -337,6 +605,21 @@
 
     &.presentation-nav-next {
       right: $space-sm;
+    }
+  }
+  
+  @include breakpoint-down(sm) {
+    width: 44px;
+    height: 44px;
+    // Move even higher on small screens due to footer height
+    top: 25% !important;
+    
+    &.presentation-nav-prev {
+      left: $space-xs;
+    }
+
+    &.presentation-nav-next {
+      right: $space-xs;
     }
   }
 }
@@ -479,13 +762,18 @@
   padding: $space-sm $space-md; // Reduced padding for smaller footer
   
   @include breakpoint-down(lg) {
-    padding: $space-xs $space-sm; // Even smaller on tablet and mobile
-    padding-bottom: calc($space-sm + 60px); // Account for mobile navbar height
+    padding: $space-sm $space-sm; // Even smaller on tablet and mobile
+    padding-bottom: calc($space-md + 60px); // Account for mobile navbar height
+  }
+  
+  @include breakpoint-down(md) {
+    padding: $space-sm $space-sm;
+    padding-bottom: calc($space-lg + 60px); // More bottom padding for content
   }
   
   @include breakpoint-down(sm) {
-    padding: $space-xs;
-    padding-bottom: calc($space-xs + 60px);
+    padding: $space-sm $space-xs;
+    padding-bottom: calc($space-lg + 60px); // Ensure enough space for mobile nav
   }
 }
 
@@ -496,9 +784,17 @@
   max-width: 1400px;
   margin: 0 auto;
 
+  @include breakpoint-down(md) {
+    flex-direction: column;
+    gap: $space-md;
+    align-items: center;
+  }
+
   @include breakpoint-down(sm) {
     flex-direction: column;
-    gap: $space-sm;
+    gap: $space-md;
+    align-items: center;
+    padding: 0 $space-sm;
   }
 }
 
@@ -508,6 +804,41 @@
   gap: 0; // Remove gap since buttons touch each other
   justify-content: center;
   flex-wrap: wrap;
+  max-width: 100%;
+  
+  @include breakpoint-down(md) {
+    // Ensure indicators don't get too cramped on smaller screens
+    max-width: 90vw;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    padding: 0 $space-sm;
+    
+    // Scrollbar styling for horizontal scroll
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba($dark-bg-primary, 0.3);
+      border-radius: 2px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba($primary-gold, 0.4);
+      border-radius: 2px;
+      
+      &:hover {
+        background: rgba($primary-gold, 0.6);
+      }
+    }
+  }
+  
+  @include breakpoint-down(sm) {
+    max-width: 85vw;
+    padding: 0 $space-xs;
+  }
 }
 
 .presentation-slide-indicator {
@@ -577,11 +908,19 @@
     // Pressed/active state
     transform: translateY(1px);
   }
-
   @include breakpoint-down(sm) {
     width: 36px;
     height: 36px;
     font-size: 0.7rem;
+    min-width: 36px; // Prevent buttons from becoming too small
+    flex-shrink: 0; // Prevent shrinking in flex container
+  }
+  
+  @include breakpoint-down(480px) {
+    width: 32px;
+    height: 32px;
+    font-size: 0.65rem;
+    min-width: 32px;
   }
 }
 
@@ -590,6 +929,18 @@
   display: flex;
   align-items: center;
   gap: $space-md;
+  
+  @include breakpoint-down(md) {
+    gap: $space-sm;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  @include breakpoint-down(sm) {
+    gap: $space-xs;
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 .presentation-slide-counter {
@@ -602,6 +953,11 @@
 .presentation-fullscreen-controls {
   display: flex;
   gap: $space-sm;
+  
+  @include breakpoint-down(sm) {
+    gap: $space-xs;
+    margin-top: $space-xs;
+  }
 }
 
 // Loading and error states
@@ -639,6 +995,18 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+// Fade in animation for navigation buttons
+@keyframes fadeInNavButton {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
   }
 }
 
@@ -705,9 +1073,84 @@
     }
   }
 
+  // Navigation button sizing already handled in main nav-btn section above
+}
+
+// Additional styles for very small screens (e.g., iPhone 5/SE)
+@media (max-width: 400px) {
+  .presentation-footer {
+    padding: $space-xs;
+    padding-bottom: calc($space-xl + 60px); // Extra space for very small screens
+  }
+  
+  .presentation-slide-indicators {
+    max-width: 80vw; // Even more constrained on very small screens
+    
+    .presentation-slide-indicator {
+      width: 28px;
+      height: 28px;
+      font-size: 0.6rem;
+      min-width: 28px;
+    }
+  }
+    .presentation-footer-controls {
+    gap: $space-xs;
+    
+    .presentation-slide-counter {
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// Hide navigation buttons on very small screens to prevent overlap
+@media (max-width: 400px) {
   .presentation-nav-btn {
-    width: 44px;
-    height: 44px;
+    display: none; // Hide completely on very small screens
+  }
+}
+
+// Updated at 2025-06-11 - Force navigation buttons higher to prevent overlap
+// Additional responsive positioning for better overlap prevention
+@media (max-width: 768px) {
+  .presentation-page .presentation-nav-btn {
+    // Move buttons even higher on mobile screens
+    top: 15% !important;
+    
+    // Increase z-index to ensure they stay above other elements
+    z-index: 150 !important;
+  }
+}
+
+// Even more aggressive positioning for mobile devices
+@media (max-width: 768px) and (orientation: portrait) {
+  .presentation-page .presentation-slide-area .presentation-nav-btn {
+    top: 10% !important;
+    z-index: 200 !important;
+  }
+}
+
+// For very small screens, move buttons much higher
+@media (max-width: 480px) {
+  .presentation-page .presentation-nav-btn {
+    top: 12% !important;
+    z-index: 250 !important;
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+
+// Prevent footer from overlapping with main content
+.presentation-main {
+  // ...existing code...
+  
+  @include breakpoint-down(md) {
+    // Account for taller footer on mobile
+    padding-bottom: calc($space-lg + 120px);
+  }
+  
+  @include breakpoint-down(sm) {
+    // More space for mobile footer with stacked content
+    padding-bottom: calc($space-xl + 120px);
   }
 }
 
@@ -747,5 +1190,46 @@
         color: #333;
       }
     }
+  }
+}
+
+// Ensure proper layering of elements to prevent overlap issues
+.presentation-page {
+  // ...existing styles...
+  
+  // Create proper stacking context to prevent navigation buttons from overlapping footer
+  .presentation-slide-area {
+    position: relative;
+    z-index: 1; // Much lower than footer to ensure buttons don't overlap
+  }
+  
+  .presentation-footer {
+    z-index: 1000; // Much higher to stay on top
+  }
+}
+
+/* CRITICAL OVERRIDE - Force navigation buttons to proper position */
+.presentation-nav-btn.presentation-nav-prev,
+.presentation-nav-btn.presentation-nav-next {
+  position: absolute !important;
+  z-index: 9999 !important;
+}
+
+/* Mobile specific overrides */
+@media screen and (max-width: 768px) {
+  .presentation-nav-btn.presentation-nav-prev,
+  .presentation-nav-btn.presentation-nav-next {
+    top: 10% !important;
+    z-index: 9999 !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .presentation-nav-btn.presentation-nav-prev,
+  .presentation-nav-btn.presentation-nav-next {
+    top: 8% !important;
+    z-index: 9999 !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 }

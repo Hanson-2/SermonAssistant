@@ -1,20 +1,36 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import './CustomRichTextEditor.css';
 import { wrapScriptureRefsInEditor, debounceWrapScriptureRefs } from '../utils/wrapScriptureRefsInEditor';
+import { fetchTags } from '../services/tagService';
 
 interface BasicRTEProps {
   html: string;
   onHtmlChange: (html: string) => void;
   onRefsChange?: (refs: any[]) => void;
+  onTagSelect?: (tagName: string) => void;
 }
 
-function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
+interface Tag {
+  id: string;
+  name: string;
+}
+
+function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect }: BasicRTEProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const lastSetHtml = useRef<string>('');
   const [isComposing, setIsComposing] = useState(false);
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());  const [currentHeading, setCurrentHeading] = useState<string>('p');
   const [currentFontSize, setCurrentFontSize] = useState<string>('16');
-  const [currentFontFamily, setCurrentFontFamily] = useState<string>('Arial');  // Debounced scripture reference wrapper - DISABLED for now
+  const [currentFontFamily, setCurrentFontFamily] = useState<string>('Arial');
+  
+  // Tag autocomplete state
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [tagSuggestions, setTagSuggestions] = useState<Tag[]>([]);
+  const [selectedTagIndex, setSelectedTagIndex] = useState(0);
+  const [tagDropdownPosition, setTagDropdownPosition] = useState({ top: 0, left: 0 });
+  const [tagInputRange, setTagInputRange] = useState<Range | null>(null);
+
+  // Debounced scripture reference wrapper - DISABLED for now
   // const debouncedWrapRefs = useRef(
   //   debounceWrapScriptureRefs(null as any, 2000) // Increased to 2 seconds to reduce interruption
   // );
@@ -25,6 +41,84 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
   //     debouncedWrapRefs.current = debounceWrapScriptureRefs(editorRef.current, 2000);
   //   }
   // }, [editorRef.current]);
+
+  // Helper function to normalize tag display
+  const normalizeTagForDisplay = useCallback((tag: string): string => {
+    return tag.split(/[\s_-]+/).map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  }, []);
+
+  // Load tag suggestions
+  const loadTagSuggestions = useCallback(() => {
+    fetchTags().then(tags => {
+      setTagSuggestions(tags);
+    }).catch(() => {
+      setTagSuggestions([]);
+    });
+  }, []);
+
+  // Tag autocomplete functionality
+  const checkForTagTrigger = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !editorRef.current) return;
+
+    const range = selection.getRangeAt(0);
+    if (!range.collapsed) return;
+
+    const textNode = range.startContainer;
+    if (textNode.nodeType !== Node.TEXT_NODE) return;
+
+    const textContent = textNode.textContent || '';
+    const cursorPos = range.startOffset;
+    
+    // Look for /tag trigger
+    const beforeCursor = textContent.substring(0, cursorPos);
+    const lastSlashIndex = beforeCursor.lastIndexOf('/');
+    
+    if (lastSlashIndex === -1) {
+      setShowTagDropdown(false);
+      return;
+    }
+    
+    const potentialTag = beforeCursor.substring(lastSlashIndex + 1);
+    
+    // Check if it's a tag trigger (starts with 'tag')
+    if (potentialTag.startsWith('tag') && potentialTag.length <= 20) {
+      // Get cursor position for dropdown placement
+      const tempRange = document.createRange();
+      tempRange.setStart(textNode, lastSlashIndex);
+      tempRange.setEnd(textNode, cursorPos);
+      const rect = tempRange.getBoundingClientRect();
+      
+      setTagDropdownPosition({
+        top: rect.bottom + window.scrollY + 5,
+        left: rect.left + window.scrollX
+      });
+      
+      // Create range for replacement
+      const replaceRange = document.createRange();
+      replaceRange.setStart(textNode, lastSlashIndex);
+      replaceRange.setEnd(textNode, cursorPos);
+      setTagInputRange(replaceRange);
+      
+      // Fetch and filter tags
+      fetchTags().then(tags => {
+        const filtered = tags.filter(tag => 
+          tag.name.toLowerCase().includes(potentialTag.substring(3).toLowerCase())
+        );
+        setTagSuggestions(filtered);
+        setSelectedTagIndex(0);
+        setShowTagDropdown(true);
+      }).catch(() => {
+        setTagSuggestions([]);
+        setShowTagDropdown(false);
+      });
+    } else {
+      setShowTagDropdown(false);
+    }
+  }, []);
+
   // Handle content changes
   const handleContentChange = useCallback(() => {
     if (isComposing || !editorRef.current) return;
@@ -638,11 +732,12 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
       execCommand('formatBlock', value);
     }
   }, [execCommand]);
-
   // Handle input events
   const handleInput = useCallback(() => {
     handleContentChange();
-  }, [handleContentChange]);
+    // Check for tag autocomplete trigger
+    setTimeout(() => checkForTagTrigger(), 0);
+  }, [handleContentChange, checkForTagTrigger]);
 
   // Handle composition events for international input
   const handleCompositionStart = useCallback(() => {
@@ -877,8 +972,99 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
         editorRef.current.appendChild(table);
       }
       handleContentChange();
+    }  }, [handleContentChange]);
+
+  const insertTagLink = useCallback((tag: Tag) => {
+    if (!tagInputRange || !editorRef.current) return;
+
+    // Create tag link element
+    const tagLink = document.createElement('span');
+    tagLink.className = 'tag-link';
+    tagLink.textContent = normalizeTagForDisplay(tag.name);
+    tagLink.setAttribute('data-tag-name', tag.name);
+    tagLink.style.cssText = `
+      background: linear-gradient(135deg, #065f46, #064e3b);
+      color: #6ee7b7;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-block;
+      margin: 0 2px;
+      border: 1px solid #10b981;
+      text-decoration: none;
+    `;
+
+    // Add click handler for the tag
+    tagLink.onclick = (e) => {
+      e.preventDefault();
+      if (onTagSelect) {
+        onTagSelect(tag.name);
+      }
+    };
+
+    // Replace the "/tag" text with the tag link
+    tagInputRange.deleteContents();
+    tagInputRange.insertNode(tagLink);
+
+    // Position cursor after the tag
+    const newRange = document.createRange();
+    newRange.setStartAfter(tagLink);
+    newRange.collapse(true);
+    
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(newRange);
+
+    // Insert a space after the tag
+    const spaceNode = document.createTextNode(' ');
+    newRange.insertNode(spaceNode);
+    newRange.setStartAfter(spaceNode);
+    newRange.collapse(true);
+    selection?.removeAllRanges();
+    selection?.addRange(newRange);
+
+    // Clean up
+    setShowTagDropdown(false);
+    setTagInputRange(null);
+    handleContentChange();
+  }, [tagInputRange, onTagSelect, handleContentChange, normalizeTagForDisplay]);
+
+  const handleTagDropdownKeydown = useCallback((e: KeyboardEvent) => {
+    if (!showTagDropdown) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedTagIndex(prev => Math.min(prev + 1, tagSuggestions.length - 1));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedTagIndex(prev => Math.max(prev - 1, 0));
+        break;
+      case 'Enter':
+      case 'Tab':
+        e.preventDefault();
+        if (tagSuggestions[selectedTagIndex]) {
+          insertTagLink(tagSuggestions[selectedTagIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowTagDropdown(false);
+        setTagInputRange(null);
+        break;
     }
-  }, [handleContentChange]);
+  }, [showTagDropdown, tagSuggestions, selectedTagIndex, insertTagLink]);
+
+  // Add keydown listener for tag dropdown
+  useEffect(() => {
+    if (showTagDropdown) {
+      document.addEventListener('keydown', handleTagDropdownKeydown);
+      return () => document.removeEventListener('keydown', handleTagDropdownKeydown);
+    }
+  }, [showTagDropdown, handleTagDropdownKeydown]);
 
   // Toolbar button configurations
   const toolbarButtons = [
@@ -1119,6 +1305,43 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
           overflowY: 'auto',
         }}
       />
+        {/* Tag Dropdown - Added for tag autocomplete */}
+      {showTagDropdown && tagSuggestions.length > 0 && (
+        <div 
+          className="tag-dropdown" 
+          style={{ 
+            position: 'absolute',
+            top: tagDropdownPosition.top, 
+            left: tagDropdownPosition.left,
+            background: '#1e293b',
+            border: '1px solid #374151',
+            borderRadius: '6px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            zIndex: 1000,
+            maxHeight: '200px',
+            overflowY: 'auto',
+            minWidth: '200px'
+          }}
+        >
+          {tagSuggestions.map((tag, index) => (
+            <div
+              key={tag.id}
+              className={`tag-suggestion ${selectedTagIndex === index ? 'selected' : ''}`}
+              style={{
+                padding: '0.5rem 0.75rem',
+                cursor: 'pointer',
+                color: selectedTagIndex === index ? '#facc15' : '#e5e7eb',
+                background: selectedTagIndex === index ? '#374151' : 'transparent',
+                borderBottom: index < tagSuggestions.length - 1 ? '1px solid #374151' : 'none'
+              }}
+              onMouseEnter={() => setSelectedTagIndex(index)}
+              onClick={() => insertTagLink(tag)}
+            >
+              {normalizeTagForDisplay(tag.name)}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

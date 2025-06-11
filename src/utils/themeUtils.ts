@@ -82,19 +82,16 @@ export const defaultThemeSettings: ThemeSettings = {
 export const applyThemeGlobally = (settings: ThemeSettings, isPreview: boolean = false): void => {
   const root = document.documentElement;
   
-  // Handle auto theme mode by detecting system preference
-  let effectiveTheme = settings.themeMode;
-  if (settings.themeMode === 'auto') {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    effectiveTheme = mediaQuery.matches ? 'dark' : 'light';
-  }
+  // Force theme mode to dark
+  const effectiveTheme = 'dark';
   
   // Set theme mode data attribute for CSS custom properties
   root.setAttribute('data-theme', effectiveTheme);
   
   // Set font size data attribute
   root.setAttribute('data-font-size', settings.fontSize);
-    // Set accessibility attributes
+  
+  // Set accessibility attributes
   const accessibilityModes: string[] = [];
   if (settings.highContrast) accessibilityModes.push('high-contrast');
   if (settings.reducedMotion) accessibilityModes.push('reduced-motion');
@@ -123,8 +120,8 @@ export const applyThemeGlobally = (settings: ThemeSettings, isPreview: boolean =
   } else {
     root.removeAttribute('data-theme-preview');
   }
-    // Apply custom colors via CSS custom properties
-  // Override the CSS variables with user-selected colors
+  
+  // Apply custom colors via CSS custom properties
   root.style.setProperty('--primary-color', settings.primaryColor);
   root.style.setProperty('--accent-color', settings.accentColor);
   root.style.setProperty('--font-family', settings.fontFamily);
@@ -190,14 +187,10 @@ export const applyThemeGlobally = (settings: ThemeSettings, isPreview: boolean =
     document.head.appendChild(customStyleEl);
   }
   customStyleEl.textContent = settings.customCSS;
-    // Save to localStorage for persistence (but not for preview)
+
+  // Save to localStorage for persistence (but not for preview)
   if (!isPreview) {
     saveThemeToStorage(settings);
-  }
-  
-  // Set up auto theme mode listener if needed
-  if (settings.themeMode === 'auto' && !isPreview) {
-    setupAutoThemeListener(settings);
   }
 };
 

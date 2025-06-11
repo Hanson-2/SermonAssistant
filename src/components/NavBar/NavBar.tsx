@@ -86,7 +86,7 @@ export default function NavBar() {
           </CustomNavDropdown>
           <span className="navbar-separator">|</span>
           <CustomNavDropdown label="Admin">
-            <Link to="/sermon-folder-management" className="custom-folder-dropdown-option" role="menuitem">Sermon Folder Management</Link>
+            <Link to="/sermon-folder-management" className="custom-folder-dropdown-option" role="menuitem">Expository Folder Management</Link>
             <div className="border-t border-gray-600 my-1" role="separator"></div>            <span className="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wide" role="presentation">Advanced Features</span>
             <Link to="/smart-categorization" className="custom-folder-dropdown-option" role="menuitem">Smart Categorization</Link>
             <Link to="/advanced-search" className="custom-folder-dropdown-option" role="menuitem">Search Expositions</Link>

@@ -18,8 +18,8 @@ html, body, #root {
 
 .pagination-btn {
   padding: 0.5rem 1rem;
-  background-color: #1f2937;
-  color: white;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   border: none;
   border-radius: 0.25rem;
   cursor: pointer;
@@ -27,7 +27,7 @@ html, body, #root {
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #374151;
+  background-color: var(--hover-bg);
 }
 
 .pagination-btn:disabled {

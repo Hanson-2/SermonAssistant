@@ -289,10 +289,9 @@ export default function TagManagementPage() {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     handleTagClick(tag.id);
-                  }
-                }}
+                  }                }}
                 aria-label={`Tag ${tag.name}`}
-                aria-expanded={activeOverlayTagId === tag.id}
+                aria-expanded={activeOverlayTagId === tag.id ? "true" : "false"}
               >
                 <span className="tag-label">{tag.name}</span>
                 {/* Desktop: Icon Overlay */}

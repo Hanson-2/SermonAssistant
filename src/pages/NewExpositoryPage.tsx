@@ -4,6 +4,7 @@ import { createSermon, uploadExpositoryImage, getSermonFolders, getSermonSeriesF
 import '../styles/edit-expository.scss';
 import MiniSermonList from '../components/MiniSermonList';
 import SermonFolderDropdown from '../components/SermonFolderDropdown';
+import { fetchTags, Tag } from '../services/tagService';
 
 export default function NewExpositoryPage() {
   const [title, setTitle] = useState("");
@@ -13,21 +14,25 @@ export default function NewExpositoryPage() {
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showExistingImages, setShowExistingImages] = useState(window.innerWidth > 768);
-  const [folderId, setFolderId] = useState<string | undefined>(undefined);
+  const [showExistingImages, setShowExistingImages] = useState(window.innerWidth > 768);  const [folderId, setFolderId] = useState<string | undefined>(undefined);
   const [seriesId, setSeriesId] = useState<string | undefined>(undefined);
   const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
   const [seriesList, setSeriesList] = useState<{ id: string; name: string }[]>([]);
+  
+  // Tag management state
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState("");
   const navigate = useNavigate();
   React.useEffect(() => {
     // Load existing images for selection
     import("../services/firebaseService").then(({ listExpositoryImages }) => {
       listExpositoryImages().then(setExistingImages).finally(() => setLoading(false));
     });
-    
-    // Fetch folders and series
+      // Fetch folders and series
     getSermonFolders().then(folders => setFolders(folders.filter(f => f.id).map(f => ({ id: f.id!, name: f.name }))));
     getSermonSeriesFunc().then(series => setSeriesList(series.filter(s => s.id).map(s => ({ id: s.id!, name: s.name }))));
+    fetchTags().then(tags => setAvailableTags(tags));
 
     // Handle window resize to adjust the visibility of the existing images section
     const handleResize = () => {
@@ -35,10 +40,52 @@ export default function NewExpositoryPage() {
     };
     
     window.addEventListener('resize', handleResize);
+      // Clean up the event listener
+    return () => window.removeEventListener('resize', handleResize);  }, []);
+
+  // Helper function to normalize tag display
+  const normalizeTagForDisplay = (tag: string): string => {
+    if (typeof tag !== 'string') return '';
+    return tag
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Tag management functions
+  const handleTagToggle = (tagName: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagName) 
+        ? prev.filter(t => t !== tagName)
+        : [...prev, tagName]
+    );
+  };
+
+  const handleAddNewTag = async () => {
+    const trimmed = newTagInput.trim();
+    if (!trimmed) return;
     
-    // Clean up the event listener
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    try {
+      const { addTag } = await import('../services/tagService');
+      await addTag(trimmed);
+      
+      // Refresh available tags
+      const updatedTags = await fetchTags();
+      setAvailableTags(updatedTags);
+      
+      // Add to selected tags
+      setSelectedTags(prev => [...prev, trimmed]);
+      setNewTagInput("");
+    } catch (error) {
+      console.error('Failed to add new tag:', error);
+    }
+  };
+
+  const handleRemoveTag = (tagName: string) => {
+    setSelectedTags(prev => prev.filter(t => t !== tagName));
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -51,14 +98,13 @@ export default function NewExpositoryPage() {
     let imageUrl = selectedImageUrl;
     if (imageFile) {
       imageUrl = await uploadExpositoryImage(imageFile);
-    }
+    }    const currentDate = new Date().toISOString().split('T')[0]; // Generate date in YYYY-MM-DD format
 
-    const currentDate = new Date().toISOString().split('T')[0]; // Generate date in YYYY-MM-DD format
-
-    await createSermon({
+    // Create sermon data with only defined values
+    const sermonData: any = {
       title,
       description,
-      date: currentDate, // Add generated date
+      date: currentDate,
       imageUrl,
       isArchived: false,
       imageOnly: false,
@@ -67,9 +113,18 @@ export default function NewExpositoryPage() {
       bibleChapter: undefined,
       bibleStartVerse: undefined,
       bibleEndVerse: undefined,
-      folderId: folderId,
-      seriesId: seriesId,
-    });
+      tags: selectedTags,
+    };
+
+    // Only include folderId and seriesId if they have values
+    if (folderId) {
+      sermonData.folderId = folderId;
+    }
+    if (seriesId) {
+      sermonData.seriesId = seriesId;
+    }
+
+    await createSermon(sermonData);
 
     // Add a short delay to ensure Firestore indexes the new record before navigation
     setTimeout(() => {
@@ -134,8 +189,7 @@ export default function NewExpositoryPage() {
               value={folderId ?? null}
               onChange={id => setFolderId(id ?? undefined)}
             />
-            <label className="form-label" htmlFor="seriesSelect">Assign to Series</label>
-            <select
+            <label className="form-label" htmlFor="seriesSelect">Assign to Series</label>            <select
               id="seriesSelect"
               className="form-input"
               value={seriesId || ''}
@@ -147,6 +201,71 @@ export default function NewExpositoryPage() {
                 <option key={series.id} value={series.id}>{series.name}</option>
               ))}
             </select>
+
+            {/* Tag Management Section */}
+            <div className="tag-management-section">
+              <label className="form-label">Tags</label>
+              
+              {/* Selected Tags Display */}
+              {selectedTags.length > 0 && (
+                <div className="selected-tags-container">
+                  <div className="selected-tags-label">Selected Tags:</div>
+                  <div className="selected-tags-list">                    {selectedTags.map(tag => (
+                      <div key={tag} className="selected-tag">
+                        <span className="tag-name">{normalizeTagForDisplay(tag)}</span>
+                        <button 
+                          type="button"
+                          className="remove-tag-btn"
+                          onClick={() => handleRemoveTag(tag)}
+                          aria-label={`Remove ${tag} tag`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Add New Tag */}
+              <div className="new-tag-input-container">
+                <input
+                  type="text"
+                  className="new-tag-input"
+                  placeholder="Enter new tag..."
+                  value={newTagInput}
+                  onChange={e => setNewTagInput(e.target.value)}
+                  onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleAddNewTag())}
+                />
+                <button 
+                  type="button"
+                  className="add-tag-btn"
+                  onClick={handleAddNewTag}
+                  disabled={!newTagInput.trim()}
+                >
+                  Add Tag
+                </button>
+              </div>
+
+              {/* Available Tags */}
+              {availableTags.length > 0 && (
+                <div className="available-tags-container">
+                  <div className="available-tags-label">Available Tags:</div>
+                  <div className="available-tags-list">                    {availableTags.map(tag => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        className={`available-tag ${selectedTags.includes(tag.name) ? 'selected' : ''}`}
+                        onClick={() => handleTagToggle(tag.name)}
+                      >
+                        {normalizeTagForDisplay(tag.name)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button type="submit" className="primary-action-button">Add Expository</button>
           </form>
 

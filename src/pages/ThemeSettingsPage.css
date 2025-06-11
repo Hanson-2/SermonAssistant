@@ -117,118 +117,7 @@
 }
 
 .preview-button:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-/* Preview Toggle */
-.preview-toggle {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  text-align: center;
-  box-shadow: var(--card-shadow);
-}
-
-.preview-toggle .checkbox-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  cursor: pointer;
-  margin-bottom: 0.5rem;
-}
-
-.preview-toggle input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--primary-color);
-  cursor: pointer;
-}
-
-.preview-toggle small {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  display: block;
-}
-
-/* Preview Toggle Button - New Styles */
-.preview-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7em;
-  padding: 0.6em 1.2em;
-  font-size: 1.08rem;
-  font-weight: 600;
-  border-radius: 2em;
-  border: none;
-  background: linear-gradient(180deg, #232323 80%, #181818 100%);
-  color: #e0c97f;
-  box-shadow: 0 2px 6px #000a, 0 1px 0 #fff2 inset;
-  text-shadow: 0 2px 4px #000a, 0 1px 0 #fff2;
-  transition: box-shadow 0.18s, background 0.18s, color 0.18s;
-  outline: none;
-  position: relative;
-  cursor: pointer;
-  border-bottom: 2.5px solid #bfa14a;
-  margin-bottom: 0.5em;
-}
-
-.preview-toggle-btn .toggle-label {
-  letter-spacing: 0.01em;
-  font-weight: 600;
-}
-
-.preview-toggle-btn .toggle-indicator {
-  width: 2.1em;
-  height: 1.1em;
-  border-radius: 1em;
-  background: linear-gradient(90deg, #444 60%, #222 100%);
-  box-shadow: 0 1px 2px #0007 inset;
-  margin-left: 0.7em;
-  position: relative;
-  transition: background 0.18s;
-  display: inline-block;
-}
-
-.preview-toggle-btn .toggle-indicator::after {
-  content: '';
-  display: block;
-  width: 1em;
-  height: 1em;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #e0c97f 60%, #bfa14a 100%);
-  box-shadow: 0 1px 2px #0007;
-  position: absolute;
-  top: 0.05em;
-  left: 0.1em;
-  transition: left 0.18s, background 0.18s;
-}
-
-.preview-toggle-btn.active {
-  background: linear-gradient(180deg, #181818 80%, #232323 100%);
-  color: #bfa14a;
-  box-shadow: 0 2px 8px #000c, 0 1px 0 #fff2 inset;
-  border-bottom: 2.5px solid #e0c97f;
-  text-shadow: 0 2px 6px #000a, 0 1px 0 #fff2;
-}
-
-.preview-toggle-btn.active .toggle-indicator {
-  background: linear-gradient(90deg, #e0c97f 60%, #bfa14a 100%);
-}
-
-.preview-toggle-btn.active .toggle-indicator::after {
-  left: 1em;
-  background: linear-gradient(135deg, #232323 60%, #181818 100%);
-}
-
-.preview-toggle-btn:focus {
-  box-shadow: 0 0 0 3px #e0c97f55, 0 2px 6px #000a, 0 1px 0 #fff2 inset;
+  background: var(--primary-hover);  transform: translateY(-1px);
 }
 
 /* Settings Grid */
@@ -1237,5 +1126,65 @@
     .actions {
       margin-bottom: max(4rem, env(safe-area-inset-bottom) + 3rem);
     }
+  }
+}
+
+/* Light Theme Contrast Enhancements */
+:root[data-theme="light"] .page-header p,
+:root[data-theme="light"] .theme-settings-header p {
+  color: #374151 !important; /* Darker gray for better contrast */
+  opacity: 1 !important; /* Remove opacity that might be making it lighter */
+}
+
+:root[data-theme="light"] .upload-hint {
+  color: #374151 !important; /* Darker gray for better contrast */
+}
+
+:root[data-theme="light"] .checkbox-group small {
+  color: #374151 !important; /* Darker gray for better contrast */
+}
+
+:root[data-theme="light"] .size-label,
+:root[data-theme="light"] .height-label,
+:root[data-theme="light"] .spacing-label {
+  color: #374151 !important; /* Darker gray for better contrast */
+}
+
+:root[data-theme="light"] .preset-codes small {
+  color: #4b5563 !important; /* Darker gray for better contrast */
+}
+
+:root[data-theme="light"] .toggle-label {
+  color: #374151 !important; /* Darker gray for better contrast */
+}
+
+/* Auto theme support */
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] .page-header p,
+  :root[data-theme="auto"] .theme-settings-header p {
+    color: #374151 !important; /* Darker gray for better contrast */
+    opacity: 1 !important; /* Remove opacity that might be making it lighter */
+  }
+
+  :root[data-theme="auto"] .upload-hint {
+    color: #374151 !important; /* Darker gray for better contrast */
+  }
+
+  :root[data-theme="auto"] .checkbox-group small {
+    color: #374151 !important; /* Darker gray for better contrast */
+  }
+
+  :root[data-theme="auto"] .size-label,
+  :root[data-theme="auto"] .height-label,
+  :root[data-theme="auto"] .spacing-label {
+    color: #374151 !important; /* Darker gray for better contrast */
+  }
+
+  :root[data-theme="auto"] .preset-codes small {
+    color: #4b5563 !important; /* Darker gray for better contrast */
+  }
+
+  :root[data-theme="auto"] .toggle-label {
+    color: #374151 !important; /* Darker gray for better contrast */
   }
 }

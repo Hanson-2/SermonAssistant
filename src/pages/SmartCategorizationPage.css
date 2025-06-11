@@ -236,6 +236,18 @@
   font-size: 0.875rem;
 }
 
+/* Light Theme Contrast Fixes for Smart Categorization */
+:root[data-theme="light"] .form-group small {
+  color: #374151 !important; /* Better contrast for light mode */
+}
+
+/* Auto theme support */
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] .form-group small {
+    color: #374151 !important; /* Better contrast for light mode */
+  }
+}
+
 .form-actions {
   display: flex;
   gap: 1rem;

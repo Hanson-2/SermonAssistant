@@ -7,6 +7,9 @@ import {
 } from '../services/firebaseService';
 import { SermonAnalytics, Sermon, SermonCategory, SermonSeries } from '../services/firebaseService';
 import { Link } from 'react-router-dom';
+import { extractScriptureReferences } from '../utils/smartParseScriptureInput';
+import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from '../utils/bookOrder';
+import { bookAliases } from '../hooks/useScriptureAutocomplete';
 import './AnalyticsDashboardPage.css';
 
 const AnalyticsDashboardPage: React.FC = () => {
@@ -158,7 +161,6 @@ const AnalyticsDashboardPage: React.FC = () => {
       .map(([seriesTitle, count]) => ({ seriesTitle, count }))
       .sort((a, b) => b.count - a.count);
   };
-
   const getTagStats = () => {
     const tagCount: { [key: string]: number } = {};
     getSafeSermons().forEach(sermon => {
@@ -174,8 +176,123 @@ const AnalyticsDashboardPage: React.FC = () => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10); // Top 10 tags
   };
-
-  // --- Most Referenced Books: Extract from notes, count by book and chapter ---
+  // Helper function to normalize book names to canonical forms
+  const normalizeBookName = (bookName: string): string => {
+    if (!bookName) return bookName;
+    
+    // First, try to normalize through aliases (handles abbreviations)
+    const normalizedKey = bookName.replace(/[.\s]/g, "").toLowerCase();
+    const aliasMatch = bookAliases[normalizedKey];
+    if (aliasMatch) {
+      return aliasMatch;
+    }
+    
+    // If no alias match, try to find exact match in canonical books (case-insensitive)
+    const allBooks = [...CANONICAL_BOOKS, ...EXTRA_CANONICAL_BOOKS];
+    const exactMatch = allBooks.find(book => 
+      book.toLowerCase() === bookName.toLowerCase()
+    );
+    if (exactMatch) {
+      return exactMatch;
+    }
+    
+    // Handle common spelling variations, typos, and alternative forms
+    const inputLower = bookName.toLowerCase().trim();
+    const partialMatch = allBooks.find(book => {
+      const bookLower = book.toLowerCase();
+      
+      // Genesis variations
+      if (bookLower === 'genesis' && (
+        inputLower === 'henesis' || 
+        inputLower === 'genisis' || 
+        inputLower === 'gensis' ||
+        inputLower === 'gen'
+      )) {
+        return true;
+      }
+      
+      // Psalms variations
+      if (bookLower === 'psalms' && (
+        inputLower === 'psalm' || 
+        inputLower === 'pslm' ||
+        inputLower === 'ps' ||
+        inputLower === 'psa'
+      )) {
+        return true;
+      }
+      
+      // Matthew variations
+      if (bookLower === 'matthew' && (
+        inputLower === 'mathew' || 
+        inputLower === 'matt' ||
+        inputLower === 'mt'
+      )) {
+        return true;
+      }
+      
+      // Revelation variations
+      if (bookLower === 'revelation' && (
+        inputLower === 'revelations' || 
+        inputLower === 'rev' ||
+        inputLower === 're'
+      )) {
+        return true;
+      }
+      
+      // Romans variations
+      if (bookLower === 'romans' && (
+        inputLower === 'rom' ||
+        inputLower === 'ro'
+      )) {
+        return true;
+      }
+      
+      // Corinthians variations
+      if (bookLower === '1 corinthians' && (
+        inputLower === '1corinthians' ||
+        inputLower === '1 cor' ||
+        inputLower === '1cor' ||
+        inputLower === 'i corinthians'
+      )) {
+        return true;
+      }
+      
+      if (bookLower === '2 corinthians' && (
+        inputLower === '2corinthians' ||
+        inputLower === '2 cor' ||
+        inputLower === '2cor' ||
+        inputLower === 'ii corinthians'
+      )) {
+        return true;
+      }
+      
+      // John variations (careful not to match 1,2,3 John)
+      if (bookLower === 'john' && inputLower === 'jn' && !inputLower.includes('1') && !inputLower.includes('2') && !inputLower.includes('3')) {
+        return true;
+      }
+      
+      // Acts variations
+      if (bookLower === 'acts' && inputLower === 'ac') {
+        return true;
+      }
+      
+      // Handle numbered books with space variations
+      if (bookLower.includes(' ') && inputLower.replace(/\s+/g, '') === bookLower.replace(/\s+/g, '')) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    if (partialMatch) {
+      return partialMatch;
+    }
+    
+    // Fallback: return the book name with proper capitalization
+    return bookName.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };// --- Most Referenced Books: Extract from notes, count by book and chapter ---
   const getBooksStats = () => {
     const bookCount: { [book: string]: number } = {};
     const chapterCount: { [book: string]: { [chapter: string]: number } } = {};
@@ -195,11 +312,18 @@ const AnalyticsDashboardPage: React.FC = () => {
         allNotes += ' ' + sermon.description;
       }
       if (allNotes) {
-        const refs = extractScriptureReferences(allNotes);
-        refs.forEach(({ book, chapter }) => {
-          bookCount[book] = (bookCount[book] || 0) + 1;
-          if (!chapterCount[book]) chapterCount[book] = {};
-          chapterCount[book][chapter] = (chapterCount[book][chapter] || 0) + 1;
+        // Remove HTML tags if present
+        const plainText = allNotes.replace(/<[^>]+>/g, ' ');
+        const refs = extractScriptureReferences(plainText);
+        refs.forEach((ref) => {
+          // Normalize the book name to handle variations and spellings
+          const normalizedBook = normalizeBookName(ref.book);
+          const chapter = ref.chapter;
+          
+          bookCount[normalizedBook] = (bookCount[normalizedBook] || 0) + 1;
+          if (!chapterCount[normalizedBook]) chapterCount[normalizedBook] = {};
+          const chapterStr = chapter.toString();
+          chapterCount[normalizedBook][chapterStr] = (chapterCount[normalizedBook][chapterStr] || 0) + 1;
         });
       }
     });
@@ -208,23 +332,6 @@ const AnalyticsDashboardPage: React.FC = () => {
       .sort((a, b) => b.count - a.count);
     return { booksArray, chapterCount };
   };
-
-  // Utility: Extract all references like "BookName Chapter:Verse" from a string, stripping HTML
-  function extractScriptureReferences(text: string): { book: string, chapter: string }[] {
-    // Remove HTML tags if present
-    const plain = text.replace(/<[^>]+>/g, ' ');
-    // Regex matches e.g. "Genesis 1:1", "1 John 2:3", "Song of Solomon 3:4", with optional dash/colon/space
-    const regex = /([1-3]?\s?[A-Za-z .]+?)\s+(\d+):\d+(?:[-–]\d+)?/g;
-    const results: { book: string, chapter: string }[] = [];
-    let match;
-    while ((match = regex.exec(plain)) !== null) {
-      const book = match[1].replace(/\s+/g, ' ').trim();
-      const chapter = match[2];
-      results.push({ book, chapter });
-    }
-    return results;
-  }
-
   const getTimeframePeriod = () => {
     const now = new Date();
     switch (selectedTimeframe) {
@@ -497,93 +604,115 @@ const AnalyticsDashboardPage: React.FC = () => {
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Charts and Analytics */}
-      <div className="analytics-grid">
-        {/* Top Tags */}
-        <div className={`analytics-card analytics-card-scrollable${collapsedCards.tags ? ' collapsed' : ''}`} title="Shows the top 10 tags used across all sermons.">
-          <div className="analytics-card-header" onClick={() => toggleCardCollapse('tags')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
-            <span>{collapsedCards.tags ? '▶' : '▼'}</span>
-            <h3 style={{margin:0}}>Most Used Tags</h3>
-          </div>
-          {!collapsedCards.tags && (
-            <div className="chart-container analytics-card-content-scrollable">
-              {getTagStats().length === 0 ? (
-                <p className="no-data">No tags assigned to sermons yet.</p>
-              ) : (
-                <div className="tag-cloud">
-                  {getTagStats().map(({ tag, count }, index) => (
-                    <span 
-                      key={tag} 
-                      className="tag-item"
-                      style={{
-                        fontSize: `${Math.max(0.8, count / 5)}rem`,
-                        color: `hsl(${index * 30}, 70%, 65%)`,
-                        cursor: 'pointer',
-                        margin: '0 6px',
-                      }}
-                      title={`Used in ${count} sermon${count !== 1 ? 's' : ''}`}
-                    >
-                      {tag} ({count})
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Most Referenced Books */}
+      </div>      {/* Most Referenced Books - Full Width Row */}
+      <div className="analytics-books-row">
         <div className={`analytics-card analytics-card-scrollable${collapsedCards.books ? ' collapsed' : ''}`} title="Shows all Bible books referenced in your sermons, ordered by total references.">
           <div className="analytics-card-header" onClick={() => toggleCardCollapse('books')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
             <span>{collapsedCards.books ? '▶' : '▼'}</span>
             <h3 style={{margin:0}}>Most Referenced Books</h3>
           </div>
           {!collapsedCards.books && (
-            <div className="chart-container analytics-card-content-scrollable">
-              <div className="bar-chart">
-                {getBooksStats().booksArray.map(({ book, count }, index) => (
-                  <div key={book} className="bar-item">
-                    <div
-                      className="bar-label clickable"
-                      title={`Book: ${book}`}
-                      style={{ cursor: 'pointer', fontWeight: 'bold' }}
-                      onClick={() => handleBookClick(book)}
-                    >
-                      {book}
-                      <span style={{ marginLeft: 8, fontSize: '0.9em', color: '#ffe082' }}>
-                        {expandedBooks.includes(book) ? '▼' : '▶'}
-                      </span>
-                    </div>
-                    <div className="bar-container">
+            <>
+              {/* Horizontal divider line */}
+              <div className="books-divider"></div>
+              <div className="chart-container analytics-card-content-scrollable">
+                <div className="bar-chart books-bar-chart">
+                  {getBooksStats().booksArray.map(({ book, count }, index) => (
+                    <div key={book} className="bar-item books-bar-item">
                       <div
-                        className="bar"
-                        style={{
-                          width: `${(count / Math.max(...getBooksStats().booksArray.map(s => s.count))) * 100}%`,
-                          backgroundColor: `hsl(${index * 36}, 60%, 50%)`
-                        }}
-                        title={`Referenced ${count} time${count !== 1 ? 's' : ''}`}
-                      ></div>
-                      <span className="bar-value">{count}</span>
-                    </div>
-                    {/* Chapter breakdown dropdown */}
-                    {expandedBooks.includes(book) && (
-                      <div style={{ marginLeft: 24, marginTop: 4, paddingBottom: 8 }}>
-                        {Object.entries(getBooksStats().chapterCount[book] || {})
-                          .sort((a, b) => Number(a[0]) - Number(b[0]))
-                          .map(([chapter, chapCount]) => (
-                            <div key={chapter} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.98em', color: '#ffe082' }}>
-                              <span style={{ minWidth: 40, fontWeight: 500 }}>Ch. {chapter}</span>
-                              <span style={{ fontWeight: 400, color: '#fffbe6' }}>{chapCount}</span>
-                            </div>
-                          ))}
+                        className="bar-label clickable books-bar-label"
+                        title={`Book: ${book}`}
+                        style={{ cursor: 'pointer', fontWeight: 'bold' }}
+                        onClick={() => handleBookClick(book)}
+                      >
+                        {book}
+                        <span style={{ marginLeft: 8, fontSize: '0.9em', color: '#ffe082' }}>
+                          {expandedBooks.includes(book) ? '▼' : '▶'}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                ))}
+                      <div className="bar-container books-bar-container">
+                        <div
+                          className="bar books-bar"
+                          style={{
+                            width: `${(count / Math.max(...getBooksStats().booksArray.map(s => s.count))) * 100}%`,
+                            background: `linear-gradient(135deg, 
+                              hsl(${(index * 25 + 180) % 360}, 70%, 55%) 0%, 
+                              hsl(${(index * 25 + 200) % 360}, 65%, 45%) 50%, 
+                              hsl(${(index * 25 + 220) % 360}, 60%, 35%) 100%)`,
+                            animationDelay: `${index * 0.1}s`
+                          }}
+                          title={`Referenced ${count} time${count !== 1 ? 's' : ''}`}
+                        ></div>
+                        <span className="bar-value books-bar-value">{count}</span>
+                      </div>
+                      {/* Chapter breakdown dropdown */}
+                      {expandedBooks.includes(book) && (
+                        <div className="chapter-breakdown" style={{ marginLeft: 24, marginTop: 4, paddingBottom: 8 }}>
+                          {Object.entries(getBooksStats().chapterCount[book] || {})
+                            .sort((a, b) => Number(a[0]) - Number(b[0]))
+                            .map(([chapter, chapCount]) => (
+                              <div key={chapter} className="chapter-item" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.98em', color: '#ffe082' }}>
+                                <span style={{ minWidth: 40, fontWeight: 500 }}>Ch. {chapter}</span>
+                                <span style={{ fontWeight: 400, color: '#fffbe6' }}>{chapCount}</span>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Charts and Analytics - Remaining Cards */}
+      <div className="analytics-grid">        {/* Top Tags */}
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.tags ? ' collapsed' : ''}`} title="Shows the top 10 tags used across all sermons.">
+          <div className="analytics-card-header" onClick={() => toggleCardCollapse('tags')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
+            <span>{collapsedCards.tags ? '▶' : '▼'}</span>
+            <h3 style={{margin:0}}>Most Used Tags</h3>
+          </div>
+          {!collapsedCards.tags && (
+            <>
+              {/* Horizontal divider line */}
+              <div className="tags-divider"></div>
+              <div className="chart-container analytics-card-content-scrollable">
+                {getTagStats().length === 0 ? (
+                  <p className="no-data">No tags assigned to sermons yet.</p>
+                ) : (
+                  <div className="bar-chart tags-bar-chart">
+                    {getTagStats().map(({ tag, count }, index) => (
+                      <div key={tag} className="bar-item tags-bar-item">
+                        <div
+                          className="bar-label tags-bar-label"
+                          title={`Tag: ${tag}`}
+                          style={{ fontWeight: 'bold' }}
+                        >
+                          {tag}
+                        </div>
+                        <div className="bar-container tags-bar-container">
+                          <div
+                            className="bar tags-bar"
+                            style={{
+                              width: `${(count / Math.max(...getTagStats().map(s => s.count))) * 100}%`,
+                              background: `linear-gradient(135deg, 
+                                hsl(${(index * 30 + 120) % 360}, 75%, 60%) 0%, 
+                                hsl(${(index * 30 + 140) % 360}, 70%, 50%) 50%, 
+                                hsl(${(index * 30 + 160) % 360}, 65%, 40%) 100%)`,
+                              animationDelay: `${index * 0.1}s`
+                            }}
+                            title={`Used in ${count} sermon${count !== 1 ? 's' : ''}`}
+                          ></div>
+                          <span className="bar-value tags-bar-value">{count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 

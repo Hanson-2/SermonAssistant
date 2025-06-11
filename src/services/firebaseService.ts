@@ -566,9 +566,46 @@ export async function batchUpdateVerseTags(updates: BatchVerseTagUpdate[]): Prom
   }
 }
 
-export async function updateSermonNotes(sermonId: string, notes: Record<string, string>): Promise<void> {
+export async function updateSermonNotes(sermonId: string, notes: Record<string, string>, slideScriptureRefs?: Record<number, any[]>): Promise<void> {
   const sermonRef = doc(db, "sermons", sermonId);
-  await updateDoc(sermonRef, { notes });
+  const updateData: any = { notes };
+  
+  console.log('[firebaseService] ====== updateSermonNotes CALLED ======');
+  console.log('[firebaseService] sermonId:', sermonId);
+  console.log('[firebaseService] notes:', notes);
+  console.log('[firebaseService] slideScriptureRefs provided:', slideScriptureRefs !== undefined);
+  
+  // Include slideScriptureRefs if provided
+  if (slideScriptureRefs !== undefined) {
+    updateData.slideScriptureRefs = slideScriptureRefs;
+    console.log('[firebaseService] updateSermonNotes saving slideScriptureRefs:', JSON.stringify(slideScriptureRefs, null, 2));
+    
+    // Log each slide's refs
+    Object.entries(slideScriptureRefs).forEach(([key, refs]) => {
+      console.log(`[firebaseService] Slide ${key} has ${refs.length} refs:`, refs);
+    });
+  } else {
+    console.log('[firebaseService] updateSermonNotes called without slideScriptureRefs');
+  }
+  
+  console.log('[firebaseService] Final updateData structure:', JSON.stringify(updateData, null, 2));
+  
+  try {
+    await updateDoc(sermonRef, updateData);
+    console.log('[firebaseService] updateSermonNotes successfully saved to Firestore');
+    
+    // Verify the save by reading it back immediately
+    const savedDoc = await getDoc(sermonRef);
+    if (savedDoc.exists()) {
+      const savedData = savedDoc.data();
+      console.log('[firebaseService] Verification: Data after save:', JSON.stringify(savedData.slideScriptureRefs, null, 2));
+    }
+  } catch (error) {
+    console.error('[firebaseService] updateSermonNotes failed:', error);
+    throw error;
+  }
+  
+  console.log('[firebaseService] ====== updateSermonNotes COMPLETE ======');
 }
 
 // Update Sermon type to include folderId
@@ -584,6 +621,7 @@ export type Sermon = {
   date: string;
   imageUrl?: string;
   notes?: Record<string, string>;
+  slideScriptureRefs?: Record<number, any[]>; // New: per-slide scripture references
   folderId?: string; // New: folder assignment
   seriesId?: string;
   category?: string;
@@ -1091,3 +1129,55 @@ export async function deleteExpositoryImage(imageUrl: string): Promise<void> {
     throw err;
   }
 }
+
+/**
+ * Get all verses that contain a specific tag, organized by book and chapter
+ */
+export async function getVersesByTag(tagName: string): Promise<{ [book: string]: { [chapter: number]: Verse[] } }> {
+  const normalizedTag = normalizeTagForDisplay(tagName);
+  const q = query(versesRef, where("tags", "array-contains", normalizedTag));
+  const snapshot = await getDocs(q);
+  
+  const versesByBookChapter: { [book: string]: { [chapter: number]: Verse[] } } = {};
+  
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    const verse: Verse = {
+      id: doc.id,
+      verse: String(data.verse),
+      text: data.text,
+      translation: data.translation,
+      book: data.book || '',
+      chapter: data.chapter || 0,
+    };
+    
+    const bookName = verse.book;
+    const chapterNum = verse.chapter;
+    
+    if (bookName && chapterNum) {
+      if (!versesByBookChapter[bookName]) {
+        versesByBookChapter[bookName] = {};
+      }
+      
+      if (!versesByBookChapter[bookName][chapterNum]) {
+        versesByBookChapter[bookName][chapterNum] = [];
+      }
+      
+      versesByBookChapter[bookName][chapterNum].push(verse);
+    }
+  });
+  
+  // Sort verses within each chapter
+  Object.keys(versesByBookChapter).forEach(book => {
+    Object.keys(versesByBookChapter[book]).forEach(chapterKey => {
+      const chapter = Number(chapterKey);
+      versesByBookChapter[book][chapter].sort((a, b) => parseInt(a.verse) - parseInt(b.verse));
+    });
+  });
+  
+  return versesByBookChapter;
+}
+
+/**
+ * Update tags for a specific verse document
+ */

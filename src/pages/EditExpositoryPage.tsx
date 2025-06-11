@@ -6,6 +6,7 @@ import "../styles/edit-expository.scss";
 import MiniSermonList from '../components/MiniSermonList';
 import SermonFolderDropdown from '../components/SermonFolderDropdown';
 import { getSermonFolders, getSermonSeriesFunc } from '../services/firebaseService';
+import { fetchTags, Tag } from '../services/tagService';
 
 export default function EditExpositoryPage() {
   const { id: sermonId } = useParams();
@@ -22,6 +23,11 @@ export default function EditExpositoryPage() {
   const [seriesId, setSeriesId] = useState<string | undefined>(undefined);
   const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
   const [seriesList, setSeriesList] = useState<{ id: string; name: string }[]>([]);
+  
+  // Tag management state
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState("");
 
   useEffect(() => {
     if (!sermonId) {
@@ -39,8 +45,7 @@ export default function EditExpositoryPage() {
     
     window.addEventListener('resize', handleResize);
     
-    setLoading(true);
-    getSermon(sermonId)
+    setLoading(true);    getSermon(sermonId)
       .then(sermon => {
         if (sermon) {
           setTitle(sermon.title || "");
@@ -48,6 +53,7 @@ export default function EditExpositoryPage() {
           setImagePreview(sermon.imageUrl || "");
           setFolderId(sermon.folderId);
           setSeriesId(sermon.seriesId);
+          setSelectedTags(sermon.tags || []);
         } else {
           setError("Sermon not found. Redirecting to dashboard...");
           setTimeout(() => navigate("/dashboard"), 2000);
@@ -60,10 +66,10 @@ export default function EditExpositoryPage() {
       .finally(() => {
         listExpositoryImages().then(setExistingImages);
         setLoading(false);
-      });
-      
+      });      
     getSermonFolders().then(folders => setFolders(folders.filter(f => f.id).map(f => ({ id: f.id!, name: f.name }))));
     getSermonSeriesFunc().then(series => setSeriesList(series.filter(s => s.id).map(s => ({ id: s.id!, name: s.name }))));
+    fetchTags().then(tags => setAvailableTags(tags));
 
     // Clean up the event listener
     return () => window.removeEventListener('resize', handleResize);
@@ -75,10 +81,52 @@ export default function EditExpositoryPage() {
       setImagePreview(URL.createObjectURL(e.target.files[0]));
     }
   };
-
   const handleImageSelect = (url: string) => {
     setImageFile(null);
     setImagePreview(url);
+  };
+  // Helper function to normalize tag display
+  const normalizeTagForDisplay = (tag: string): string => {
+    if (typeof tag !== 'string') return '';
+    return tag
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Tag management functions
+  const handleTagToggle = (tagName: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagName) 
+        ? prev.filter(t => t !== tagName)
+        : [...prev, tagName]
+    );
+  };
+
+  const handleAddNewTag = async () => {
+    const trimmed = newTagInput.trim();
+    if (!trimmed) return;
+    
+    try {
+      const { addTag } = await import('../services/tagService');
+      await addTag(trimmed);
+      
+      // Refresh available tags
+      const updatedTags = await fetchTags();
+      setAvailableTags(updatedTags);
+      
+      // Add to selected tags
+      setSelectedTags(prev => [...prev, trimmed]);
+      setNewTagInput("");
+    } catch (error) {
+      console.error('Failed to add new tag:', error);
+    }
+  };
+
+  const handleRemoveTag = (tagName: string) => {
+    setSelectedTags(prev => prev.filter(t => t !== tagName));
   };
 
   // Add handler for deleting an image
@@ -92,9 +140,7 @@ export default function EditExpositoryPage() {
     } catch (err) {
       alert('Failed to delete image.');
     }
-  };
-
-  const handleSubmit = async () => {
+  };  const handleSubmit = async () => {
     if (!sermonId) {
       setError("Invalid Sermon ID. Cannot save changes.");
       return;
@@ -106,13 +152,24 @@ export default function EditExpositoryPage() {
         finalImageUrl = uploadedUrl;
       }
     }
-    await updateSermon(sermonId, {
+    
+    // Create update object with only defined values
+    const updateData: any = {
       title: title.trim() || "Untitled Sermon",
       description: description.trim() || "No description provided.",
       imageUrl: finalImageUrl || "",
-      folderId: folderId,
-      seriesId: seriesId,
-    });
+      tags: selectedTags,
+    };
+    
+    // Only include folderId and seriesId if they have values
+    if (folderId) {
+      updateData.folderId = folderId;
+    }
+    if (seriesId) {
+      updateData.seriesId = seriesId;
+    }
+    
+    await updateSermon(sermonId, updateData);
     navigate("/dashboard");
   };
   if (loading) {
@@ -148,11 +205,19 @@ export default function EditExpositoryPage() {
           </div>
         </div>
       </div>
-    );
-  }
+    );  }
 
   return (
     <div className="edit-expository-page">
+      {/* Back Button */}
+      <button 
+        className="back-to-details-btn"
+        onClick={() => navigate(`/expository/${sermonId}`)}
+        title="Back to Expository Details"
+      >
+        ← Back to Expository
+      </button>
+      
       <div className="edit-expository-layout">
         <div className="mini-dashboard-panel">
           <MiniSermonList />
@@ -195,8 +260,7 @@ export default function EditExpositoryPage() {
               folders={folders}
               value={folderId ?? null}
               onChange={id => setFolderId(id ?? undefined)}
-            />
-            <label className="form-label" htmlFor="seriesSelect">Assign to Series</label>
+            />            <label className="form-label" htmlFor="seriesSelect">Assign to Series</label>
             <select
               id="seriesSelect"
               className="form-input"
@@ -209,6 +273,72 @@ export default function EditExpositoryPage() {
                 <option key={series.id} value={series.id}>{series.name}</option>
               ))}
             </select>
+
+            {/* Tag Management Section */}
+            <div className="tag-management-section">
+              <label className="form-label">Tags</label>
+              
+              {/* Selected Tags Display */}
+              {selectedTags.length > 0 && (
+                <div className="selected-tags-container">                  {selectedTags.map(tag => (
+                    <span key={tag} className="selected-tag">
+                      {normalizeTagForDisplay(tag)}
+                      <button
+                        type="button"
+                        className="remove-tag-btn"
+                        onClick={() => handleRemoveTag(tag)}
+                        aria-label={`Remove tag: ${tag}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Add New Tag Input */}
+              <div className="add-tag-container">
+                <input
+                  type="text"
+                  className="form-input new-tag-input"
+                  placeholder="Add new tag..."
+                  value={newTagInput}
+                  onChange={(e) => setNewTagInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddNewTag();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="add-tag-btn"
+                  onClick={handleAddNewTag}
+                  disabled={!newTagInput.trim()}
+                >
+                  Add Tag
+                </button>
+              </div>
+
+              {/* Available Tags Selection */}
+              {availableTags.length > 0 && (
+                <div className="available-tags-section">
+                  <span className="available-tags-label">Available Tags:</span>
+                  <div className="available-tags-container">                    {availableTags.map(tag => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        className={`available-tag ${selectedTags.includes(tag.name) ? 'selected' : ''}`}
+                        onClick={() => handleTagToggle(tag.name)}
+                      >
+                        {normalizeTagForDisplay(tag.name)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <button type="submit" className="primary-action-button">Save Changes</button>
           </form>

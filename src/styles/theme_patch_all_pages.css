@@ -33,11 +33,11 @@ body,
   font-size: 2.8rem !important;
   font-family: 'Georgia', 'Trajan Pro', serif !important;
   font-weight: 700 !important;
-  color: #e0c97f !important;
+  color: var(--primary-color) !important;
   letter-spacing: 1.5px !important;
   margin-bottom: 30px !important;
   text-align: center !important;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.18);
+  text-shadow: var(--text-shadow-gold);
 }
 
 /* 4. Optional Page Header Wrapper */
@@ -72,10 +72,9 @@ textarea,
 select {
   padding: 12px 15px !important;
   font-size: 1rem !important;
-  border: 1px solid #4B3A1A !important;
-  border-radius: 8px !important;
-  background: linear-gradient(to bottom, #1a1a1a, #242424) !important;
-  color: #e0c97f !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;  background: var(--input-bg) !important;
+  color: var(--text-primary) !important;
   font-weight: 500 !important;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.3) !important;
   transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s !important;
@@ -90,8 +89,8 @@ input[type="url"]:focus,
 input[type="number"]:focus,
 textarea:focus,
 select:focus {
-  border-color: #f0e68c !important;
-  background-color: #2a2a2a !important;
+  border-color: var(--primary-color) !important;
+  background-color: var(--input-bg) !important;
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), 0 0 0 3px rgba(224, 201, 127, 0.3), 0 1px 2px rgba(0,0,0,0.3) !important;
   outline: none !important;
 }
@@ -107,7 +106,7 @@ textarea {
 /* Select dropdown styling */
 select {
   cursor: pointer !important;
-  background-image: linear-gradient(45deg, transparent 50%, #e0c97f 50%), linear-gradient(135deg, #e0c97f 50%, transparent 50%) !important;
+  background-image: linear-gradient(45deg, transparent 50%, var(--primary-color) 50%), linear-gradient(135deg, var(--primary-color) 50%, transparent 50%) !important;
   background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px) !important;
   background-size: 5px 5px, 5px 5px !important;
   background-repeat: no-repeat !important;
@@ -117,7 +116,7 @@ select {
 
 /* Modern form labels */
 label {
-  color: #e0c97f !important;
+  color: var(--primary-color) !important;
   font-weight: 600 !important;
   margin-bottom: 0.5rem !important;
   display: block !important;

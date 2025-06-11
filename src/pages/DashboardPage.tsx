@@ -1,20 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import SermonGrid from "../components/SermonGrid";
-import { fetchSermons, fetchSermonsByFolder, getSermonFolders, SermonFolder } from "../services/firebaseService";
+import { fetchSermons, fetchSermonsByFolder, getSermonFolders, SermonFolder, getUserProfile, UserProfile } from "../services/firebaseService";
 import { Sermon } from "../components/SermonCard/SermonCard";
 import SermonFolderDropdown from "../components/SermonFolderDropdown";
+import { getAuth } from "firebase/auth";
 
 import "../pages/DashboardPage.css";
 import "../styles/shared-buttons.scss";
 import "../styles/scss/main.scss";
 import "../styles/custom-folder-dropdown.css";
 
+// Helper function to get time of day greeting
+const getTimeOfDayGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Morning";
+  if (hour >= 12 && hour < 17) return "Afternoon";
+  if (hour >= 17 && hour < 24) return "Evening";
+  return "Night";
+};
+
 export default function DashboardPage() {
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [folders, setFolders] = useState<SermonFolder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -39,12 +50,29 @@ export default function DashboardPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [filterOpen]);
+    };  }, [filterOpen]);
   
   useEffect(() => {
     getSermonFolders().then(setFolders);
   }, []);
+
+  // Load user profile for greeting
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const profile = await getUserProfile();
+        setUserProfile(profile);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+      }
+    };
+    
+    const auth = getAuth();
+    if (auth.currentUser) {
+      loadUserProfile();
+    }
+  }, []);
+
   useEffect(() => {
     if (selectedFolderId === undefined) return;
     if (selectedFolderId === null) {
@@ -133,10 +161,18 @@ export default function DashboardPage() {
       </div>
     );
   }
-
   return (
     <>
       <div className="min-h-screen flex flex-col items-center justify-start p-8">
+        {/* Time-of-day greeting header */}
+        {userProfile && (
+          <div className="dashboard-greeting-header w-full max-w-7xl mb-6">
+            <h1 className="dashboard-greeting-text">
+              Good {getTimeOfDayGreeting()}, {userProfile.displayName || 'there'}!
+            </h1>
+          </div>
+        )}
+        
         <div className="flex flex-col md:flex-row justify-between items-center px-6 pt-8 pb-4 w-full max-w-7xl relative">
           {/* Folder Filter Dropdown */}
           <div className="dashboard-filter mb-4 md:mb-0 mr-0 md:mr-4 w-full md:w-auto">
@@ -156,10 +192,9 @@ export default function DashboardPage() {
           </div>
           <button
             ref={filterButtonRef}
-            onClick={() => setFilterOpen(!filterOpen)}
-            className="filter-button"
+            onClick={() => setFilterOpen(!filterOpen)}            className="filter-button"
             aria-label="Filter"
-            aria-expanded={!!filterOpen}
+            aria-expanded={filterOpen ? "true" : "false"}
           >
             <svg
               className="w-6 h-6"

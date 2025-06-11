@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
 import CustomRichTextEditor from '../components/CustomRichTextEditor';
-import MinimalTiptapTest from '../components/MinimalTiptapTest';
 import "./ExpositoryDetailPage.css"; // Reuse styles
 
 export default function TestExpositoryEditorPage() {
@@ -34,8 +33,6 @@ export default function TestExpositoryEditorPage() {
         <div className="expository-main-content">
           <div className="slide-editor-vertical-layout">            <div className="slide-editor-notes-area" style={{ border: '2px dashed green', padding: '1rem', minHeight: '400px' }}>
               <h3 style={{ color: 'white', marginBottom: '1rem' }}>Simple Editor Test</h3>
-              
-              <MinimalTiptapTest />
               
               <div style={{ marginTop: '2rem' }}>
                 <h4 style={{ color: 'white', marginBottom: '1rem' }}>CustomRichTextEditor Test</h4>

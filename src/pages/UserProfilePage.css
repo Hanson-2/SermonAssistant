@@ -336,6 +336,34 @@
   margin: 0 0 0.25rem 0;
 }
 
+/* Light Theme Contrast Fixes for User Profile */
+:root[data-theme="light"] .profile-email {
+  color: #374151 !important; /* Better contrast for light mode */
+}
+
+:root[data-theme="light"] .profile-join-date {
+  color: #4b5563 !important; /* Better contrast for light mode */
+}
+
+:root[data-theme="light"] .checkbox-group small {
+  color: #374151 !important; /* Better contrast for light mode */
+}
+
+/* Auto theme support */
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] .profile-email {
+    color: #374151 !important; /* Better contrast for light mode */
+  }
+
+  :root[data-theme="auto"] .profile-join-date {
+    color: #4b5563 !important; /* Better contrast for light mode */
+  }
+
+  :root[data-theme="auto"] .checkbox-group small {
+    color: #374151 !important; /* Better contrast for light mode */
+  }
+}
+
 .profile-join-date {
   color: #64748b;
   font-size: 0.9rem;

@@ -7,7 +7,6 @@ import { useTheme } from '../context/ThemeContext';
 import { 
   ThemeSettings, 
   applyThemePreview, 
-  removeThemePreview, 
   getSystemColorScheme 
 } from '../utils/themeUtils';
 import './ThemeSettingsPage.css';
@@ -64,40 +63,21 @@ const fontFamilies = [
 ];
 
 export default function ThemeSettingsPage() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [systemColorScheme, setSystemColorScheme] = useState<'light' | 'dark'>('dark');
+  const [user, setUser] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [success, setSuccess] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const { settings: themeSettings, updateTheme } = useTheme();
-  const [settings, setSettings] = useState<ThemeSettings>(themeSettings);
+  const [settings, setSettings] = React.useState(themeSettings);
 
-  const [previewMode, setPreviewMode] = useState(false);
-
-  useEffect(() => {
-  // Update local settings when theme context changes
+  React.useEffect(() => {
     setSettings(themeSettings);
   }, [themeSettings]);
-  // Detect system color scheme
-  useEffect(() => {
-    const updateSystemColorScheme = () => {
-      setSystemColorScheme(getSystemColorScheme());
-    };
-    
-    // Set initial value
-    updateSystemColorScheme();
-    
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => updateSystemColorScheme();
-    
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const auth = getAuth(app);
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
@@ -111,8 +91,7 @@ export default function ThemeSettingsPage() {
     return unsubscribe;
   }, [navigate]);
 
-  // Clear messages after 5 seconds
-  useEffect(() => {
+  React.useEffect(() => {
     if (success || error) {
       const timer = setTimeout(() => {
         setSuccess(null);
@@ -120,46 +99,18 @@ export default function ThemeSettingsPage() {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [success, error]);  // Apply theme preview
-  useEffect(() => {
-    if (previewMode) {
-      applyThemePreview(settings);
-    } else {
-      removeThemePreview(themeSettings);
-    }
-    return () => {
-      if (previewMode) {
-        removeThemePreview(themeSettings);
-      }
-    };
-  }, [settings, previewMode, themeSettings]);
-  // Also apply preview when any settings change while in preview mode
-  useEffect(() => {
-    if (previewMode) {
-      applyThemePreview(settings);
-    }
-  }, [
-    previewMode,
-    settings.primaryColor, 
-    settings.accentColor, 
-    settings.backgroundImage, 
-    settings.fontSize, 
-    settings.fontFamily, 
-    settings.themeMode, 
-    settings.compactMode, 
-    settings.highContrast, 
-    settings.reducedMotion,
-    settings.largeClickTargets,
-    settings.enhancedFocus,
-    settings.dyslexiaFriendly,
-    settings.lineHeight,
-    settings.letterSpacing,
-    settings.customCSS
-  ]);const loadThemeSettings = async () => {
+  }, [success, error]);
+
+  React.useEffect(() => {
+    applyThemePreview(settings);
+  }, [settings]);
+
+  const loadThemeSettings = async () => {
     try {
       const profile = await getUserProfile();
-      if (profile && profile.themeSettings) {        const updatedSettings: ThemeSettings = {
-          themeMode: profile.themeSettings.themeMode ?? 'dark',
+      if (profile && profile.themeSettings) {
+        const updatedSettings: ThemeSettings = {
+          themeMode: 'dark', // Force dark theme
           primaryColor: profile.themeSettings.primaryColor ?? '#e0c97f',
           accentColor: profile.themeSettings.accentColor ?? '#3b82f6',
           backgroundImage: profile.themeSettings.backgroundImage ?? '/Blue Wall Background.png',
@@ -177,29 +128,31 @@ export default function ThemeSettingsPage() {
         };
         setSettings(updatedSettings);
         updateTheme(updatedSettings);
-      }    } catch (error) {
-      console.error('Error loading theme settings:', error);
+      } else {
+        // If no profile theme, force dark theme
+        setSettings((prev) => ({ ...prev, themeMode: 'dark' }));
+        updateTheme({ themeMode: 'dark' });
+      }
+    } catch (error) {
       setError('Failed to load theme settings.');
+      // Force dark theme on error
+      setSettings((prev) => ({ ...prev, themeMode: 'dark' }));
+      updateTheme({ themeMode: 'dark' });
     }
   };
+
   const handleSave = async () => {
     if (!user) return;
 
     setSaving(true);
     setError(null);
     setSuccess(null);
-    
+
     try {
-      // Save to Firebase
       await updateUserProfile({ themeSettings: settings });
-      
-      // Update theme context and apply globally
       updateTheme(settings);
-      
       setSuccess('Theme settings saved successfully!');
-      setPreviewMode(false);
     } catch (error) {
-      console.error('Error saving theme settings:', error);
       setError('Failed to save theme settings. Please try again.');
     } finally {
       setSaving(false);
@@ -212,10 +165,12 @@ export default function ThemeSettingsPage() {
       primaryColor: preset.primary,
       accentColor: preset.accent
     });
-  };  const handleReset = () => {
+  };
+
+  const handleReset = () => {
     if (window.confirm('Are you sure you want to reset all theme settings to defaults? This action cannot be undone.')) {
       setSettings({
-        themeMode: 'dark',
+        themeMode: 'dark', // Force dark theme
         primaryColor: '#e0c97f',
         accentColor: '#3b82f6',
         backgroundImage: '/Blue Wall Background.png',
@@ -233,7 +188,9 @@ export default function ThemeSettingsPage() {
       });
       setSuccess('Theme settings reset to defaults.');
     }
-  };const handleBackgroundUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  };
+
+  const handleBackgroundUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // Clear any previous errors
@@ -302,28 +259,7 @@ export default function ThemeSettingsPage() {
             {success}
             <button onClick={() => setSuccess(null)} className="close-btn">×</button>
           </div>
-        )}
-
-        <div className="theme-container">          {/* Preview Toggle */}
-          <div className="preview-toggle">
-            <button
-              type="button"
-              className={`preview-toggle-btn${previewMode ? ' active' : ''}`}
-              onClick={() => {
-                setPreviewMode(!previewMode);
-                setSuccess(
-                  !previewMode
-                    ? 'Preview mode enabled. Changes will be applied temporarily.'
-                    : 'Preview mode disabled. Reverted to saved theme.'
-                );
-              }}
-              tabIndex={0}
-            >
-              <span className="toggle-label">Live Preview Mode</span>
-              <span className="toggle-indicator" />
-            </button>
-            <small>Enable to see changes immediately without saving</small>
-          </div>
+        )}        <div className="theme-container">
 
           <div className="theme-grid">
             
@@ -333,25 +269,6 @@ export default function ThemeSettingsPage() {
                 <h2>Basic Theme</h2>
               </div>
                 <div className="form-group">
-                <label>Theme Mode</label>
-                <div className="theme-mode-toggles">
-                  {(['light', 'dark', 'auto'] as const).map(mode => (
-                    <button
-                      key={mode}
-                      className={`theme-toggle ${settings.themeMode === mode ? 'active' : ''}`}
-                      onClick={() => setSettings({...settings, themeMode: mode})}
-                    >                      <div className="toggle-icon">
-                        {mode === 'light' && '☀️'}
-                        {mode === 'dark' && '🌙'}
-                        {mode === 'auto' && (systemColorScheme === 'dark' ? '🌙' : '☀️')}
-                      </div>
-                      <span className="toggle-label">
-                        {mode === 'auto' ? `Auto (${systemColorScheme})` : mode.charAt(0).toUpperCase() + mode.slice(1)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>              <div className="form-group">
                 <label>Background Image</label>
                 <div className="background-grid">
                   {backgroundImages.map(bg => (
@@ -674,9 +591,7 @@ export default function ThemeSettingsPage() {
                 <small>Add custom CSS to further customize the appearance. Use with caution.</small>
               </div>
             </div>
-          </div>
-
-          {/* Action Buttons */}
+          </div>          {/* Action Buttons */}
           <div className="actions">
             <button
               className="btn btn-secondary"
@@ -684,12 +599,6 @@ export default function ThemeSettingsPage() {
               disabled={saving}
             >
               Reset to Defaults
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={() => setPreviewMode(!previewMode)}
-            >
-              {previewMode ? 'Exit Preview' : 'Preview Changes'}
             </button>
             <button
               className="btn btn-primary"

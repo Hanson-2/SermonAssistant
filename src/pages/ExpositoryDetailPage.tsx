@@ -3,9 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getSermon, updateSermonNotes, updateSermon, getScriptureVersesForChapter, getUserProfile } from "../services/firebaseService";
 import { Sermon } from "../components/SermonCard/SermonCard";
 import { extractScriptureReferences } from "../utils/smartParseScriptureInput";
+import { mergeConsecutiveVerses, ScriptureReference } from "../utils/mergeConsecutiveVerses";
 import CustomRichTextEditor from "../components/CustomRichTextEditor";
 import ScriptureMiniCard from "../components/ScriptureMiniCard";
 import ScriptureOverlay from "../components/ScriptureOverlay";
+import TagsPanel from "../components/TagsPanel";
+import TagOverlay from "../components/TagOverlay";
 import debounce from "lodash.debounce";
 import "./ExpositoryDetailPage.css";
 import { bookAliases } from "../hooks/useScriptureAutocomplete";
@@ -108,9 +111,19 @@ export default function ExpositoryDetailPage() {
   const [editableTitle, setEditableTitle] = useState("");
   const [editableDescription, setEditableDescription] = useState("");
   const [editableDate, setEditableDate] = useState("");
-  const [savingMetadata, setSavingMetadata] = useState(false);// --- Get user's default translation from user profile ---
+  const [savingMetadata, setSavingMetadata] = useState(false);
+  
+  // --- Get user's default translation from user profile ---
   const [defaultTranslation, setDefaultTranslation] = useState<string>('');
-  useEffect(() => {
+  
+  // --- Tag management state ---
+  const [selectedTagFromDropdown, setSelectedTagFromDropdown] = useState<string | null>(null);  const [tagOverlayOpen, setTagOverlayOpen] = useState(false);
+  // --- Per-slide Scripture Refs State ---
+  const [slideScriptureRefs, setSlideScriptureRefs] = useState<Record<number, any[]>>({});
+  
+  const [slideTitles, setSlideTitles] = useState<string[]>([]);
+  const [editingTitleIdx, setEditingTitleIdx] = useState<number | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);  useEffect(() => {
     // Load user's default translation from their profile
     const loadUserPreferences = async () => {
       try {
@@ -137,8 +150,7 @@ export default function ExpositoryDetailPage() {
       }
     };
     loadUserPreferences();
-  }, []);
-  useEffect(() => {
+  }, []);  useEffect(() => {
     if (!id) return;
     getSermon(id).then((data) => {
       if (data) {
@@ -157,25 +169,82 @@ export default function ExpositoryDetailPage() {
         } else {
           const initialSlides = splitSlides(data.description || "");
           setSlides(initialSlides.length ? initialSlides : [""]);
+        }        // Restore slideScriptureRefs from database if available
+        console.log('[ExpositoryDetailPage] Full sermon data from database:', data);
+        if (data.slideScriptureRefs) {
+          console.log('[ExpositoryDetailPage] Found slideScriptureRefs in database:', data.slideScriptureRefs);
+          console.log('[ExpositoryDetailPage] Type of slideScriptureRefs:', typeof data.slideScriptureRefs);
+          console.log('[ExpositoryDetailPage] Keys:', Object.keys(data.slideScriptureRefs));
+          console.log('[ExpositoryDetailPage] Raw slideScriptureRefs structure:', JSON.stringify(data.slideScriptureRefs, null, 2));
+          
+          // Convert numeric keys back to numbers and set the state
+          const restoredRefs: Record<number, any[]> = {};
+          Object.entries(data.slideScriptureRefs).forEach(([key, value]) => {
+            restoredRefs[Number(key)] = value;
+            console.log(`[ExpositoryDetailPage] Restored slide ${key}:`, value);
+          });
+          setSlideScriptureRefs(restoredRefs);          console.log('[ExpositoryDetailPage] Final restored slideScriptureRefs:', restoredRefs);
+          
+          // Add a test to verify the restoration worked
+          setTimeout(() => {
+            console.log('[ExpositoryDetailPage] POST-RESTORATION CHECK - slideScriptureRefs state:', slideScriptureRefs);
+          }, 1000);
+        } else {
+          // Initialize empty slideScriptureRefs if none in database
+          console.log('[ExpositoryDetailPage] No slideScriptureRefs in database, initializing empty');
+          console.log('[ExpositoryDetailPage] Available fields in sermon data:', Object.keys(data));
+          setSlideScriptureRefs({});
         }
       } else {
         navigate("/dashboard");
       }
     });
-  }, [id, navigate]);
-
-  const persistSlides = useCallback(() => {
-    if (!sermon) return;
+  }, [id, navigate]);  const persistSlides = useCallback(() => {
+    if (!sermon) {
+      console.log('[ExpositoryDetailPage] persistSlides: No sermon, skipping persistence');
+      return;
+    }
     const newNotes: Record<string, string> = slides.reduce((acc, slideContent, idx) => {
       acc[String(idx)] = slideContent;
       return acc;
     }, {} as Record<string, string>);
-    updateSermonNotes(sermon.id.toString(), newNotes).catch((error) =>
-      console.error("Failed to save slides", error)
-    );
-  }, [sermon, slides]);
-
+    
+    console.log('[ExpositoryDetailPage] persistSlides called with:');
+    console.log('  - sermon ID:', sermon.id);
+    console.log('  - newNotes:', newNotes);
+    console.log('  - slideScriptureRefs:', slideScriptureRefs);
+    console.log('  - slideScriptureRefs keys:', Object.keys(slideScriptureRefs));
+    console.log('  - slideScriptureRefs JSON:', JSON.stringify(slideScriptureRefs, null, 2));
+    
+    if (Object.keys(slideScriptureRefs).length > 0) {
+      console.log('[ExpositoryDetailPage] persistSlides: Has scripture refs to save');
+      Object.entries(slideScriptureRefs).forEach(([key, refs]) => {
+        console.log(`[ExpositoryDetailPage] Slide ${key} has ${refs.length} refs:`, refs);
+      });
+    } else {
+      console.log('[ExpositoryDetailPage] persistSlides: No scripture refs to save');
+    }
+    
+    updateSermonNotes(sermon.id.toString(), newNotes, slideScriptureRefs)
+      .then(() => {
+        console.log('[ExpositoryDetailPage] Successfully persisted slides and scriptureRefs');
+      })
+      .catch((error) => {
+        console.error("Failed to save slides", error);
+      });
+  }, [sermon, slides, slideScriptureRefs]);
   const debouncedPersistSlides = useCallback(debounce(persistSlides, 500), [persistSlides]);
+
+  // Debug slideScriptureRefs changes and auto-persist
+  useEffect(() => {
+    console.log('[ExpositoryDetailPage] slideScriptureRefs state changed:', JSON.stringify(slideScriptureRefs, null, 2));
+    
+    // Auto-persist when slideScriptureRefs changes (but not on initial mount)
+    if (sermon && Object.keys(slideScriptureRefs).length > 0) {
+      console.log('[ExpositoryDetailPage] Auto-persisting due to slideScriptureRefs change');
+      debouncedPersistSlides();
+    }
+  }, [slideScriptureRefs, sermon, debouncedPersistSlides]);
 
   function updateSlideContent(newHtml: string) {
     setSlides((prevSlides) => {
@@ -416,19 +485,20 @@ export default function ExpositoryDetailPage() {
     } else if (e.key === 'Escape') {
       e.preventDefault();
       handleDateCancel();
-    }
-  };
+    }  };  // Update slideScriptureRefs for slides that don't have persisted refs
+  useEffect(() => {
+    // Only extract scripture refs from text for slides that don't have persisted refs
+    const refsBySlide = slides.map((slideText, slideIndex) => {
+      // If we already have slideScriptureRefs for this slide (from database or tag selection), use those
+      const existingRefs = slideScriptureRefs[slideIndex];
+      if (existingRefs && existingRefs.length > 0) {
+        console.log(`[ExpositoryDetailPage] Slide ${slideIndex} already has refs, skipping text extraction`);
+        return existingRefs;
+      }
 
-  // --- Per-slide scripture refs ---
-  const [slideScriptureRefs, setSlideScriptureRefs] = useState<any[][]>([]);
-  // --- Per-slide titles ---
-  const [slideTitles, setSlideTitles] = useState<string[]>([]);
-  const [editingTitleIdx, setEditingTitleIdx] = useState<number | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);  useEffect(() => {
-    // For each slide, extract and normalize scripture refs
-    const refsBySlide = slides.map(slideText => {
+      // Only extract from text if no existing refs
       const rawRefs = extractScriptureReferences(slideText);
-      return rawRefs.map(ref => {
+      const textBasedRefs = rawRefs.map(ref => {
         let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
         let bookName = bookAliases[localRawBook] || ref.book;
         let referenceString;
@@ -443,10 +513,30 @@ export default function ExpositoryDetailPage() {
           }
         }
         
-        return { ...ref, book: bookName, reference: referenceString };
+        return { 
+          ...ref, 
+          book: bookName, 
+          reference: referenceString,
+          sourceType: 'manual' as const,
+          addedViaTag: false
+        };
       });
+
+      return textBasedRefs;
     });
-    setSlideScriptureRefs(refsBySlide);
+
+    // Convert to object format and only update if there are changes
+    const refsObject = refsBySlide.reduce((acc, refs, index) => {
+      acc[index] = refs;
+      return acc;
+    }, {} as Record<number, any[]>);
+
+    // Only update if different from current state
+    if (JSON.stringify(refsObject) !== JSON.stringify(slideScriptureRefs)) {
+      console.log('[ExpositoryDetailPage] Updating slideScriptureRefs from text extraction:', refsObject);
+      setSlideScriptureRefs(refsObject);
+    }
+
     // Initialize slide titles if not set or slides changed
     setSlideTitles(prev => {
       if (!prev || prev.length !== slides.length) {
@@ -454,7 +544,7 @@ export default function ExpositoryDetailPage() {
       }
       return prev;
     });
-  }, [slides]);
+  }, [slides, bookAliases]);
 
   // Editable sidebar title logic
   function handleTitleDoubleClick(idx: number) {
@@ -516,13 +606,172 @@ export default function ExpositoryDetailPage() {
     return slides[activeSlide] || "";
   }, [slides, activeSlide]);
 
+  // --- Tag management functions ---
+  const handleTagSelect = useCallback((tagName: string) => {
+    setSelectedTagFromDropdown(tagName);
+    setTagOverlayOpen(true);
+  }, []);
+  const handleTagOverlayClose = useCallback(() => {
+    setTagOverlayOpen(false);
+    setSelectedTagFromDropdown(null);
+  }, []);
+
+  const handleTagClick = useCallback((tagName: string) => {
+    setSelectedTagFromDropdown(tagName);
+    setTagOverlayOpen(true);
+  }, []);  // Function to remove a scripture reference from current slide
+  const handleRemoveScriptureRef = useCallback((refToRemove: any) => {
+    const currentRefs = slideScriptureRefs[activeSlide] || [];
+    const updatedRefs = currentRefs.filter(ref => ref.reference !== refToRemove.reference);
+    
+    setSlideScriptureRefs(prev => ({
+      ...prev,
+      [activeSlide]: updatedRefs
+    }));
+
+    // Trigger persistence
+    debouncedPersistSlides();
+    
+    console.log('[ExpositoryDetailPage] Removed scripture ref:', refToRemove.reference);
+  }, [activeSlide, slideScriptureRefs, debouncedPersistSlides]);  const handleVerseSelectionFromTag = useCallback(async (verses: any[]) => {
+    // Add selected verses to the current slide
+    if (!verses.length) return;
+
+    console.log('[ExpositoryDetailPage] ====== TAG VERSE SELECTION START ======');
+    console.log('[ExpositoryDetailPage] Raw verses from tag:', JSON.stringify(verses, null, 2));
+    console.log('[ExpositoryDetailPage] Sample verse structure:', verses[0]);
+    console.log('[ExpositoryDetailPage] Active slide:', activeSlide);
+    console.log('[ExpositoryDetailPage] Current slideScriptureRefs:', JSON.stringify(slideScriptureRefs, null, 2));
+
+    // Mark verses as coming from tags and add sourceType
+    const taggedVerses = verses.map(v => {
+      console.log('[ExpositoryDetailPage] Processing verse:', v);
+      const processedVerse = {
+        ...v,
+        addedViaTag: true,
+        sourceType: 'tag' as const,
+        // Ensure numeric verse numbers for proper sorting
+        verse: typeof v.verse === 'string' ? parseInt(v.verse, 10) : v.verse,
+        chapter: typeof v.chapter === 'string' ? parseInt(v.chapter, 10) : v.chapter
+      };
+      console.log('[ExpositoryDetailPage] Processed to:', processedVerse);
+      return processedVerse;
+    });
+
+    console.log('[ExpositoryDetailPage] Tagged verses after processing:', JSON.stringify(taggedVerses, null, 2));
+
+    // DON'T add to slide text content - just add to slideScriptureRefs
+    // This prevents duplication when the useEffect extracts refs from text
+    
+    // Update scripture refs for the current slide immediately
+    const existingRefs = slideScriptureRefs[activeSlide] || [];
+    const updatedRefs = [...existingRefs, ...taggedVerses];
+    
+    console.log('[ExpositoryDetailPage] Existing refs for slide', activeSlide, ':', JSON.stringify(existingRefs, null, 2));
+    console.log('[ExpositoryDetailPage] Updated refs for slide', activeSlide, ':', JSON.stringify(updatedRefs, null, 2));    setSlideScriptureRefs(prev => {
+      const newState = {
+        ...prev,
+        [activeSlide]: updatedRefs
+      };
+      console.log('[ExpositoryDetailPage] New slideScriptureRefs state:', JSON.stringify(newState, null, 2));
+      return newState;
+    });
+
+    console.log('[ExpositoryDetailPage] Added verses from tag to slide', activeSlide, ':', taggedVerses);// Trigger persistence of slideScriptureRefs - commented out as we do immediate persistence above
+    // console.log('[ExpositoryDetailPage] Calling debouncedPersistSlides...');
+    // debouncedPersistSlides();
+
+    // Auto-add the tag to the sermon's tags if not already present
+    if (selectedTagFromDropdown && sermon) {
+      const currentTags = sermon.tags || [];
+      if (!currentTags.includes(selectedTagFromDropdown)) {
+        try {
+          const updatedTags = [...currentTags, selectedTagFromDropdown];
+          await updateSermon(sermon.id.toString(), { tags: updatedTags });
+          
+          // Update local sermon state
+          setSermon(prev => prev ? { ...prev, tags: updatedTags } : null);
+        } catch (error) {
+          console.error('Failed to add tag to sermon:', error);
+        }
+      }
+    }    // Close the overlay after verse selection
+    setTagOverlayOpen(false);
+    setSelectedTagFromDropdown(null);
+      console.log('[ExpositoryDetailPage] ====== TAG VERSE SELECTION END ======');
+  }, [activeSlide, slideScriptureRefs, debouncedPersistSlides, selectedTagFromDropdown, sermon]);
+
+  // Test function to manually add test verses for debugging
+  const addTestVerses = useCallback(() => {
+    console.log('[ExpositoryDetailPage] ====== ADDING TEST VERSES ======');
+    const testVerses = [
+      {
+        book: "Genesis",
+        chapter: 1,
+        verse: 1,
+        reference: "Genesis 1:1",
+        addedViaTag: true,
+        sourceType: 'tag' as const,
+        text: "In the beginning God created the heaven and the earth."
+      },
+      {
+        book: "Genesis", 
+        chapter: 1,
+        verse: 2,
+        reference: "Genesis 1:2",
+        addedViaTag: true,
+        sourceType: 'tag' as const,
+        text: "And the earth was without form, and void..."
+      },
+      {
+        book: "Genesis",
+        chapter: 1, 
+        verse: 3,
+        reference: "Genesis 1:3",
+        addedViaTag: true,
+        sourceType: 'tag' as const,
+        text: "And God said, Let there be light..."
+      }
+    ];
+
+    const existingRefs = slideScriptureRefs[activeSlide] || [];
+    const updatedRefs = [...existingRefs, ...testVerses];
+    
+    console.log('[ExpositoryDetailPage] Test verses:', testVerses);
+    console.log('[ExpositoryDetailPage] Updated refs:', updatedRefs);
+      setSlideScriptureRefs(prev => ({
+      ...prev,
+      [activeSlide]: updatedRefs
+    }));
+
+    console.log('[ExpositoryDetailPage] Test verses state updated, auto-persistence should trigger');
+    console.log('[ExpositoryDetailPage] ====== TEST VERSES ADDED ======');
+  }, [activeSlide, slideScriptureRefs]);
+
   if (!sermon) {
     return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   }
-
   return (
     <div className="expository-detail-root">
-      <div className="expository-bg-overlay" />      <div className="expository-sticky-banner">
+      <div className="expository-bg-overlay" />
+        {/* Action buttons above title banner */}      <div className="expository-action-buttons">
+        <button 
+          className="expository-action-btn edit-details-btn"
+          onClick={() => navigate(`/edit-expository/${sermon.id}`)}
+          title="Edit sermon details"
+        >
+          Edit Details
+        </button>
+        <button 
+          className="expository-action-btn presentation-btn"
+          onClick={() => navigate(`/presentation/${sermon.id}`)}
+          title="View presentation"
+        >
+          Presentation
+        </button>
+      </div>
+
+      <div className="expository-sticky-banner">
         <div className="expository-banner-row">
           {isEditingTitle ? (
             <input
@@ -599,14 +848,32 @@ export default function ExpositoryDetailPage() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Scripture mini cards banner */}
-      <div className="expository-scripture-banner">
-        {(slideScriptureRefs[activeSlide] || []).map((ref, i) => (
-          <ScriptureMiniCard key={i} verse={ref} />
-        ))}
-      </div>      <div className="expository-main-layout">
+      </div>      {/* Scripture mini cards banner */}
+      <div className="expository-scripture-banner">        {(() => {
+          const currentSlideRefs = slideScriptureRefs[activeSlide] || [];
+          console.log('[ExpositoryDetailPage] ====== RENDERING SCRIPTURE MINI CARDS ======');
+          console.log('[ExpositoryDetailPage] Active slide:', activeSlide);
+          console.log('[ExpositoryDetailPage] Raw currentSlideRefs:', JSON.stringify(currentSlideRefs, null, 2));
+          console.log('[ExpositoryDetailPage] About to call mergeConsecutiveVerses with:', currentSlideRefs.length, 'verses');
+          
+          const mergedRefs = mergeConsecutiveVerses(currentSlideRefs);
+          console.log('[ExpositoryDetailPage] Rendering scripture mini cards:', { 
+            original: currentSlideRefs.length, 
+            merged: mergedRefs.length,
+            originalRefs: currentSlideRefs,
+            mergedRefs: mergedRefs
+          });
+          console.log('[ExpositoryDetailPage] Final mergedRefs for rendering:', JSON.stringify(mergedRefs, null, 2));
+          
+          return mergedRefs.map((ref, i) => (
+            <ScriptureMiniCard 
+              key={`${ref.reference}-${ref.addedViaTag ? 'tag' : 'manual'}-${i}`} 
+              verse={ref} 
+              onRemove={() => handleRemoveScriptureRef(ref)}
+            />
+          ));
+        })()}
+      </div><div className="expository-main-layout">
         <div className="expository-page-list">
           {/* Page list navigation */}
           <nav style={{ display: 'contents' }}>            {slides.map((slide, idx) => (
@@ -638,9 +905,7 @@ export default function ExpositoryDetailPage() {
                 )}
               </div>
             ))}          </nav>
-        </div>
-
-        <div className="expository-main-content">
+        </div>        <div className="expository-main-content">
           {overlayOpen && lockedOverlayRef && (
             (() => {
               console.log('[ExpositoryDetailPage] Rendering ScriptureOverlay with defaultTranslation:', defaultTranslation);
@@ -665,6 +930,7 @@ export default function ExpositoryDetailPage() {
                 onHtmlChange={updateSlideContent}
                 onRefsChange={handleRefsChange}
                 activeSlide={activeSlide}
+                onTagSelect={handleTagSelect}
               />
               <div className="expository-slide-status">
                 {saving ? <span className="saving">Saving...</span> : saveStatus && <span className="saved">{saveStatus}</span>}
@@ -685,8 +951,23 @@ export default function ExpositoryDetailPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>        {/* Tags Panel */}
+        <TagsPanel
+          expositoryTags={sermon?.tags || []}
+          onVerseSelect={handleVerseSelectionFromTag}
+          onTagClick={handleTagClick}
+        />
       </div>
+
+      {/* Tag Overlay - Moved outside main container for full-screen display */}
+      {selectedTagFromDropdown && tagOverlayOpen && (
+        <TagOverlay
+          tagName={selectedTagFromDropdown}
+          isOpen={tagOverlayOpen}
+          onClose={handleTagOverlayClose}
+          onVerseSelect={handleVerseSelectionFromTag}
+        />
+      )}
     </div>
   );
 }

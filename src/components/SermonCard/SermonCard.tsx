@@ -21,6 +21,7 @@ export type Sermon = {
   imageUrl?: string;
   notes?: Record<string, string>;
   folderId?: string;
+  tags?: string[];
 };
 
 // Extend SermonCardProps to include new functionality
@@ -114,8 +115,7 @@ const SermonCard: React.FC<SermonCardProps> = ({
       }
       setShowOverlay(!showOverlay);
     }
-  };  const handleView = () => navigate(`/expository/${sermon.id}`);
-  const handleEdit = () => navigate(`/edit-expository/${sermon.id}`);
+  };  const handleEdit = () => navigate(`/expository/${sermon.id}`);
   const handlePresentation = () => navigate(`/presentation/${sermon.id}`);
   const handleDuplicate = async () => {
     const { id, ...copyData } = sermon;
@@ -140,7 +140,6 @@ const SermonCard: React.FC<SermonCardProps> = ({
       alert("Deleted successfully.");
     }
   };  const actionButtons = [
-    { label: "View", action: handleView },
     { label: "Edit", action: handleEdit },
     { label: "Presentation", action: handlePresentation },
     { label: "Duplicate", action: handleDuplicate },

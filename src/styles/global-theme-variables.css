@@ -123,48 +123,76 @@
   --bg-secondary: #f8f9fa;
   --bg-tertiary: #e9ecef;
   --bg-card: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  --bg-overlay: rgba(255, 255, 255, 0.9);
+  --bg-overlay: rgba(255, 255, 255, 0.95);
   
-  /* Text Colors */
-  --text-primary: #212529;
-  --text-secondary: #495057;
-  --text-muted: #6c757d;
+  /* Text Colors - Enhanced contrast for light mode */
+  --text-primary: #1a1a1a;
+  --text-secondary: #374151; /* Improved contrast from #4a4a4a */
+  --text-muted: #4b5563; /* Improved contrast from #6b7280 */
   --text-color: var(--text-primary);
   
   /* Border Colors */
-  --border-color: #dee2e6;
-  --border-light: #e9ecef;
+  --border-color: #d1d5db;
+  --border-light: #e5e7eb;
   --border-primary: var(--primary-color);
   
   /* Input & Form Colors */
-  --input-bg: linear-gradient(to bottom, #ffffff, #f8f9fa);
-  --input-border: #ced4da;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
   --input-focus: var(--primary-color);
-  --hover-bg: rgba(var(--primary-color-rgb), 0.1);
+  --hover-bg: rgba(var(--primary-color-rgb), 0.08);
+  
+  /* Enhanced Primary Colors for Light Mode */
+  --primary-color: #b8860b; /* Darker golden color for better contrast */
+  --primary-color-rgb: 184, 134, 11;
+  --primary-hover: #daa520;
+  --primary-light: rgba(184, 134, 11, 0.1);
+  --primary-dark: #8b6914;
+  
+  /* Enhanced Accent Colors for Light Mode */
+  --accent-color: #1d4ed8; /* Darker blue for better contrast */
+  --accent-color-rgb: 29, 78, 216;
+  --accent-hover: #1e40af;
+  --accent-light: rgba(29, 78, 216, 0.1);
   
   /* Status Colors - Light Mode Variations */
-  --success-bg: #f0f9ff;
-  --success-text: #047857;
-  --success-border: #34d399;
+  --success-bg: #f0fdf4;
+  --success-text: #166534;
+  --success-border: #22c55e;
   
   --error-bg: #fef2f2;
   --error-text: #dc2626;
-  --error-border: #f87171;
+  --error-border: #ef4444;
+  
+  /* Additional Light Theme Variables */
+  --warning-bg: #fef3c7;
+  --warning-text: #92400e;
+  --warning-border: #f59e0b;
+  
+  --info-bg: #eff6ff;
+  --info-text: #1e40af;
+  --info-border: #3b82f6;
+  
+  /* Light Theme Button Colors */
+  --btn-secondary-bg: var(--bg-secondary);
+  --btn-secondary-text: var(--text-primary);
+  --btn-secondary-border: var(--border-color);
   
   /* Background Image Overlay */
-  --bg-image-overlay: rgba(255, 255, 255, 0.7);
-  --bg-image-opacity: 0.15;
+  --bg-image-overlay: rgba(255, 255, 255, 0.85);
+  --bg-image-opacity: 0.3;
   
-  /* Shadows - Lighter for Light Mode */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-  --shadow-lg: 0 8px 25px rgba(0,0,0,0.15);
-  --shadow-inset: inset 0 2px 4px rgba(0,0,0,0.1);
-  --text-shadow-gold: 0 0 10px rgba(251, 191, 36, 0.3), 1px 1px 0px rgba(75, 58, 26, 0.5);
+  /* Shadows - Appropriate for Light Mode */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --shadow-inset: inset 0 2px 4px rgba(0,0,0,0.06);
+  --text-shadow-gold: 0 1px 2px rgba(184, 134, 11, 0.4);
   
   /* Card Styling */
+  --card-bg: var(--bg-card);
   --card-shadow: var(--shadow-md);
-  --card-shadow-hover: 0 8px 20px rgba(0,0,0,0.2);
+  --card-shadow-hover: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 /* === AUTO THEME (SYSTEM PREFERENCE) === */
@@ -175,48 +203,75 @@
     --bg-secondary: #f8f9fa;
     --bg-tertiary: #e9ecef;
     --bg-card: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    --bg-overlay: rgba(255, 255, 255, 0.9);
-    
-    /* Text Colors */
-    --text-primary: #212529;
-    --text-secondary: #495057;
-    --text-muted: #6c757d;
+    --bg-overlay: rgba(255, 255, 255, 0.95);
+      /* Text Colors - Enhanced contrast for light mode */
+    --text-primary: #1a1a1a;
+    --text-secondary: #374151; /* Improved contrast from #4a4a4a */
+    --text-muted: #4b5563; /* Improved contrast from #6b7280 */
     --text-color: var(--text-primary);
     
     /* Border Colors */
-    --border-color: #dee2e6;
-    --border-light: #e9ecef;
+    --border-color: #d1d5db;
+    --border-light: #e5e7eb;
     --border-primary: var(--primary-color);
     
     /* Input & Form Colors */
-    --input-bg: linear-gradient(to bottom, #ffffff, #f8f9fa);
-    --input-border: #ced4da;
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
     --input-focus: var(--primary-color);
-    --hover-bg: rgba(var(--primary-color-rgb), 0.1);
+    --hover-bg: rgba(var(--primary-color-rgb), 0.08);
+    
+    /* Enhanced Primary Colors for Light Mode */
+    --primary-color: #b8860b; /* Darker golden color for better contrast */
+    --primary-color-rgb: 184, 134, 11;
+    --primary-hover: #daa520;
+    --primary-light: rgba(184, 134, 11, 0.1);
+    --primary-dark: #8b6914;
+    
+    /* Enhanced Accent Colors for Light Mode */
+    --accent-color: #1d4ed8; /* Darker blue for better contrast */
+    --accent-color-rgb: 29, 78, 216;
+    --accent-hover: #1e40af;
+    --accent-light: rgba(29, 78, 216, 0.1);
     
     /* Status Colors - Light Mode Variations */
-    --success-bg: #f0f9ff;
-    --success-text: #047857;
-    --success-border: #34d399;
+    --success-bg: #f0fdf4;
+    --success-text: #166534;
+    --success-border: #22c55e;
     
     --error-bg: #fef2f2;
     --error-text: #dc2626;
-    --error-border: #f87171;
+    --error-border: #ef4444;
+    
+    /* Additional Light Theme Variables */
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
+    --warning-border: #f59e0b;
+    
+    --info-bg: #eff6ff;
+    --info-text: #1e40af;
+    --info-border: #3b82f6;
+    
+    /* Light Theme Button Colors */
+    --btn-secondary-bg: var(--bg-secondary);
+    --btn-secondary-text: var(--text-primary);
+    --btn-secondary-border: var(--border-color);
     
     /* Background Image Overlay */
-    --bg-image-overlay: rgba(255, 255, 255, 0.7);
-    --bg-image-opacity: 0.15;
+    --bg-image-overlay: rgba(255, 255, 255, 0.85);
+    --bg-image-opacity: 0.3;
     
-    /* Shadows - Lighter for Light Mode */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 8px 25px rgba(0,0,0,0.15);
-    --shadow-inset: inset 0 2px 4px rgba(0,0,0,0.1);
-    --text-shadow-gold: 0 0 10px rgba(251, 191, 36, 0.3), 1px 1px 0px rgba(75, 58, 26, 0.5);
+    /* Shadows - Appropriate for Light Mode */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --shadow-inset: inset 0 2px 4px rgba(0,0,0,0.06);
+    --text-shadow-gold: 0 1px 2px rgba(184, 134, 11, 0.4);
     
     /* Card Styling */
+    --card-bg: var(--bg-card);
     --card-shadow: var(--shadow-md);
-    --card-shadow-hover: 0 8px 20px rgba(0,0,0,0.2);
+    --card-shadow-hover: 0 8px 25px rgba(0,0,0,0.15);
   }
 }
 
@@ -513,6 +568,45 @@ a, .link {
 }
 a:hover, .link:hover {
   color: var(--primary-hover) !important;
+}
+
+/* === GLOBAL LIGHT THEME TEXT CONTRAST FIXES === */
+/* Override any remaining secondary/muted text for better light mode contrast */
+:root[data-theme="light"] small,
+:root[data-theme="light"] .small-text,
+:root[data-theme="light"] .helper-text,
+:root[data-theme="light"] .hint-text,
+:root[data-theme="light"] .description-text,
+:root[data-theme="light"] .upload-hint,
+:root[data-theme="light"] p {
+  color: #374151 !important;
+}
+
+/* Force override for page headers and descriptions */
+:root[data-theme="light"] .page-header p,
+:root[data-theme="light"] .theme-settings-header p {
+  color: #374151 !important;
+  opacity: 1 !important;
+}
+
+/* Auto theme support for global overrides */
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] small,
+  :root[data-theme="auto"] .small-text,
+  :root[data-theme="auto"] .helper-text,
+  :root[data-theme="auto"] .hint-text,
+  :root[data-theme="auto"] .description-text,
+  :root[data-theme="auto"] .upload-hint,
+  :root[data-theme="auto"] p {
+    color: #374151 !important;
+  }
+  
+  /* Force override for page headers and descriptions */
+  :root[data-theme="auto"] .page-header p,
+  :root[data-theme="auto"] .theme-settings-header p {
+    color: #374151 !important;
+    opacity: 1 !important;
+  }
 }
 
 /* Minimal, non-distracting application: Only key elements use theme colors. */
