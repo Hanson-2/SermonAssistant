@@ -32,14 +32,27 @@ const ScriptureMiniCard: React.FC<ScriptureMiniCardProps> = ({ verse, onRemove }
       const verseEnd = refMatch[4];
       displayRef = `${getDisplayBookAbbrev(book)} ${chapter}:${verseStart}${verseEnd ? "-" + verseEnd : ""}`;
     } else {
-      displayRef = verse.reference;
+      // Try to parse chapter-only reference like "Genesis 1"
+      const chapterMatch = verse.reference.match(/^([1-3]?\s*[A-Za-z .]+)\s+(\d+)$/i);
+      if (chapterMatch) {
+        const book = normalizeBookName(chapterMatch[1]);
+        const chapter = chapterMatch[2];
+        displayRef = `${getDisplayBookAbbrev(book)} ${chapter}`;
+      } else {
+        displayRef = verse.reference;
+      }
     }
-  } else if (verse.book && verse.chapter && verse.verse) {
+  } else if (verse.book && verse.chapter) {
     const book = normalizeBookName(verse.book);
-    displayRef = `${getDisplayBookAbbrev(book)} ${verse.chapter}:${verse.verse}`;
+    if (verse.verse) {
+      displayRef = `${getDisplayBookAbbrev(book)} ${verse.chapter}:${verse.verse}`;
+    } else {
+      // Chapter-only display when no verse is specified
+      displayRef = `${getDisplayBookAbbrev(book)} ${verse.chapter}`;
+    }
   } else {
     displayRef = "";
-  }  return (<div 
+  }return (<div 
       className="scripture-mini-card p-2 rounded-lg shadow-md cursor-pointer
                  bg-gradient-to-br from-gray-900 to-black 
                  border border-transparent 

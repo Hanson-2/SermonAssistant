@@ -30,7 +30,7 @@
 /* --- Sticky Banner --- */
 .expository-sticky-banner {
   position: sticky;
-  top: 3rem;
+  top: 1rem;
   z-index: 30;
   background: rgba(17, 23, 39, 0.95);
   -webkit-backdrop-filter: blur(8px);
@@ -68,13 +68,103 @@
   text-overflow: ellipsis;
 }
 
+/* --- Editable Banner Elements --- */
+.expository-banner-title.editable,
+.expository-banner-date.editable,
+.expository-banner-desc.editable {
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.expository-banner-title.editable:hover,
+.expository-banner-date.editable:hover,
+.expository-banner-desc.editable:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.edit-hint {
+  opacity: 0;
+  margin-left: 6px;
+  font-size: 0.7em;
+  color: #9ca3af;
+  transition: opacity 0.2s ease;
+  font-weight: normal;
+}
+
+.editable:hover .edit-hint {
+  opacity: 0.7;
+}
+
+.expository-banner-title-input,
+.expository-banner-date-input,
+.expository-banner-desc-input {
+  background: rgba(30, 41, 59, 0.95);
+  border: 2px solid #ffd700;
+  border-radius: 4px;
+  color: #fff;
+  padding: 4px 8px;
+  outline: none;
+  font-family: inherit;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.expository-banner-title-input {
+  font-size: 2rem;
+  font-weight: bold;
+  flex: 1;
+  min-width: 0;
+}
+
+.expository-banner-date-input {
+  color: #9ca3af;
+  font-size: 0.95rem;
+  width: 150px;
+}
+
+.expository-banner-desc-input {
+  color: #d1d5db;
+  font-size: 1rem;
+  width: 100%;
+  resize: none;
+  min-height: 2.5rem;
+}
+
+.expository-banner-desc-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.saving-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.saving-text {
+  color: #ffd700;
+  font-size: 0.875rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* --- Scripture Mini-Card Banner --- */
 .expository-scripture-banner {
   position: sticky;
-  top: 5.5rem;
+  top: 3.5rem;
   z-index: 100;
   isolation: isolate;
-  background: linear-gradient(90deg, #1e293b 0%, #232b3e 100%) !important;
+  background: linear-gradient(90deg, #000000 0%, #1a1a1a 100%) !important;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   display: flex;
@@ -97,9 +187,8 @@
   /* gradient border */
   border: 2px solid transparent;
   border-image: linear-gradient(45deg, #FFD700, #FFA500) 1;
-
   /* your original dark background */
-  background: linear-gradient(135deg, #494949 0%, #000000 100%);
+  background: linear-gradient(135deg, #2d2d2d 0%, #000000 100%);
   color: #ffd000;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4);
@@ -326,7 +415,7 @@
   display: flex;
   align-items: flex-start;
   gap: 0.7rem;
-  background: linear-gradient(90deg, #1e293b 60%, #232b3e 100%);
+  background: linear-gradient(90deg, #000000 60%, #1a1a1a 100%);
   border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   box-shadow: 0 2px 8px rgba(36,36,36,0.10);
@@ -340,7 +429,7 @@
 .scripture-mini-card-modern:focus,
 .scripture-mini-card-modern:hover {
   box-shadow: 0 4px 16px #2563eb33;
-  background: #232b3e;
+  background: #1a1a1a;
 }
 .scripture-mini-card-ref-modern {
   font-size: 1.05rem;
@@ -380,7 +469,7 @@
   font-size: 0.9rem !important;
   border: 2px solid transparent !important;
   border-image: linear-gradient(45deg, #FFD700, #FFA500) 1 !important;
-  background: linear-gradient(135deg, #494949 0%, #000000 100%) !important;
+  background: linear-gradient(135deg, #2d2d2d 0%, #000000 100%) !important;
   color: #ffd000 !important;
   font-weight: 400 !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4) !important;
@@ -480,7 +569,7 @@
 .expository-page-list {
   min-width: 180px;
   max-width: 240px;
-  background: rgba(24, 24, 24, 0.92);
+  background: rgba(0, 0, 0, 0.92);
   border-right: 1px solid #232b3e;
   padding: 1rem 0;
   display: flex;
@@ -511,7 +600,7 @@
 }
 
 .expository-page-list-item.active {
-  background: linear-gradient(90deg,#ffd70022,#232b3e);
+  background: linear-gradient(90deg,#ffd70022,#000000);
   color: #ffd700;
   font-weight: 700;
   border-left: 4px solid #ffd700;
@@ -653,15 +742,14 @@
     height: auto;
     min-height: 0;
     max-height: 80px;
-    
-    /* Horizontal layout */
+      /* Horizontal layout */
     flex-direction: row;
     overflow-x: auto;
     overflow-y: hidden;
     padding: 0.75rem 1rem;
     
     /* Visual styling */
-    background: rgba(24,24,24,0.95);
+    background: rgba(0,0,0,0.95);
     border-right: none;
     border-bottom: 2px solid #232b3e;
     border-top: 1px solid #232b3e;
@@ -729,15 +817,14 @@
     border: 2px solid rgba(255, 215, 0, 0.3);
     color: #ffd700;
   }
-  
-  /* Input styling for editing page titles in mobile */
+    /* Input styling for editing page titles in mobile */
   .expository-page-list-item.editing {
     width: auto !important;
     min-width: 120px;
     padding: 0.4rem 0.8rem !important;
     border-radius: 15px !important;
     border: 2px solid #ffd700 !important;
-    background: #232b3e !important;
+    background: #000000 !important;
     color: #ffd700 !important;
     font-weight: 700 !important;
     font-size: 0.85rem !important;

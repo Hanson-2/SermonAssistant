@@ -217,7 +217,14 @@ export default function PresentationPage() {
     return () => window.removeEventListener('showScriptureOverlay', handleScriptureOverlay);
   }, []);  // Handle scripture reference click
   const handleScriptureRefClick = useCallback((ref: ScriptureReference) => {
-    const reference = `${ref.book} ${ref.chapter}:${ref.verse}${ref.endVerse && ref.endVerse !== ref.verse ? `-${ref.endVerse}` : ''}`;
+    let reference;
+    if (ref.verse !== undefined) {
+      // Verse-specific reference
+      reference = `${ref.book} ${ref.chapter}:${ref.verse}${ref.endVerse && ref.endVerse !== ref.verse ? `-${ref.endVerse}` : ''}`;
+    } else {
+      // Chapter-only reference
+      reference = `${ref.book} ${ref.chapter}`;
+    }
     
     console.log('[PresentationPage] Scripture reference clicked:', reference);
     console.log('[PresentationPage] User preferred defaultTranslation:', defaultTranslation);
@@ -225,7 +232,7 @@ export default function PresentationPage() {
     setSelectedScripture({
       book: ref.book,
       chapter: ref.chapter.toString(),
-      verse: ref.verse.toString(),
+      verse: ref.verse?.toString(),
       endVerse: ref.endVerse?.toString(),
       reference
     });
@@ -306,8 +313,10 @@ export default function PresentationPage() {
                   onClick={() => handleScriptureRefClick(ref)}
                   title="Click to view scripture text"
                 >
-                  {ref.book} {ref.chapter}:{ref.verse}
-                  {ref.endVerse && ref.endVerse !== ref.verse && `-${ref.endVerse}`}
+                  {ref.verse !== undefined 
+                    ? `${ref.book} ${ref.chapter}:${ref.verse}${ref.endVerse && ref.endVerse !== ref.verse ? `-${ref.endVerse}` : ''}`
+                    : `${ref.book} ${ref.chapter}`
+                  }
                 </button>
               ))}
             </div>

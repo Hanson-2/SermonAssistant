@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import './CustomRichTextEditor.css';
+import { wrapScriptureRefsInEditor, debounceWrapScriptureRefs } from '../utils/wrapScriptureRefsInEditor';
 
 interface BasicRTEProps {
   html: string;
@@ -11,11 +12,19 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const lastSetHtml = useRef<string>('');
   const [isComposing, setIsComposing] = useState(false);
-  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
-  const [currentHeading, setCurrentHeading] = useState<string>('p');
+  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());  const [currentHeading, setCurrentHeading] = useState<string>('p');
   const [currentFontSize, setCurrentFontSize] = useState<string>('16');
-  const [currentFontFamily, setCurrentFontFamily] = useState<string>('Arial');
+  const [currentFontFamily, setCurrentFontFamily] = useState<string>('Arial');  // Debounced scripture reference wrapper - DISABLED for now
+  // const debouncedWrapRefs = useRef(
+  //   debounceWrapScriptureRefs(null as any, 2000) // Increased to 2 seconds to reduce interruption
+  // );
 
+  // // Update the debounced function when editor ref changes - DISABLED
+  // useEffect(() => {
+  //   if (editorRef.current) {
+  //     debouncedWrapRefs.current = debounceWrapScriptureRefs(editorRef.current, 2000);
+  //   }
+  // }, [editorRef.current]);
   // Handle content changes
   const handleContentChange = useCallback(() => {
     if (isComposing || !editorRef.current) return;
@@ -23,8 +32,7 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
     const currentHtml = editorRef.current.innerHTML;
     if (currentHtml !== lastSetHtml.current) {
       onHtmlChange(currentHtml);
-      
-      // Extract scripture references if callback provided
+        // Extract scripture references if callback provided
       if (onRefsChange) {
         try {
           const textContent = editorRef.current.textContent || '';
@@ -38,7 +46,11 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
           console.warn('Error extracting scripture references:', error);
           onRefsChange([]);
         }
-      }
+      }      
+      // DISABLED: No longer auto-wrapping scripture references inline
+      // if (editorRef.current) {
+      //   debouncedWrapRefs.current();
+      // }
     }
   }, [onHtmlChange, onRefsChange, isComposing]);
 
@@ -627,6 +639,24 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
     }
   }, [execCommand]);
 
+  // Handle input events
+  const handleInput = useCallback(() => {
+    handleContentChange();
+  }, [handleContentChange]);
+
+  // Handle composition events for international input
+  const handleCompositionStart = useCallback(() => {
+    setIsComposing(true);
+  }, []);
+
+  const handleCompositionEnd = useCallback(() => {
+    setIsComposing(false);
+    // Trigger content change after composition ends
+    setTimeout(() => {
+      handleContentChange();
+    }, 0);
+  }, [handleContentChange]);
+
   // Set HTML content when prop changes
   useEffect(() => {
     if (!editorRef.current || isComposing) return;
@@ -637,10 +667,26 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
       const selection = window.getSelection();
       const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
       const cursorOffset = range ? range.startOffset : 0;
-      const anchorNode = range ? range.startContainer : null;
-      
-      lastSetHtml.current = html;
+      const anchorNode = range ? range.startContainer : null;      lastSetHtml.current = html;
       editorRef.current.innerHTML = html || '';
+      
+      // DISABLED: No longer auto-wrapping scripture references inline
+      // if (editorRef.current && html) {
+      //   setTimeout(() => {
+      //     if (editorRef.current) {
+      //       wrapScriptureRefsInEditor(editorRef.current);
+      //     }
+      //   }, 100);
+      // }
+      
+      // Clean any existing scripture spans when setting new HTML
+      if (editorRef.current && html) {
+        setTimeout(() => {
+          if (editorRef.current) {
+            wrapScriptureRefsInEditor(editorRef.current); // This only clears spans now
+          }
+        }, 100);
+      }
       
       if (anchorNode && editorRef.current.contains(anchorNode)) {
         try {
@@ -655,25 +701,6 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
       }
     }
   }, [html, isComposing]);
-
-  // Handle composition events (for IME input)
-  const handleCompositionStart = useCallback(() => {
-    setIsComposing(true);
-  }, []);
-
-  const handleCompositionEnd = useCallback(() => {
-    setIsComposing(false);
-    setTimeout(handleContentChange, 0);
-  }, [handleContentChange]);
-
-  // Handle input events
-  const handleInput = useCallback((e: React.FormEvent) => {
-    if (!isComposing) {
-      handleContentChange();
-      updateActiveFormats();
-      updateCurrentHeading();
-    }
-  }, [handleContentChange, updateActiveFormats, updateCurrentHeading, isComposing]);
 
   // Handle selection change to update active formats
   const handleSelectionChange = useCallback(() => {
@@ -747,13 +774,128 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
     document.execCommand('insertText', false, text);
     handleContentChange();
   }, [handleContentChange]);
+  // Custom button handlers
+  const handleInsertImage = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const imageUrl = event.target?.result as string;
+          if (editorRef.current) {
+            editorRef.current.focus();
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.alt = file.name;
+            
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              const range = selection.getRangeAt(0);
+              range.insertNode(img);
+              range.setStartAfter(img);
+              range.setEndAfter(img);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            } else {
+              editorRef.current.appendChild(img);
+            }
+            handleContentChange();
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  }, [handleContentChange]);
+
+  const handleInsertLink = useCallback(() => {
+    const url = prompt('Enter the URL:');
+    if (url && editorRef.current) {
+      editorRef.current.focus();
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+        // If there's selected text, make it a link
+        document.execCommand('createLink', false, url);
+      } else {
+        // If no selection, create a link with the URL as text
+        const a = document.createElement('a');
+        a.href = url;
+        a.textContent = url;
+        a.target = '_blank';
+        
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          range.insertNode(a);
+          range.setStartAfter(a);
+          range.setEndAfter(a);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+      handleContentChange();
+    }
+  }, [handleContentChange]);
+
+  const handleInsertTable = useCallback(() => {
+    const rows = parseInt(prompt('Number of rows:') || '2', 10);
+    const cols = parseInt(prompt('Number of columns:') || '2', 10);
+    
+    if (rows > 0 && cols > 0 && editorRef.current) {
+      editorRef.current.focus();
+      
+      const table = document.createElement('table');
+      table.style.borderCollapse = 'collapse';
+      table.style.width = '100%';
+      table.style.border = '1px solid #ccc';
+      
+      for (let i = 0; i < rows; i++) {
+        const row = document.createElement('tr');
+        for (let j = 0; j < cols; j++) {
+          const cell = document.createElement(i === 0 ? 'th' : 'td');
+          cell.style.border = '1px solid #ccc';
+          cell.style.padding = '8px';
+          cell.innerHTML = '&nbsp;';
+          row.appendChild(cell);
+        }
+        table.appendChild(row);
+      }
+      
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.insertNode(table);
+        range.setStartAfter(table);
+        range.setEndAfter(table);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } else {
+        editorRef.current.appendChild(table);
+      }
+      handleContentChange();
+    }
+  }, [handleContentChange]);
 
   // Toolbar button configurations
   const toolbarButtons = [
+    // Action Group (moved to front)
+    { key: 'undo', command: 'undo', icon: '↶', title: 'Undo (Ctrl+Z)' },
+    { key: 'redo', command: 'redo', icon: '↷', title: 'Redo (Ctrl+Shift+Z)' },
+    { key: 'sep0', separator: true },
+      // Media and Insert Group
+    { key: 'insertImage', custom: 'insertImage', icon: '🖼️', title: 'Insert Image' },
+    { key: 'insertLink', custom: 'insertLink', icon: '🔗', title: 'Insert Link' },
+    { key: 'insertTable', custom: 'insertTable', icon: '📋', title: 'Insert Table' },
+    { key: 'sep1', separator: true },
+    
     // Font Controls Group
     { key: 'fontFamily', dropdown: true, type: 'fontFamily', title: 'Font Family' },
     { key: 'fontSize', dropdown: true, type: 'fontSize', title: 'Font Size' },
-    { key: 'sep1', separator: true },
+    { key: 'sep2', separator: true },
     
     // Text Formatting Group
     { key: 'bold', command: 'bold', icon: '𝐁', title: 'Bold (Ctrl+B)' },
@@ -763,35 +905,30 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
     { key: 'superscript', command: 'superscript', icon: 'X²', title: 'Superscript' },
     { key: 'subscript', command: 'subscript', icon: 'X₂', title: 'Subscript' },
     { key: 'removeFormat', command: 'removeFormat', icon: '✗', title: 'Clear Formatting' },
-    { key: 'sep2', separator: true },
+    { key: 'sep3', separator: true },
     
     // Color Controls Group
     { key: 'fontColor', color: true, type: 'foreColor', icon: '🎨', title: 'Font Color' },
     { key: 'backgroundColor', color: true, type: 'backColor', icon: '🖍', title: 'Background Color' },
-    { key: 'sep3', separator: true },
+    { key: 'sep4', separator: true },
     
     // Paragraph Group
     { key: 'heading', dropdown: true, type: 'heading', title: 'Paragraph Style' },
-    { key: 'sep4', separator: true },
+    { key: 'sep5', separator: true },
       // List and Alignment Group
     { key: 'ul', command: 'insertUnorderedList', icon: '•', title: 'Bullet List' },
     { key: 'ol', command: 'insertOrderedList', icon: '1.', title: 'Numbered List' },
-    { key: 'sep5', separator: true },
+    { key: 'sep6', separator: true },
       // Alignment Group
     { key: 'left', command: 'justifyLeft', icon: '◧', title: 'Align Left' },
     { key: 'center', command: 'justifyCenter', icon: '▬', title: 'Align Center' },
     { key: 'right', command: 'justifyRight', icon: '◨', title: 'Align Right' },
     { key: 'justify', command: 'justifyFull', icon: '▦', title: 'Justify' },
-    { key: 'sep6', separator: true },
+    { key: 'sep7', separator: true },
     
     // Indentation Group
     { key: 'outdent', command: 'outdent', icon: '⇤', title: 'Decrease Indent' },
     { key: 'indent', command: 'indent', icon: '⇥', title: 'Increase Indent' },
-    { key: 'sep7', separator: true },
-    
-    // Action Group
-    { key: 'undo', command: 'undo', icon: '↶', title: 'Undo (Ctrl+Z)' },
-    { key: 'redo', command: 'redo', icon: '↷', title: 'Redo (Ctrl+Shift+Z)' },
   ] as const;
 
   return (
@@ -812,36 +949,36 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
                   title={button.title}
                   value={currentFontFamily}
                 >
-                  <option value="Arial">Arial</option>
-                  <option value="Helvetica">Helvetica</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Verdana">Verdana</option>
-                  <option value="Courier New">Courier New</option>
-                  <option value="Trebuchet MS">Trebuchet MS</option>
-                  <option value="Tahoma">Tahoma</option>
-                  <option value="Comic Sans MS">Comic Sans MS</option>
-                  <option value="Impact">Impact</option>
-                  <option value="'Roboto', sans-serif">Roboto</option>
-                  <option value="'Open Sans', sans-serif">Open Sans</option>
-                  <option value="'Lato', sans-serif">Lato</option>
-                  <option value="'Montserrat', sans-serif">Montserrat</option>
-                  <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
-                  <option value="'Oswald', sans-serif">Oswald</option>
-                  <option value="'Raleway', sans-serif">Raleway</option>
-                  <option value="'PT Sans', sans-serif">PT Sans</option>
-                  <option value="'Ubuntu', sans-serif">Ubuntu</option>
-                  <option value="'Nunito', sans-serif">Nunito</option>
-                  <option value="'Playfair Display', serif">Playfair Display</option>
-                  <option value="'Merriweather', serif">Merriweather</option>
-                  <option value="'Crimson Text', serif">Crimson Text</option>
-                  <option value="'Libre Baskerville', serif">Libre Baskerville</option>
-                  <option value="'Lora', serif">Lora</option>
-                  <option value="'PT Serif', serif">PT Serif</option>
-                  <option value="'Source Code Pro', monospace">Source Code Pro</option>
-                  <option value="'Fira Code', monospace">Fira Code</option>
-                  <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-                  <option value="'Inconsolata', monospace">Inconsolata</option>
+                  <option value="Arial" style={{ fontFamily: 'Arial' }}>Arial</option>
+                  <option value="Helvetica" style={{ fontFamily: 'Helvetica' }}>Helvetica</option>
+                  <option value="Times New Roman" style={{ fontFamily: 'Times New Roman' }}>Times New Roman</option>
+                  <option value="Georgia" style={{ fontFamily: 'Georgia' }}>Georgia</option>
+                  <option value="Verdana" style={{ fontFamily: 'Verdana' }}>Verdana</option>
+                  <option value="Courier New" style={{ fontFamily: 'Courier New' }}>Courier New</option>
+                  <option value="Trebuchet MS" style={{ fontFamily: 'Trebuchet MS' }}>Trebuchet MS</option>
+                  <option value="Tahoma" style={{ fontFamily: 'Tahoma' }}>Tahoma</option>
+                  <option value="Comic Sans MS" style={{ fontFamily: 'Comic Sans MS' }}>Comic Sans MS</option>
+                  <option value="Impact" style={{ fontFamily: 'Impact' }}>Impact</option>
+                  <option value="'Roboto', sans-serif" style={{ fontFamily: "'Roboto', sans-serif" }}>Roboto</option>
+                  <option value="'Open Sans', sans-serif" style={{ fontFamily: "'Open Sans', sans-serif" }}>Open Sans</option>
+                  <option value="'Lato', sans-serif" style={{ fontFamily: "'Lato', sans-serif" }}>Lato</option>
+                  <option value="'Montserrat', sans-serif" style={{ fontFamily: "'Montserrat', sans-serif" }}>Montserrat</option>
+                  <option value="'Source Sans Pro', sans-serif" style={{ fontFamily: "'Source Sans Pro', sans-serif" }}>Source Sans Pro</option>
+                  <option value="'Oswald', sans-serif" style={{ fontFamily: "'Oswald', sans-serif" }}>Oswald</option>
+                  <option value="'Raleway', sans-serif" style={{ fontFamily: "'Raleway', sans-serif" }}>Raleway</option>
+                  <option value="'PT Sans', sans-serif" style={{ fontFamily: "'PT Sans', sans-serif" }}>PT Sans</option>
+                  <option value="'Ubuntu', sans-serif" style={{ fontFamily: "'Ubuntu', sans-serif" }}>Ubuntu</option>
+                  <option value="'Nunito', sans-serif" style={{ fontFamily: "'Nunito', sans-serif" }}>Nunito</option>
+                  <option value="'Playfair Display', serif" style={{ fontFamily: "'Playfair Display', serif" }}>Playfair Display</option>
+                  <option value="'Merriweather', serif" style={{ fontFamily: "'Merriweather', serif" }}>Merriweather</option>
+                  <option value="'Crimson Text', serif" style={{ fontFamily: "'Crimson Text', serif" }}>Crimson Text</option>
+                  <option value="'Libre Baskerville', serif" style={{ fontFamily: "'Libre Baskerville', serif" }}>Libre Baskerville</option>
+                  <option value="'Lora', serif" style={{ fontFamily: "'Lora', serif" }}>Lora</option>
+                  <option value="'PT Serif', serif" style={{ fontFamily: "'PT Serif', serif" }}>PT Serif</option>
+                  <option value="'Source Code Pro', monospace" style={{ fontFamily: "'Source Code Pro', monospace" }}>Source Code Pro</option>
+                  <option value="'Fira Code', monospace" style={{ fontFamily: "'Fira Code', monospace" }}>Fira Code</option>
+                  <option value="'JetBrains Mono', monospace" style={{ fontFamily: "'JetBrains Mono', monospace" }}>JetBrains Mono</option>
+                  <option value="'Inconsolata', monospace" style={{ fontFamily: "'Inconsolata', monospace" }}>Inconsolata</option>
                 </select>
               );
             }
@@ -907,29 +1044,53 @@ function BasicRTE({ html, onHtmlChange, onRefsChange }: BasicRTEProps) {
                   />
                 </label>
               </div>
+            );          }
+            // Handle custom buttons
+          if ('custom' in button) {
+            return (
+              <button
+                key={button.key}
+                type="button"
+                className="toolbar-button"
+                onClick={() => {
+                  if (button.custom === 'insertImage') {
+                    handleInsertImage();
+                  } else if (button.custom === 'insertLink') {
+                    handleInsertLink();
+                  } else if (button.custom === 'insertTable') {
+                    handleInsertTable();
+                  }
+                }}
+                title={button.title}
+              >
+                {button.icon}
+              </button>
             );
           }
+          
+          // Handle standard command buttons
+          if ('command' in button) {
             const isActive = activeFormats.has(button.command);
           
-          return (
-            <button
-              key={button.key}
-              type="button"
-              className={`toolbar-button ${isActive ? 'active' : ''}`}
-              onClick={() => {
-                if (button.command === 'insertUnorderedList') {
-                  toggleList('ul');
-                } else if (button.command === 'insertOrderedList') {
-                  toggleList('ol');
-                } else {
-                  execCommand(button.command);
-                }
-              }}
-              title={button.title}
-            >
-              {button.icon}
-            </button>
-          );
+            return (
+              <button
+                key={button.key}
+                type="button"
+                className={`toolbar-button ${isActive ? 'active' : ''}`}                onClick={() => {
+                  if (button.command === 'insertUnorderedList') {
+                    toggleList('ul');
+                  } else if (button.command === 'insertOrderedList') {
+                    toggleList('ol');
+                  } else {
+                    execCommand(button.command);
+                  }
+                }}
+                title={button.title}
+              >
+                {button.icon}
+              </button>
+            );
+          }
         })}
       </div>
 

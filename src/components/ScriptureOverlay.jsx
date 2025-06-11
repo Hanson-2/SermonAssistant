@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getDisplayBookAbbrev, normalizeBookName } from '../utils/getDisplayBookAbbrev';
 
@@ -156,13 +156,21 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
         verseRange: String(effective.verseRange || '0')
       });
       return;
-    }
-
-    const { book: normBook, chapter: normChapter, startVerse, endVerse } = parsed;
+    }    const { book: normBook, chapter: normChapter, startVerse, endVerse } = parsed;
     console.log('[ScriptureOverlay] FetchEffect: Parsed successfully:', { normBook, normChapter, startVerse, endVerse });
-    setDisplayRef({ book: normBook, chapter: normChapter, verseRange: startVerse === endVerse ? `${startVerse}` : `${startVerse}-${endVerse}` });
-
-    // --- DEBUG: Log types and values for Firestore query ---
+    
+    // Determine if this is a chapter-only reference
+    const isChapterOnly = startVerse === 1 && endVerse === 999;
+    const displayVerseRange = isChapterOnly ? 
+      '' : // Don't show verse range for chapter-only references
+      (startVerse === endVerse ? `${startVerse}` : `${startVerse}-${endVerse}`);
+    
+    setDisplayRef({ 
+      book: normBook, 
+      chapter: normChapter, 
+      verseRange: displayVerseRange,
+      isChapterOnly 
+    });    // --- DEBUG: Log types and values for Firestore query ---
     console.log('DEBUG types:', {
       normBook, normChapter, startVerse, endVerse,
       typeof_normBook: typeof normBook,
@@ -171,6 +179,7 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
       typeof_endVerse: typeof endVerse,
     });
     // --- END DEBUG ---
+    
     const fetchVerses = async () => {
       try {
         // Query the correct 'verses' collection for this book/chapter
@@ -179,17 +188,33 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
         const startV = Number(startVerse);
         const endV = Number(endVerse);
         const bookLower = String(normBook).toLowerCase().replace(/\s+/g, ' ').trim();
+          // Check if this is a chapter-only reference (endVerse is 999 indicates whole chapter)
+        const isChapterOnly = endV === 999;
+        
         // Use Firestore query() and where() for all conditions
-        const { query, where } = await import('firebase/firestore');
-        const qRef = query(
-          versesRef,
-          where('book_lower', '==', bookLower),
-          where('chapter', '==', chapterNum),
-          where('verse', '>=', startV),
-          where('verse', '<=', endV)
-        );
+        let qRef;
+        if (isChapterOnly) {
+          // For chapter-only references, don't set an upper bound on verse numbers
+          qRef = query(
+            versesRef,
+            where('book_lower', '==', bookLower),
+            where('chapter', '==', chapterNum),
+            where('verse', '>=', startV)
+          );
+        } else {
+          // For specific verse ranges, use both bounds
+          qRef = query(
+            versesRef,
+            where('book_lower', '==', bookLower),
+            where('chapter', '==', chapterNum),
+            where('verse', '>=', startV),
+            where('verse', '<=', endV)
+          );
+        }
+        
         const snap = await getDocs(qRef);
         console.log('[Overlay] Firestore returned', snap.docs.length, 'docs');
+        
         // Robust: force verse to number, log type, and filter in JS for range
         const docs = snap.docs
           .map(doc => {
@@ -198,7 +223,11 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             console.log('Verse type:', typeof data.verse, data.verse, data.translation, data.text);
             return { ...data, verse: verseNum };
           })
-          .filter(d => d.verse >= startV && d.verse <= endV);
+          .filter(d => {
+            // For chapter-only, include all verses in the chapter
+            // For specific ranges, filter by the exact range
+            return isChapterOnly ? d.verse >= startV : (d.verse >= startV && d.verse <= endV);
+          });
         console.log('[Overlay] After filter, docs:', docs.map(d => ({ verse: d.verse, translation: d.translation, text: d.text })));
         console.log('[Overlay] Raw docs from Firestore:', docs);
         if (docs.length === 0) {
@@ -221,7 +250,10 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             label: t.label.toUpperCase(), // Ensure label is always uppercase
             text: t.verses.map(v => v.text).join('\n'), // legacy
             verses: t.verses,
-          };        });// Normalize codes for robust comparison
+          };
+        });
+        
+        // Normalize codes for robust comparison
         const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, '');
         
         console.log('[Overlay] Before reordering, list:', list.map(t => t.code));
@@ -265,6 +297,7 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
           }
         }
         // Debug: show what will be rendered
+        console.log('[Overlay] Translations list:', list);        // Debug: show what will be rendered
         console.log('[Overlay] Translations list:', list);
         if (list.length > 0) {
           console.log('[Overlay] Active translation verses:', list[0].verses);
@@ -275,9 +308,10 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
         setCurrent('');
       } finally {
         setLoading(false);
-      }    };
+      }
+    };
     fetchVerses();
-  }, [open, effective, defaultTranslation]);  // Ensure default translation is set on mount and when translations change
+  }, [open, effective, defaultTranslation]); // Dependencies for the fetchVerses effect
   
   useEffect(() => {
     console.log('[ScriptureOverlay] Translation selection effect triggered:', {
@@ -348,9 +382,12 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             onClick={(e) => e.stopPropagation()} // Prevent click inside from closing
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-3 md:p-4 border-b border-yellow-400/20 flex-shrink-0 bg-black/20">
-              <h2 className="text-lg md:text-xl font-semibold text-yellow-400 truncate pr-2">
-                {displayRef.book ? `${displayBook} ${displayRef.chapter}:${displayRef.verseRange}` : 'Loading Reference...'}
+            <div className="flex items-center justify-between p-3 md:p-4 border-b border-yellow-400/20 flex-shrink-0 bg-black/20">              <h2 className="text-lg md:text-xl font-semibold text-yellow-400 truncate pr-2">
+                {displayRef.book ? 
+                  (displayRef.verseRange ? 
+                    `${displayBook} ${displayRef.chapter}:${displayRef.verseRange}` : 
+                    `${displayBook} ${displayRef.chapter}`) : 
+                  'Loading Reference...'}
               </h2>
               <button 
                 onClick={onClose} 

@@ -23,9 +23,9 @@ const aliasPattern = Object
   .sort((a, b) => b.length - a.length)       // longest first
   .join("|");
 
-// Combined regex: full book names OR aliases, then chapter:verse (REQUIRED verse), optional ranges
+// Combined regex: full book names OR aliases, then chapter:verse (optional verse), optional ranges
 const scriptureRegex = new RegExp(
-  `((?:${bookPattern}|${aliasPattern}))\\s+(\\d+):(\\d+)(?:\\s*-\\s*(\\d+)(?::(\\d+))?)?`,
+  `((?:${bookPattern}|${aliasPattern}))\\s+(\\d+)(?::(\\d+)(?:\\s*-\\s*(\\d+)(?::(\\d+))?)?)?`,
   "gi"
 );
 
@@ -36,100 +36,100 @@ const chapterOnlyRegex = new RegExp(
 );
 
 export function extractScriptureReferences(text: string): ScriptureReference[] {
+  const refs: ScriptureReference[] = [];
   const allMatches: Array<{
     match: RegExpExecArray;
     type: 'verse' | 'chapter';
-    index: number;
+    start: number;
+    end: number;
   }> = [];
 
-  // Collect all verse-specific matches
+  // Find all verse-specific matches
   let match: RegExpExecArray | null;
   while ((match = scriptureRegex.exec(text))) {
     allMatches.push({
-      match: [...match] as RegExpExecArray,
+      match,
       type: 'verse',
-      index: match.index
+      start: match.index,
+      end: match.index + match[0].length
     });
   }
 
-  // Reset regex for chapter-only references
+  // Reset regex and find all chapter-only matches
   chapterOnlyRegex.lastIndex = 0;
-
-  // Collect all chapter-only matches
   while ((match = chapterOnlyRegex.exec(text))) {
     allMatches.push({
-      match: [...match] as RegExpExecArray,
+      match,
       type: 'chapter',
-      index: match.index
+      start: match.index,
+      end: match.index + match[0].length
     });
   }
 
   // Sort all matches by their position in the text
-  allMatches.sort((a, b) => a.index - b.index);
+  allMatches.sort((a, b) => a.start - b.start);
 
-  const refs: ScriptureReference[] = [];
-  // Process matches in order of appearance
-  for (const { match, type } of allMatches) {
-    if (type === 'verse') {
-      const [, rawToken, chapStr, vsStr, endChapOrVsStr, endVsStr] = match;
+  // Process matches in order, checking for overlaps
+  for (const { match, type, start, end } of allMatches) {
+    // Check if this match overlaps with any already processed reference
+    const overlaps = refs.some(ref => {
+      const possibleMatches = [];
       
+      if (ref.verse !== undefined) {
+        // Verse-specific reference
+        possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}`);
+        possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}-${ref.endVerse || ref.verse}`);
+      } else {
+        // Chapter-only reference
+        possibleMatches.push(`${ref.book} ${ref.chapter}`);
+      }
+      
+      return possibleMatches.some(refText => {
+        const refIndex = text.indexOf(refText);
+        if (refIndex === -1) return false;
+        const refEnd = refIndex + refText.length;
+        // Check for overlap
+        return !(end <= refIndex || start >= refEnd);
+      });
+    });
+    
+    if (overlaps) continue;
+
+    if (type === 'verse') {
+      // Process verse-specific reference
+      const [, rawToken, chapStr, vsStr, endChapOrVsStr, endVsStr] = match;
       // Normalize alias key (strip dots/spaces, lowercase)
       const key = rawToken.replace(/[.\s]/g, "").toLowerCase();
       // Map to canonical book name, or clean up raw token
       const book = bookAliases[key] || rawToken.replace(/[.]/g, " ").trim();
 
       const chapter = parseInt(chapStr, 10);
-      const verse = parseInt(vsStr, 10);
+      const verse = vsStr ? parseInt(vsStr, 10) : undefined;
 
-      if (endChapOrVsStr && endVsStr) {
-        refs.push({
-          book,
-          chapter,
-          verse,
-          endChapter: parseInt(endChapOrVsStr, 10),
-          endVerse: parseInt(endVsStr, 10),
-        });
-      } else if (endChapOrVsStr) {
-        refs.push({
-          book,
-          chapter,
-          verse,
-          endChapter: chapter,
-          endVerse: parseInt(endChapOrVsStr, 10),
-        });
-      } else {
-        refs.push({ book, chapter, verse });
-      }
-    } else if (type === 'chapter') {
-      const [fullMatch, rawToken, chapStr] = match;
-      const matchStart = match.index;
-      const matchEnd = matchStart + fullMatch.length;
-
-      // Check if this overlaps with any existing reference
-      const overlaps = refs.some(ref => {
-        // Try to find the position of this reference in the text
-        const possibleMatches = [];
-        
-        if (ref.verse !== undefined) {
-          // Verse-specific reference
-          possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}`);
-          possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}-${ref.endVerse || ref.verse}`);
+      if (verse !== undefined) {
+        if (endChapOrVsStr && endVsStr) {
+          refs.push({
+            book,
+            chapter,
+            verse,
+            endChapter: parseInt(endChapOrVsStr, 10),
+            endVerse: parseInt(endVsStr, 10),
+          });
+        } else if (endChapOrVsStr) {
+          refs.push({
+            book,
+            chapter,
+            verse,
+            endChapter: chapter,
+            endVerse: parseInt(endChapOrVsStr, 10),
+          });
         } else {
-          // Chapter-only reference
-          possibleMatches.push(`${ref.book} ${ref.chapter}`);
+          refs.push({ book, chapter, verse });
         }
-        
-        return possibleMatches.some(refText => {
-          const refIndex = text.indexOf(refText);
-          if (refIndex === -1) return false;
-          const refEnd = refIndex + refText.length;
-          // Check for overlap
-          return !(matchEnd <= refIndex || matchStart >= refEnd);
-        });
-      });
-      
-      if (overlaps) continue;
-      
+      }
+    } else {
+      // Process chapter-only reference
+      const [, rawToken, chapStr] = match;
       // Normalize alias key (strip dots/spaces, lowercase)
       const key = rawToken.replace(/[.\s]/g, "").toLowerCase();
       // Map to canonical book name, or clean up raw token

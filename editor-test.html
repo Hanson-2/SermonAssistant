@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rich Text Editor Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1e293b;
+            border-radius: 8px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #facc15;
+            border-bottom: 2px solid #facc15;
+            padding-bottom: 10px;
+        }
+        .instructions {
+            background-color: #334155;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>BasicRichTextEditor Test Page</h1>
+        
+        <div class="test-section">
+            <h2>Testing Instructions</h2>
+            <div class="instructions">
+                <p><strong>Font Functionality Tests:</strong></p>
+                <ol>
+                    <li>Select text and try changing font family from the dropdown</li>
+                    <li>Verify that each font option in the dropdown shows in its actual font</li>
+                    <li>Test font size changes</li>
+                    <li>Try bold, italic, underline formatting</li>
+                </ol>
+                
+                <p><strong>Scripture Reference Tests:</strong></p>
+                <ol>
+                    <li>Type scripture references like "John 3:16" or "Romans 8:28"</li>
+                    <li>Wait for them to automatically highlight with golden styling</li>
+                    <li>Test that clicking on highlighted references works</li>
+                    <li>Verify that scripture highlighting doesn't interfere with font changes</li>
+                </ol>
+                
+                <p><strong>Integration Tests:</strong></p>
+                <ol>
+                    <li>Apply font styles to text that contains scripture references</li>
+                    <li>Add scripture references to already formatted text</li>
+                    <li>Verify both features work together harmoniously</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Sample Text for Testing</h2>
+            <div id="editor-container"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // This would normally import your React component
+        // For now, we'll just create a simple placeholder
+        const container = document.getElementById('editor-container');
+        container.innerHTML = `
+            <div style="border: 1px solid #555; padding: 15px; border-radius: 4px; background: #1e293b; min-height: 200px;">
+                <p style="color: #94a3b8; font-style: italic;">
+                    React BasicRichTextEditor component will be rendered here.
+                    <br><br>
+                    Sample text to test:
+                    <br>
+                    "For God so loved the world that He gave His one and only Son, that whoever believes in Him shall not perish but have eternal life. John 3:16"
+                    <br><br>
+                    "And we know that in all things God works for the good of those who love Him, who have been called according to His purpose. Romans 8:28"
+                </p>
+            </div>
+        `;
+    </script>
+</body>
+</html>

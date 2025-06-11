@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getSermon, updateSermonNotes, getScriptureVersesForChapter, getUserProfile } from "../services/firebaseService";
+import { getSermon, updateSermonNotes, updateSermon, getScriptureVersesForChapter, getUserProfile } from "../services/firebaseService";
 import { Sermon } from "../components/SermonCard/SermonCard";
 import { extractScriptureReferences } from "../utils/smartParseScriptureInput";
 import CustomRichTextEditor from "../components/CustomRichTextEditor";
@@ -53,18 +53,27 @@ export default function ExpositoryDetailPage() {
     chapter: number;
     verseRange: string;
     reference: string;
-  } | null>(null);
-  // --- Debounce scripture reference extraction for stability ---
+  } | null>(null);  // --- Debounce scripture reference extraction for stability ---
   const debouncedSetRefs = useCallback(
     debounce((rawRefsFromEffect: any[]) => {
       // Normalize refs immediately before setting state
       const normalizedRefsFromEffect = rawRefsFromEffect.map(ref => {
         let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
         let bookName = bookAliases[localRawBook] || ref.book;
-        let referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
-        if (ref.endVerse && ref.endVerse !== ref.verse) {
-          referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
+        
+        // Build normalized reference string (handle chapter-only vs verse-specific)
+        let referenceString;
+        if (ref.verse !== undefined) {
+          // Verse-specific reference
+          referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
+          if (ref.endVerse && ref.endVerse !== ref.verse) {
+            referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
+          }
+        } else {
+          // Chapter-only reference
+          referenceString = `${bookName} ${ref.chapter}`;
         }
+        
         return { ...ref, book: bookName, reference: referenceString };
       });
 
@@ -89,9 +98,17 @@ export default function ExpositoryDetailPage() {
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
   const [overlayContent, setOverlayContent] = useState<string>("");
   const [overlayLoading, setOverlayLoading] = useState(false);
-  const [overlayError, setOverlayError] = useState<string | null>(null);
-  const [overlayTranslations, setOverlayTranslations] = useState<Array<{ code: string, label: string, text: string }>>([]);
-  const [overlayOpen, setOverlayOpen] = useState(false);  // --- Get user's default translation from user profile ---
+  const [overlayError, setOverlayError] = useState<string | null>(null);  const [overlayTranslations, setOverlayTranslations] = useState<Array<{ code: string, label: string, text: string }>>([]);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+
+  // --- Editable sermon metadata state ---
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [editableTitle, setEditableTitle] = useState("");
+  const [editableDescription, setEditableDescription] = useState("");
+  const [editableDate, setEditableDate] = useState("");
+  const [savingMetadata, setSavingMetadata] = useState(false);// --- Get user's default translation from user profile ---
   const [defaultTranslation, setDefaultTranslation] = useState<string>('');
   useEffect(() => {
     // Load user's default translation from their profile
@@ -121,12 +138,17 @@ export default function ExpositoryDetailPage() {
     };
     loadUserPreferences();
   }, []);
-
   useEffect(() => {
     if (!id) return;
     getSermon(id).then((data) => {
       if (data) {
         setSermon(data);
+        
+        // Initialize editable metadata
+        setEditableTitle(data.title || "");
+        setEditableDescription(data.description || "");
+        setEditableDate(data.date || "");
+        
         if (data.notes && typeof data.notes === "object") {
           const orderedSlides = Object.keys(data.notes)
             .sort((a, b) => Number(a) - Number(b))
@@ -167,17 +189,25 @@ export default function ExpositoryDetailPage() {
     // Note: Scripture refs are updated via useEffect watching 'slides'
     // or directly by EditableRichText's onRefsChange calling handleRefsChange
   }
-
   function handleRefsChange(rawRefsFromEditableRichText: any[]) {
     // Normalize book names using bookAliases and create the reference string
     const normalizedRefs = rawRefsFromEditableRichText.map(ref => {
       let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
       let bookName = bookAliases[localRawBook] || ref.book;
-      // Build normalized reference string (with range if present)
-      let referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
-      if (ref.endVerse && ref.endVerse !== ref.verse) {
-        referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
+      
+      // Build normalized reference string (handle chapter-only vs verse-specific)
+      let referenceString;
+      if (ref.verse !== undefined) {
+        // Verse-specific reference
+        referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
+        if (ref.endVerse && ref.endVerse !== ref.verse) {
+          referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
+        }
+      } else {
+        // Chapter-only reference
+        referenceString = `${bookName} ${ref.chapter}`;
       }
+      
       return { ...ref, book: bookName, reference: referenceString };
     });
     // console.log('[ExpositoryDetailPage] handleRefsChange: Directly setting scriptureRefs from EditableRichText', normalizedRefs);
@@ -240,19 +270,24 @@ export default function ExpositoryDetailPage() {
       if (overlayOpen && lockedOverlayRef) {
         console.log('[ExpositoryDetailPage] Overlay already open and locked, ignoring event.');
         return;
-      }
-
-      const detailBook = e.detail.book;
+      }      const detailBook = e.detail.book;
       const detailChapter = e.detail.chapter;
       const detailVerse = e.detail.verse;
       const detailEndVerse = e.detail.endVerse;
 
-      const currentVerseRange = detailEndVerse && detailEndVerse !== detailVerse
-        ? `${detailVerse}-${detailEndVerse}`
-        : `${detailVerse}`;
-
-      // Construct the reference string to accurately reflect the verse range
-      const currentReference = `${detailBook} ${detailChapter}:${currentVerseRange}`;
+      let currentVerseRange, currentReference;
+      
+      // Handle chapter-only references (when verse is undefined)
+      if (detailVerse === undefined || detailVerse === null) {
+        currentVerseRange = ""; // No verse range for chapter-only
+        currentReference = `${detailBook} ${detailChapter}`;
+      } else {
+        // Handle verse-specific references
+        currentVerseRange = detailEndVerse && detailEndVerse !== detailVerse
+          ? `${detailVerse}-${detailEndVerse}`
+          : `${detailVerse}`;
+        currentReference = `${detailBook} ${detailChapter}:${currentVerseRange}`;
+      }
 
       const refObj = {
         book: detailBook,
@@ -274,7 +309,6 @@ export default function ExpositoryDetailPage() {
     // Re-run if overlayOpen changes, to ensure the listener's closure has the latest overlayOpen state.
     // Or if lockedOverlayRef changes from null to non-null or vice-versa while open is true (edge case).
   }, [overlayOpen, lockedOverlayRef]);
-
   // When overlay closes, clear locked ref
   function handleOverlayClose() {
     console.log('[ExpositoryDetailPage] handleOverlayClose called. Current overlayOpen:', overlayOpen);
@@ -283,23 +317,132 @@ export default function ExpositoryDetailPage() {
     console.log('[ExpositoryDetailPage] Overlay closed. overlayOpen set to false, lockedOverlayRef to null.');
   }
 
+  // --- Metadata editing functions ---
+  const saveMetadata = async (field: 'title' | 'description' | 'date', value: string) => {
+    if (!sermon) return;
+    
+    setSavingMetadata(true);
+    try {
+      const updateData: Partial<Sermon> = {};
+      updateData[field] = value;
+      
+      await updateSermon(sermon.id.toString(), updateData);
+      
+      // Update local sermon state
+      setSermon(prev => prev ? { ...prev, [field]: value } : null);
+      
+    } catch (error) {
+      console.error(`Failed to save ${field}:`, error);
+      // Revert the editable value on error
+      if (field === 'title') setEditableTitle(sermon.title || "");
+      if (field === 'description') setEditableDescription(sermon.description || "");
+      if (field === 'date') setEditableDate(sermon.date || "");
+    } finally {
+      setSavingMetadata(false);
+    }
+  };
+
+  const handleTitleEdit = () => {
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSave = async () => {
+    setIsEditingTitle(false);
+    if (editableTitle.trim() !== (sermon?.title || "").trim()) {
+      await saveMetadata('title', editableTitle.trim());
+    }
+  };
+
+  const handleTitleCancel = () => {
+    setIsEditingTitle(false);
+    setEditableTitle(sermon?.title || "");
+  };
+  const handleMetadataTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleTitleCancel();
+    }
+  };
+
+  const handleDescriptionEdit = () => {
+    setIsEditingDescription(true);
+  };
+
+  const handleDescriptionSave = async () => {
+    setIsEditingDescription(false);
+    if (editableDescription.trim() !== (sermon?.description || "").trim()) {
+      await saveMetadata('description', editableDescription.trim());
+    }
+  };
+
+  const handleDescriptionCancel = () => {
+    setIsEditingDescription(false);
+    setEditableDescription(sermon?.description || "");
+  };
+
+  const handleMetadataDescriptionKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      handleDescriptionSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleDescriptionCancel();
+    }
+  };
+
+  const handleDateEdit = () => {
+    setIsEditingDate(true);
+  };
+
+  const handleDateSave = async () => {
+    setIsEditingDate(false);
+    if (editableDate.trim() !== (sermon?.date || "").trim()) {
+      await saveMetadata('date', editableDate.trim());
+    }
+  };
+
+  const handleDateCancel = () => {
+    setIsEditingDate(false);
+    setEditableDate(sermon?.date || "");
+  };
+
+  const handleMetadataDateKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleDateSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleDateCancel();
+    }
+  };
+
   // --- Per-slide scripture refs ---
   const [slideScriptureRefs, setSlideScriptureRefs] = useState<any[][]>([]);
   // --- Per-slide titles ---
   const [slideTitles, setSlideTitles] = useState<string[]>([]);
   const [editingTitleIdx, setEditingTitleIdx] = useState<number | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  useEffect(() => {
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);  useEffect(() => {
     // For each slide, extract and normalize scripture refs
     const refsBySlide = slides.map(slideText => {
       const rawRefs = extractScriptureReferences(slideText);
       return rawRefs.map(ref => {
         let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
         let bookName = bookAliases[localRawBook] || ref.book;
-        let referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
-        if (ref.endVerse && ref.endVerse !== ref.verse) {
-          referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
+        let referenceString;
+        
+        // Handle chapter-only references (verse is undefined)
+        if (ref.verse === undefined) {
+          referenceString = `${bookName} ${ref.chapter}`;
+        } else {
+          referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
+          if (ref.endVerse && ref.endVerse !== ref.verse) {
+            referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
+          }
         }
+        
         return { ...ref, book: bookName, reference: referenceString };
       });
     });
@@ -379,13 +522,83 @@ export default function ExpositoryDetailPage() {
 
   return (
     <div className="expository-detail-root">
-      <div className="expository-bg-overlay" />
-      <div className="expository-sticky-banner">
+      <div className="expository-bg-overlay" />      <div className="expository-sticky-banner">
         <div className="expository-banner-row">
-          <h1 className="expository-banner-title">{sermon.title}</h1>
-          <span className="expository-banner-date">{sermon.date}</span>
+          {isEditingTitle ? (
+            <input
+              type="text"
+              className="expository-banner-title-input"
+              value={editableTitle}
+              onChange={(e) => setEditableTitle(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={handleMetadataTitleKeyDown}
+              autoFocus
+              placeholder="Enter sermon title"
+            />
+          ) : (            <h1 
+              className="expository-banner-title editable" 
+              onClick={handleTitleEdit}
+              title="Click to edit title"
+            >
+              {sermon.title || "Untitled Sermon"}
+              {!savingMetadata && <span className="edit-hint">&lt;</span>}
+            </h1>
+          )}
+          
+          {isEditingDate ? (
+            <input
+              type="text"
+              className="expository-banner-date-input"
+              value={editableDate}
+              onChange={(e) => setEditableDate(e.target.value)}
+              onBlur={handleDateSave}
+              onKeyDown={handleMetadataDateKeyDown}
+              autoFocus
+              placeholder="Enter date"
+            />
+          ) : (            <span 
+              className="expository-banner-date editable" 
+              onClick={handleDateEdit}
+              title="Click to edit date"
+            >
+              {sermon.date || "No date"}
+              {!savingMetadata && <span className="edit-hint">&lt;</span>}
+            </span>
+          )}
         </div>
-        <div className="expository-banner-desc">{sermon.description?.slice(0, 120)}</div>
+        
+        <div className="expository-banner-desc-container">
+          {isEditingDescription ? (
+            <textarea
+              className="expository-banner-desc-input"
+              value={editableDescription}
+              onChange={(e) => setEditableDescription(e.target.value)}
+              onBlur={handleDescriptionSave}
+              onKeyDown={handleMetadataDescriptionKeyDown}
+              autoFocus
+              placeholder="Enter sermon description"
+              rows={2}
+            />
+          ) : (            <div 
+              className="expository-banner-desc editable" 
+              onClick={handleDescriptionEdit}
+              title="Click to edit description (Ctrl+Enter to save)"
+            >
+              {sermon.description ? (
+                sermon.description.length > 120 ? 
+                  `${sermon.description.slice(0, 120)}...` : 
+                  sermon.description
+              ) : "No description"}
+              {!savingMetadata && <span className="edit-hint">&lt;</span>}
+            </div>
+          )}
+          
+          {savingMetadata && (
+            <div className="saving-indicator">
+              <span className="saving-text">Saving...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Scripture mini cards banner */}

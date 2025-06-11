@@ -187,11 +187,12 @@ export default function PresentationView({ sermon, isOpen, onClose }: Presentati
             {/* Scripture references */}
             {currentSlideScriptureRefs.length > 0 && (
               <div className="presentation-scripture">
-                <h3>Scripture References</h3>
-                <div className="presentation-scripture-list">                  {currentSlideScriptureRefs.map((ref, index) => (
+                <h3>Scripture References</h3>                <div className="presentation-scripture-list">                  {currentSlideScriptureRefs.map((ref, index) => (
                     <span key={index} className="presentation-scripture-ref">
-                      {ref.book} {ref.chapter}:{ref.verse}
-                      {ref.endVerse && ref.endVerse !== ref.verse && `-${ref.endVerse}`}
+                      {ref.verse !== undefined 
+                        ? `${ref.book} ${ref.chapter}:${ref.verse}${ref.endVerse && ref.endVerse !== ref.verse ? `-${ref.endVerse}` : ''}`
+                        : `${ref.book} ${ref.chapter}`
+                      }
                     </span>
                   ))}
                 </div>

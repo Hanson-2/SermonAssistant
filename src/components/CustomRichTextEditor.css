@@ -1,3 +1,6 @@
+/* Google Fonts import for font preview */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=Oswald:wght@400;700&family=Raleway:wght@400;700&family=PT+Sans:wght@400;700&family=Ubuntu:wght@400;700&family=Nunito:wght@400;700&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Crimson+Text:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Lora:wght@400;700&family=PT+Serif:wght@400;700&family=Source+Code+Pro:wght@400;700&family=Fira+Code:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Inconsolata:wght@400;700&display=swap');
+
 .editor-container {
   width: 100%;
   max-width: 100vw;
@@ -195,6 +198,25 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Special styling for media insertion buttons */
+.toolbar-button[title*="Insert Image"],
+.toolbar-button[title*="Insert Link"],
+.toolbar-button[title*="Insert Table"] {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+}
+
+.toolbar-button[title*="Insert Image"]:hover,
+.toolbar-button[title*="Insert Link"]:hover,
+.toolbar-button[title*="Insert Table"]:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+}
+
 /* Toolbar separators */
 .toolbar-separator {
   width: 1px;
@@ -248,8 +270,56 @@
 
 /* Specific dropdown widths */
 .toolbar-font-family {
-  min-width: 120px;
+  min-width: 140px;
   padding-right: 2rem;
+}
+
+/* Font family dropdown option styling for previews */
+.toolbar-font-family option {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  background: #1e293b;
+  color: #f3f4f6;
+  border: none;
+}
+
+/* Font-specific option styling - ensures each font displays in its own typeface */
+.toolbar-font-family option[value="Arial"] { font-family: Arial, sans-serif !important; }
+.toolbar-font-family option[value="Helvetica"] { font-family: Helvetica, sans-serif !important; }
+.toolbar-font-family option[value="Times New Roman"] { font-family: "Times New Roman", serif !important; }
+.toolbar-font-family option[value="Georgia"] { font-family: Georgia, serif !important; }
+.toolbar-font-family option[value="Verdana"] { font-family: Verdana, sans-serif !important; }
+.toolbar-font-family option[value="Courier New"] { font-family: "Courier New", monospace !important; }
+.toolbar-font-family option[value="Trebuchet MS"] { font-family: "Trebuchet MS", sans-serif !important; }
+.toolbar-font-family option[value="Tahoma"] { font-family: Tahoma, sans-serif !important; }
+.toolbar-font-family option[value="Comic Sans MS"] { font-family: "Comic Sans MS", cursive !important; }
+.toolbar-font-family option[value="Impact"] { font-family: Impact, sans-serif !important; }
+.toolbar-font-family option[value="'Roboto', sans-serif"] { font-family: "Roboto", sans-serif !important; }
+.toolbar-font-family option[value="'Open Sans', sans-serif"] { font-family: "Open Sans", sans-serif !important; }
+.toolbar-font-family option[value="'Lato', sans-serif"] { font-family: "Lato", sans-serif !important; }
+.toolbar-font-family option[value="'Montserrat', sans-serif"] { font-family: "Montserrat", sans-serif !important; }
+.toolbar-font-family option[value="'Source Sans Pro', sans-serif"] { font-family: "Source Sans Pro", sans-serif !important; }
+.toolbar-font-family option[value="'Oswald', sans-serif"] { font-family: "Oswald", sans-serif !important; }
+.toolbar-font-family option[value="'Raleway', sans-serif"] { font-family: "Raleway", sans-serif !important; }
+.toolbar-font-family option[value="'PT Sans', sans-serif"] { font-family: "PT Sans", sans-serif !important; }
+.toolbar-font-family option[value="'Ubuntu', sans-serif"] { font-family: "Ubuntu", sans-serif !important; }
+.toolbar-font-family option[value="'Nunito', sans-serif"] { font-family: "Nunito", sans-serif !important; }
+.toolbar-font-family option[value="'Playfair Display', serif"] { font-family: "Playfair Display", serif !important; }
+.toolbar-font-family option[value="'Merriweather', serif"] { font-family: "Merriweather", serif !important; }
+.toolbar-font-family option[value="'Crimson Text', serif"] { font-family: "Crimson Text", serif !important; }
+.toolbar-font-family option[value="'Libre Baskerville', serif"] { font-family: "Libre Baskerville", serif !important; }
+.toolbar-font-family option[value="'Lora', serif"] { font-family: "Lora", serif !important; }
+.toolbar-font-family option[value="'PT Serif', serif"] { font-family: "PT Serif", serif !important; }
+.toolbar-font-family option[value="'Source Code Pro', monospace"] { font-family: "Source Code Pro", monospace !important; }
+.toolbar-font-family option[value="'Fira Code', monospace"] { font-family: "Fira Code", monospace !important; }
+.toolbar-font-family option[value="'JetBrains Mono', monospace"] { font-family: "JetBrains Mono", monospace !important; }
+.toolbar-font-family option[value="'Inconsolata', monospace"] { font-family: "Inconsolata", monospace !important; }
+
+/* Enhance dropdown appearance when opened */
+.toolbar-font-family:focus option {
+  padding: 10px 12px;
 }
 
 .toolbar-font-size {
@@ -788,4 +858,86 @@
 .basic-rte-editor li span[data-list-text="true"] {
   white-space: normal !important;
   word-break: normal !important;
+}
+
+/* Scripture reference styling */
+.basic-rte-editor .scripture-ref {
+  color: #facc15 !important;
+  background: rgba(250, 204, 21, 0.15) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  text-decoration: underline !important;
+  text-decoration-color: rgba(250, 204, 21, 0.7) !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid rgba(250, 204, 21, 0.3) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  display: inline !important;
+  white-space: nowrap !important;
+}
+
+.basic-rte-editor .scripture-ref:hover {
+  background: rgba(250, 204, 21, 0.25) !important;
+  border-color: rgba(250, 204, 21, 0.6) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(250, 204, 21, 0.3) !important;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.4) !important;
+}
+
+.basic-rte-editor .scripture-ref:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Ensure scripture refs don't interfere with list styling */
+.basic-rte-editor li .scripture-ref {
+  margin: 0 !important;
+  vertical-align: baseline !important;
+}
+
+/* Prevent scripture refs from inheriting unwanted formatting */
+.basic-rte-editor .scripture-ref * {
+  color: inherit !important;
+  background: inherit !important;
+  font-weight: inherit !important;
+  text-decoration: inherit !important;
+}
+
+/* Ensure proper cursor positioning after scripture references to prevent style bleeding */
+.basic-rte-editor .scripture-ref + * {
+  /* Reset any inherited scripture styling */
+  color: inherit !important;
+  background: inherit !important;
+  font-weight: inherit !important;
+  text-decoration: inherit !important;
+  border: inherit !important;
+  box-shadow: inherit !important;
+  transform: inherit !important;
+  padding: inherit !important;
+  border-radius: inherit !important;
+}
+
+/* Prevent style bleeding when typing after scripture references */
+.basic-rte-editor .scripture-ref::after {
+  content: "\200B"; /* Zero-width space to help with cursor positioning */
+  color: inherit;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  text-decoration: none;
+  font-weight: normal;
+  padding: 0;
+  margin: 0;
+}
+
+/* More comprehensive prevention of style bleeding */
+.basic-rte-editor span:not(.scripture-ref) {
+  /* Ensure non-scripture spans don't inherit scripture styling */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
 }
