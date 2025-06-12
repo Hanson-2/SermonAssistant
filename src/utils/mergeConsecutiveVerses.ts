@@ -1,4 +1,6 @@
 // Utility function to merge consecutive verses into ranges
+import { buildScriptureReference, isValidVerseNumber } from '../utils/scriptureReferenceUtils.ts';
+
 export interface ScriptureReference {
   book: string;
   chapter: number;
@@ -59,17 +61,16 @@ export function mergeConsecutiveVerses(verses: ScriptureReference[]): ScriptureR
         verse.chapter === lastVerse.chapter &&
         currentVerseNum !== undefined && 
         lastVerseNum !== undefined &&
-        currentVerseNum === (lastVerseNum + 1) &&
         // Only merge verses from same source AND same addedViaTag status
         verse.addedViaTag === lastVerse.addedViaTag &&
-        verse.sourceType === lastVerse.sourceType;
+        verse.sourceType === lastVerse.sourceType &&
+        (currentVerseNum === (lastVerseNum + 1));
       
       console.log('[mergeConsecutiveVerses] Checking merge for:', verse, 'with last:', lastVerse);
       console.log('[mergeConsecutiveVerses] Can merge?', canMerge, {
         sameBook: verse.book === lastVerse.book,
         sameChapter: verse.chapter === lastVerse.chapter,
         verseDefined: currentVerseNum !== undefined && lastVerseNum !== undefined,
-        consecutive: currentVerseNum === (lastVerseNum + 1),
         sameTag: verse.addedViaTag === lastVerse.addedViaTag,
         sameSource: verse.sourceType === lastVerse.sourceType
       });
@@ -103,24 +104,24 @@ export function mergeConsecutiveVerses(verses: ScriptureReference[]): ScriptureR
 
 function createMergedReference(group: ScriptureReference[]): ScriptureReference {
   if (group.length === 1) {
-    return group[0];
+    // Always normalize reference string
+    return {
+      ...group[0],
+      reference: buildScriptureReference(group[0])
+    };
   }
 
   const first = group[0];
   const last = group[group.length - 1];
 
-  // Create range reference
-  let reference: string;
-  if (first.verse !== undefined && last.verse !== undefined) {
-    if (first.verse === last.verse) {
-      reference = `${first.book} ${first.chapter}:${first.verse}`;
-    } else {
-      reference = `${first.book} ${first.chapter}:${first.verse}-${last.verse}`;
-    }
-  } else {
-    // Chapter-only reference
-    reference = `${first.book} ${first.chapter}`;
-  }
+  // Use buildScriptureReference to construct the merged reference robustly
+  const mergedRefObj = {
+    book: first.book,
+    chapter: first.chapter,
+    verse: first.verse,
+    endVerse: last.verse !== first.verse ? last.verse : undefined
+  };
+  const reference = buildScriptureReference(mergedRefObj);
 
   // Combine text if available
   const combinedText = group

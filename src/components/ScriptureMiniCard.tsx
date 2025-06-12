@@ -1,5 +1,6 @@
 import React from "react";
 import { getDisplayBookAbbrev, normalizeBookName } from "../utils/getDisplayBookAbbrev";
+import { buildScriptureReference } from "../utils/scriptureReferenceUtils";
 
 interface ScriptureMiniCardProps {
   verse: any; // Accepts a verse object from the autocomplete
@@ -28,8 +29,10 @@ const ScriptureMiniCard: React.FC<ScriptureMiniCardProps> = ({ verse, onRemove }
   };// Normalize and display abbreviated reference name
   let displayRef = "";
   if (verse.reference) {
-    // Try to parse reference like "Genesis 1:1" or "Gen 1:1-2"
-    const refMatch = verse.reference.match(/^([1-3]?\s*[A-Za-z .]+)\s+(\d+):(\d+)(?:-(\d+))?$/i);
+    // Force normalization at render time using buildScriptureReference
+    const normalizedRef = buildScriptureReference(verse);
+    // Try to parse normalized reference like "Genesis 1:1" or "Gen 1:1-2"
+    const refMatch = normalizedRef.match(/^([1-3]?\s*[A-Za-z .]+)\s+(\d+):(\d+)(?:-(\d+))?$/i);
     if (refMatch) {
       const book = normalizeBookName(refMatch[1]);
       const chapter = refMatch[2];
@@ -38,16 +41,18 @@ const ScriptureMiniCard: React.FC<ScriptureMiniCardProps> = ({ verse, onRemove }
       displayRef = `${getDisplayBookAbbrev(book)} ${chapter}:${verseStart}${verseEnd ? "-" + verseEnd : ""}`;
     } else {
       // Try to parse chapter-only reference like "Genesis 1"
-      const chapterMatch = verse.reference.match(/^([1-3]?\s*[A-Za-z .]+)\s+(\d+)$/i);
+      const chapterMatch = normalizedRef.match(/^([1-3]?\s*[A-Za-z .]+)\s+(\d+)$/i);
       if (chapterMatch) {
         const book = normalizeBookName(chapterMatch[1]);
         const chapter = chapterMatch[2];
         displayRef = `${getDisplayBookAbbrev(book)} ${chapter}`;
       } else {
-        displayRef = verse.reference;
+        displayRef = normalizedRef;
       }
     }
   } else if (verse.book && verse.chapter) {
+    // Fallback: construct from book/chapter/verse directly
+    const normalizedRef = buildScriptureReference(verse);
     const book = normalizeBookName(verse.book);
     if (verse.verse) {
       displayRef = `${getDisplayBookAbbrev(book)} ${verse.chapter}:${verse.verse}`;

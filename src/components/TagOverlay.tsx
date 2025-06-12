@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getVersesByTag } from '../services/firebaseService';
+import { buildScriptureReference } from '../utils/scriptureReferenceUtils';
 import './TagOverlay.css';
 
 interface TagOverlayProps {
@@ -102,15 +103,19 @@ const TagOverlay: React.FC<TagOverlayProps> = ({ tagName, isOpen, onClose, onVer
       Object.entries(chapters).forEach(([chapterNum, chapterVerses]) => {
         chapterVerses.forEach(verse => {
           const verseBook = verse.book || book;
-          const verseChapter = verse.chapter || parseInt(chapterNum);
-          const verseKey = verse.id ? verse.id : `${verseBook}-${verseChapter}-${verse.verse}-${verse.translation}`;
+          const verseChapter = verse.chapter || parseInt(chapterNum);        const verseKey = verse.id ? verse.id : `${verseBook}-${verseChapter}-${verse.verse}-${verse.translation}`;
           if (selectedVerses.has(verseKey)) {
             selectedVerseObjects.push({
               book: verseBook,
               chapter: verseChapter,
               verse: verse.verse,
               endVerse: verse.verse,
-              reference: `${verseBook} ${verseChapter}:${verse.verse}`
+              reference: buildScriptureReference({
+                book: verseBook,
+                chapter: verseChapter,
+                verse: verse.verse,
+                endVerse: verse.verse
+              })
             });
           }
         });

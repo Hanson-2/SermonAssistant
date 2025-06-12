@@ -3,6 +3,7 @@
 
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "./bookOrder.js";
 import { bookAliases } from "../hooks/useScriptureAutocomplete.js";
+import { buildScriptureReference } from "./scriptureReferenceUtils.js";
 
 export type ScriptureReference = {
   book: string;
@@ -10,6 +11,7 @@ export type ScriptureReference = {
   verse?: number; // Make verse optional for chapter-only references
   endChapter?: number;
   endVerse?: number;
+  reference: string; // Always include a properly formatted reference string
 };
 
 // Prepare full book names (longest first for greedy matching)
@@ -79,40 +81,52 @@ export function extractScriptureReferences(text: string): ScriptureReference[] {
       const book = bookAliases[key] || rawToken.replace(/[.]/g, " ").trim();
 
       const chapter = parseInt(chapStr, 10);
-      const verse = parseInt(vsStr, 10);
-
-      if (endChapOrVsStr && endVsStr) {
-        refs.push({
+      const verse = parseInt(vsStr, 10);      if (endChapOrVsStr && endVsStr) {
+        const refObj = {
           book,
           chapter,
           verse,
           endChapter: parseInt(endChapOrVsStr, 10),
           endVerse: parseInt(endVsStr, 10),
+        };
+        refs.push({
+          ...refObj,
+          reference: buildScriptureReference(refObj)
         });
       } else if (endChapOrVsStr) {
-        refs.push({
+        const refObj = {
           book,
           chapter,
           verse,
           endChapter: chapter,
           endVerse: parseInt(endChapOrVsStr, 10),
+        };
+        refs.push({
+          ...refObj,
+          reference: buildScriptureReference(refObj)
         });
       } else {
-        refs.push({ book, chapter, verse });
-      }
-    } else if (type === 'chapter') {
-      const [rawToken, chapStr] = match;
+        const refObj = { book, chapter, verse };
+        refs.push({
+          ...refObj,
+          reference: buildScriptureReference(refObj)
+        });
+      }    } else if (type === 'chapter') {
+      const [, rawToken, chapStr] = match;
 
       // Fix: Only skip if the exact same chapter-only reference is already present
       const key = rawToken.replace(/[.\s]/g, "").toLowerCase();
       const book = bookAliases[key] || rawToken.replace(/[.]/g, " ").trim();
       const chapter = parseInt(chapStr, 10);
       const alreadyPresent = refs.some(ref =>
-        ref.book === book && ref.chapter === chapter && ref.verse === undefined
-      );
+        ref.book === book && ref.chapter === chapter && ref.verse === undefined      );
       if (alreadyPresent) continue;
       
-      refs.push({ book, chapter }); // No verse for chapter-only references
+      const refObj = { book, chapter };
+      refs.push({
+        ...refObj,
+        reference: buildScriptureReference(refObj)
+      }); // Chapter-only reference with proper reference string
     }
   }
 

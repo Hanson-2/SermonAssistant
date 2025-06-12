@@ -4,6 +4,7 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Home, X, ChevronDown, Download } from 'lucide-react';
 import { Sermon, getSermon, getUserProfile } from '../services/firebaseService';
 import { extractScriptureReferences, ScriptureReference } from '../utils/smartParseScriptureInput';
+import { buildScriptureReference } from '../utils/scriptureReferenceUtils';
 import ScriptureOverlay from '../components/ScriptureOverlay';
 import PptxGenJS from 'pptxgenjs';
 import './PresentationPage.scss';
@@ -538,16 +539,12 @@ export default function PresentationPage() {
           fontFace: 'Segoe UI',
           color: goldTheme.light,
           align: 'center'
-        });
-      }
+        });      }
       
       // Add scripture references if available
       if (currentSlideScriptureRefs.length > 0) {
         const scriptureText = currentSlideScriptureRefs
-          .map(ref => ref.verse !== undefined 
-            ? `${ref.book} ${ref.chapter}:${ref.verse}${ref.endVerse && ref.endVerse !== ref.verse ? `-${ref.endVerse}` : ''}`
-            : `${ref.book} ${ref.chapter}`
-          )
+          .map(ref => buildScriptureReference(ref))
           .join(' • ');
           
         titleSlide.addText(scriptureText, {
@@ -770,18 +767,10 @@ export default function PresentationPage() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showAnimationDropdown]);// Handle scripture reference click
-  const handleScriptureRefClick = useCallback((ref: ScriptureReference) => {
-    let reference;
-    if (ref.verse !== undefined) {
-      // Verse-specific reference
-      reference = `${ref.book} ${ref.chapter}:${ref.verse}${ref.endVerse && ref.endVerse !== ref.verse ? `-${ref.endVerse}` : ''}`;
-    } else {
-      // Chapter-only reference
-      reference = `${ref.book} ${ref.chapter}`;
-    }
+  const handleScriptureRefClick = useCallback((ref: ScriptureReference) => {    const reference = buildScriptureReference(ref);
     
     console.log('[PresentationPage] Scripture reference clicked:', reference);
-    console.log('[PresentationPage] User preferred defaultTranslation:', defaultTranslation);    setSelectedScripture({
+    console.log('[PresentationPage] User preferred defaultTranslation:', defaultTranslation);setSelectedScripture({
       book: ref.book,
       chapter: ref.chapter.toString(),
       verse: ref.verse?.toString(),
@@ -948,12 +937,8 @@ export default function PresentationPage() {
                   type="button"
                   className="presentation-scripture-ref"
                   onClick={() => handleScriptureRefClick(ref)}
-                  title="Click to view scripture text"
-                >
-                  {ref.verse !== undefined 
-                    ? `${ref.book} ${ref.chapter}:${ref.verse}${ref.endVerse && ref.endVerse !== ref.verse ? `-${ref.endVerse}` : ''}`
-                    : `${ref.book} ${ref.chapter}`
-                  }
+                  title="Click to view scripture text"                >
+                  {buildScriptureReference(ref)}
                 </button>
               ))}
             </div>

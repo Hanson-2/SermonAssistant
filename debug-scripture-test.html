@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Scripture Test</title>
+</head>
+<body>
+    <h1>Simple Scripture Reference Test</h1>
+    <p>Open Developer Console (F12) to see test results</p>
+    
+    <script type="module">
+        console.log('🧪 Testing Scripture Reference Extraction...');
+        
+        try {
+            // Import the function
+            const { extractScriptureReferences } = await import('./src/utils/smartParseScriptureInput.js');
+            
+            // Test case that was failing
+            const testInput = 'John 3';
+            console.log(`\n📖 Testing: "${testInput}"`);
+            
+            const results = extractScriptureReferences(testInput);
+            console.log('📊 Results:', results);
+            
+            if (results.length > 0) {
+                const ref = results[0];
+                console.log(`✅ Found reference:`);
+                console.log(`   Book: "${ref.book}"`);
+                console.log(`   Chapter: ${ref.chapter}`);
+                console.log(`   Verse: ${ref.verse || 'N/A'}`);
+                console.log(`   Reference String: "${ref.reference}"`);
+                
+                // Check for issues
+                if (ref.reference.includes('NaN')) {
+                    console.error('❌ ERROR: Reference contains NaN!');
+                } else if (ref.book === 'John 3') {
+                    console.error('❌ ERROR: Book parsed incorrectly as "John 3"');
+                } else if (isNaN(ref.chapter)) {
+                    console.error('❌ ERROR: Chapter is NaN');
+                } else {
+                    console.log('🎉 SUCCESS: Reference parsed correctly!');
+                }
+            } else {
+                console.error('❌ ERROR: No references found');
+            }
+            
+            // Test more cases
+            const moreCases = ['Genesis 1', 'Matt 5', 'John 3:16', 'Romans 8:28-30'];
+            for (const testCase of moreCases) {
+                console.log(`\n📖 Testing: "${testCase}"`);
+                const results = extractScriptureReferences(testCase);
+                console.log(`   Found ${results.length} reference(s)`);
+                results.forEach((ref, i) => {
+                    console.log(`   ${i + 1}. "${ref.reference}" (Book: "${ref.book}", Chapter: ${ref.chapter}, Verse: ${ref.verse || 'N/A'})`);
+                    if (ref.reference.includes('NaN') || ref.book.includes(ref.chapter?.toString())) {
+                        console.error(`   ❌ ERROR in reference ${i + 1}`);
+                    }
+                });
+            }
+            
+        } catch (error) {
+            console.error('❌ Import or execution error:', error);
+        }
+    </script>
+</body>
+</html>

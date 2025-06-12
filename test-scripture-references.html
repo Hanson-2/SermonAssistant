@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scripture Reference Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e5e5e5;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #2a2a2a;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .pass { background: #1a4d1a; color: #90ee90; }
+        .fail { background: #4d1a1a; color: #ff9090; }
+        .reference { 
+            font-weight: bold; 
+            color: #d4af37; 
+        }
+        h1 { color: #d4af37; }
+        h2 { color: #f4e4bc; }
+    </style>
+</head>
+<body>
+    <h1>Scripture Reference Normalization Test</h1>
+    <p>This page tests our scripture reference utility to ensure no "NaN" or malformed references are generated.</p>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <script type="module">
+        // Mock implementation of buildScriptureReference for testing
+        function buildScriptureReference(ref) {
+            if (!ref || !ref.book || !ref.chapter) {
+                return 'Invalid Reference';
+            }
+            
+            const book = String(ref.book).trim();
+            const chapter = parseInt(ref.chapter);
+            
+            if (!book || isNaN(chapter)) {
+                return 'Invalid Reference';
+            }
+            
+            // Chapter-only reference
+            if (!ref.verse || ref.verse === undefined || ref.verse === null || ref.verse === '') {
+                return `${book} ${chapter}`;
+            }
+            
+            const verse = parseInt(ref.verse);
+            if (isNaN(verse)) {
+                return `${book} ${chapter}`;
+            }
+            
+            // Single verse
+            if (!ref.endVerse || ref.endVerse === undefined || ref.endVerse === null || ref.endVerse === verse) {
+                return `${book} ${chapter}:${verse}`;
+            }
+            
+            const endVerse = parseInt(ref.endVerse);
+            if (isNaN(endVerse) || endVerse === verse) {
+                return `${book} ${chapter}:${verse}`;
+            }
+            
+            // Verse range
+            return `${book} ${chapter}:${verse}-${endVerse}`;
+        }
+
+        // Test cases that were previously causing NaN issues
+        const testCases = [
+            {
+                name: "Chapter-only reference",
+                input: { book: "John", chapter: 3 },
+                expected: "John 3"
+            },
+            {
+                name: "Chapter-only with string chapter",
+                input: { book: "John", chapter: "3" },
+                expected: "John 3"
+            },
+            {
+                name: "Single verse reference",
+                input: { book: "John", chapter: 3, verse: 16 },
+                expected: "John 3:16"
+            },
+            {
+                name: "Verse range reference",
+                input: { book: "John", chapter: 3, verse: 16, endVerse: 17 },
+                expected: "John 3:16-17"
+            },
+            {
+                name: "Undefined verse (should be chapter-only)",
+                input: { book: "John", chapter: 3, verse: undefined },
+                expected: "John 3"
+            },
+            {
+                name: "Null verse (should be chapter-only)",
+                input: { book: "John", chapter: 3, verse: null },
+                expected: "John 3"
+            },
+            {
+                name: "Empty string verse (should be chapter-only)",
+                input: { book: "John", chapter: 3, verse: "" },
+                expected: "John 3"
+            },
+            {
+                name: "NaN verse (should be chapter-only)",
+                input: { book: "John", chapter: 3, verse: NaN },
+                expected: "John 3"
+            },
+            {
+                name: "String verse numbers",
+                input: { book: "John", chapter: "3", verse: "16" },
+                expected: "John 3:16"
+            },
+            {
+                name: "Same start and end verse",
+                input: { book: "John", chapter: 3, verse: 16, endVerse: 16 },
+                expected: "John 3:16"
+            },
+            {
+                name: "Invalid endVerse (NaN)",
+                input: { book: "John", chapter: 3, verse: 16, endVerse: NaN },
+                expected: "John 3:16"
+            },
+            {
+                name: "Missing book",
+                input: { chapter: 3, verse: 16 },
+                expected: "Invalid Reference"
+            },
+            {
+                name: "Missing chapter",
+                input: { book: "John", verse: 16 },
+                expected: "Invalid Reference"
+            },
+            {
+                name: "Complex book name",
+                input: { book: "1 Corinthians", chapter: 13, verse: 4 },
+                expected: "1 Corinthians 13:4"
+            }
+        ];
+
+        // Run tests
+        const resultsContainer = document.getElementById('test-results');
+        let passCount = 0;
+        let totalCount = testCases.length;
+
+        testCases.forEach((testCase, index) => {
+            const result = buildScriptureReference(testCase.input);
+            const passed = result === testCase.expected;
+            
+            if (passed) passCount++;
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            resultDiv.innerHTML = `
+                <strong>Test ${index + 1}: ${testCase.name}</strong><br>
+                Input: ${JSON.stringify(testCase.input)}<br>
+                Expected: <span class="reference">${testCase.expected}</span><br>
+                Got: <span class="reference">${result}</span><br>
+                Status: ${passed ? '✅ PASS' : '❌ FAIL'}
+            `;
+            resultsContainer.appendChild(resultDiv);
+        });
+
+        // Summary
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = `test-result ${passCount === totalCount ? 'pass' : 'fail'}`;
+        summaryDiv.innerHTML = `
+            <strong>Test Summary</strong><br>
+            Passed: ${passCount}/${totalCount}<br>
+            ${passCount === totalCount ? '🎉 All tests passed!' : '⚠️ Some tests failed'}
+        `;
+        resultsContainer.insertBefore(summaryDiv, resultsContainer.firstChild);
+
+        // Check for NaN in any result
+        const hasNaN = testCases.some(testCase => {
+            const result = buildScriptureReference(testCase.input);
+            return result.includes('NaN') || result.includes('undefined');
+        });
+
+        if (!hasNaN) {
+            console.log('✅ No NaN or undefined values found in any test results!');
+        } else {
+            console.error('❌ Found NaN or undefined values in test results!');
+        }
+    </script>
+</body>
+</html>

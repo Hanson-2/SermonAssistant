@@ -606,6 +606,22 @@
   border-left: 4px solid #ffd700;
 }
 
+/* Drag and drop styling */
+.expository-page-list-item.drag-over {
+  border: 2px solid #60a5fa !important;
+  background: rgba(96, 165, 250, 0.2) !important;
+  transform: scale(1.02) !important;
+  box-shadow: 0 0 15px rgba(96, 165, 250, 0.4) !important;
+}
+
+.expository-page-list-item[draggable="true"] {
+  cursor: grab;
+}
+
+.expository-page-list-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
 @media (max-width: 900px) {
   .expository-page-list {
     min-width: 120px;
@@ -1052,11 +1068,10 @@
   border: 1px solid rgba(75, 85, 99, 0.5);
   border-radius: 6px;
   padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;  cursor: pointer;
+  font-size: 0.875rem;  font-weight: 500;  cursor: pointer;
   transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .expository-action-btn:hover {

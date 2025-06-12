@@ -3,6 +3,7 @@
 
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "./bookOrder.js";
 import { bookAliases } from "../hooks/useScriptureAutocomplete.js";
+import { buildScriptureReference } from "./scriptureReferenceUtils.js";
 
 export type ScriptureReference = {
   book: string;
@@ -10,6 +11,7 @@ export type ScriptureReference = {
   verse?: number; // Make verse optional for chapter-only references
   endChapter?: number;
   endVerse?: number;
+  reference: string; // Always include a properly formatted reference string
 };
 
 // Prepare full book names (longest first for greedy matching)
@@ -68,20 +70,19 @@ export function extractScriptureReferences(text: string): ScriptureReference[] {
 
   // Sort all matches by their position in the text
   allMatches.sort((a, b) => a.start - b.start);
-
   // Process matches in order, checking for overlaps
   for (const { match, type, start, end } of allMatches) {
     // Check if this match overlaps with any already processed reference
     const overlaps = refs.some(ref => {
-      const possibleMatches = [];
+      const possibleMatches: string[] = [];
       
       if (ref.verse !== undefined) {
         // Verse-specific reference
-        possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}`);
-        possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}-${ref.endVerse || ref.verse}`);
+        possibleMatches.push(buildScriptureReference(ref));
+        possibleMatches.push(buildScriptureReference({...ref, endVerse: ref.endVerse || ref.verse}));
       } else {
         // Chapter-only reference
-        possibleMatches.push(`${ref.book} ${ref.chapter}`);
+        possibleMatches.push(buildScriptureReference(ref));
       }
       
       return possibleMatches.some(refText => {
@@ -106,25 +107,36 @@ export function extractScriptureReferences(text: string): ScriptureReference[] {
       const chapter = parseInt(chapStr, 10);
       const verse = vsStr ? parseInt(vsStr, 10) : undefined;
 
-      if (verse !== undefined) {
-        if (endChapOrVsStr && endVsStr) {
-          refs.push({
+      if (verse !== undefined) {        if (endChapOrVsStr && endVsStr) {
+          const ref = {
             book,
             chapter,
             verse,
             endChapter: parseInt(endChapOrVsStr, 10),
             endVerse: parseInt(endVsStr, 10),
+          };
+          refs.push({
+            ...ref,
+            reference: buildScriptureReference(ref)
           });
         } else if (endChapOrVsStr) {
-          refs.push({
+          const ref = {
             book,
             chapter,
             verse,
             endChapter: chapter,
             endVerse: parseInt(endChapOrVsStr, 10),
+          };
+          refs.push({
+            ...ref,
+            reference: buildScriptureReference(ref)
           });
         } else {
-          refs.push({ book, chapter, verse });
+          const ref = { book, chapter, verse };
+          refs.push({
+            ...ref,
+            reference: buildScriptureReference(ref)
+          });
         }
       }
     } else {
@@ -134,10 +146,13 @@ export function extractScriptureReferences(text: string): ScriptureReference[] {
       const key = rawToken.replace(/[.\s]/g, "").toLowerCase();
       // Map to canonical book name, or clean up raw token
       const book = bookAliases[key] || rawToken.replace(/[.]/g, " ").trim();
+        const chapter = parseInt(chapStr, 10);
       
-      const chapter = parseInt(chapStr, 10);
-      
-      refs.push({ book, chapter }); // No verse for chapter-only references
+      const ref = { book, chapter };
+      refs.push({
+        ...ref,
+        reference: buildScriptureReference(ref)
+      }); // No verse for chapter-only references
     }
   }
 

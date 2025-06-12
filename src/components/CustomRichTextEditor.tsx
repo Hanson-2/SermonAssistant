@@ -7,6 +7,7 @@ interface CustomRichTextEditorProps {
   onRefsChange?: (refs: any[]) => void;
   onTagSelect?: (tagName: string) => void;
   activeSlide?: number;
+  onCompositionStateChange?: (isComposing: boolean) => void; // NEW
 }
 
 export default function CustomRichTextEditor({ 
@@ -14,7 +15,8 @@ export default function CustomRichTextEditor({
   onHtmlChange, 
   onRefsChange,
   onTagSelect, 
-  activeSlide 
+  activeSlide,
+  onCompositionStateChange // NEW
 }: CustomRichTextEditorProps) {
   return (
     <div className="custom-rich-text-editor">
@@ -23,6 +25,7 @@ export default function CustomRichTextEditor({
         onHtmlChange={onHtmlChange}
         onRefsChange={onRefsChange}
         onTagSelect={onTagSelect}
+        onCompositionStateChange={onCompositionStateChange} // NEW
       />
     </div>
   );

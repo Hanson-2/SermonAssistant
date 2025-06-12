@@ -3,6 +3,7 @@
 
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from "./bookOrder.js";
 import { bookAliases } from "../hooks/useScriptureAutocomplete.js";
+import { buildScriptureReference } from "./scriptureReferenceUtils.js";
 
 export type ScriptureReference = {
   book: string;
@@ -82,17 +83,15 @@ export function extractScriptureReferences(text: string): ScriptureReference[] {
     const matchStart = match.index;
     const matchEnd = matchStart + fullMatch.length;
       // Check if this overlaps with any existing chapter:verse reference
-    const overlaps = refs.some(ref => {
-      // Try to find the position of this reference in the text
-      const possibleMatches = [];
-      
-      if (ref.verse !== undefined) {
+    const overlaps = refs.some(ref => {      // Try to find the position of this reference in the text
+      const possibleMatches: string[] = [];
+        if (ref.verse !== undefined) {
         // Verse-specific reference
-        possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}`);
-        possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}-${ref.endVerse || ref.verse}`);
+        possibleMatches.push(buildScriptureReference(ref));
+        possibleMatches.push(buildScriptureReference({...ref, endVerse: ref.endVerse || ref.verse}));
       } else {
         // Chapter-only reference
-        possibleMatches.push(`${ref.book} ${ref.chapter}`);
+        possibleMatches.push(buildScriptureReference(ref));
       }
       
       return possibleMatches.some(refText => {

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scripture Reference NaN Bug Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .test-input {
+            font-weight: bold;
+            color: #333;
+        }
+        .test-result {
+            margin-top: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .result-details {
+            background-color: #e9ecef;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        .summary {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .summary.success {
+            color: #28a745;
+        }
+        .summary.error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>Scripture Reference NaN Bug Fix Test</h1>
+    <p>This test verifies that chapter-only scripture references no longer produce "NaN" in the reference strings.</p>
+    
+    <div class="test-container">
+        <h2>Test Cases</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Live Test</h2>
+        <p>Type a scripture reference to test:</p>
+        <input type="text" id="live-input" placeholder="e.g., John 3, Genesis 1:1, Matt 5:3-12" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <div id="live-result"></div>
+    </div>
+
+    <div id="summary" class="summary"></div>
+
+    <script type="module">
+        // Test cases that were previously causing NaN issues
+        const testCases = [
+            'John 3',           // Chapter-only reference
+            'Genesis 1',        // Chapter-only reference with full name
+            'Matt 5',           // Abbreviated chapter-only reference
+            'Ps 119',           // Abbreviated psalm
+            '1 Cor 13',         // Numbered book chapter-only
+            'John 3:16',        // Verse-specific reference (should still work)
+            'Matthew 5:3-12',   // Range reference (should still work)
+            'Romans 8:28-30',   // Verse range (should still work)
+            'Psalm 23',         // Chapter-only with full canonical name
+            '2 Timothy 3',      // Numbered book chapter-only
+            'Here is John 3 and also Genesis 1:1 in the same text', // Mixed references
+            'Check out Matt 5 for the beatitudes and Rom 8:28',      // Multiple in one text
+        ];
+
+        let passedTests = 0;
+        let totalTests = testCases.length;
+
+        async function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            for (let i = 0; i < testCases.length; i++) {
+                const testCase = testCases[i];
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-case';
+                
+                try {
+                    // Import the scripture extraction function
+                    const { extractScriptureReferences } = await import('./src/utils/smartParseScriptureInput.js');
+                    
+                    const results = extractScriptureReferences(testCase);
+                    
+                    let hasNaN = false;
+                    let resultHtml = `<div class="test-input">Input: "${testCase}"</div>`;
+                    
+                    if (results.length === 0) {
+                        resultHtml += `<div class="test-result">No references found</div>`;
+                    } else {
+                        results.forEach((ref, refIndex) => {
+                            const details = [
+                                `Book: ${ref.book}`,
+                                `Chapter: ${ref.chapter}`,
+                                `Verse: ${ref.verse || 'N/A'}`,
+                                `End Chapter: ${ref.endChapter || 'N/A'}`,
+                                `End Verse: ${ref.endVerse || 'N/A'}`,
+                                `Reference String: "${ref.reference}"`
+                            ].join(', ');
+                            
+                            // Check for NaN in the reference string
+                            if (ref.reference && ref.reference.includes('NaN')) {
+                                hasNaN = true;
+                                resultHtml += `<div class="test-result error">❌ Reference ${refIndex + 1}: ${details}</div>`;
+                                resultHtml += `<div class="error">ERROR: Reference contains NaN!</div>`;
+                            } else {
+                                resultHtml += `<div class="test-result success">✅ Reference ${refIndex + 1}: ${details}</div>`;
+                            }
+                        });
+                    }
+                    
+                    if (!hasNaN) {
+                        passedTests++;
+                        testDiv.style.borderLeftColor = '#28a745';
+                    } else {
+                        testDiv.style.borderLeftColor = '#dc3545';
+                    }
+                    
+                } catch (error) {
+                    resultHtml = `<div class="test-input">Input: "${testCase}"</div>`;
+                    resultHtml += `<div class="test-result error">❌ ERROR: ${error.message}</div>`;
+                    testDiv.style.borderLeftColor = '#dc3545';
+                }
+                
+                testDiv.innerHTML = resultHtml;
+                resultsDiv.appendChild(testDiv);
+            }
+            
+            // Show summary
+            const summaryDiv = document.getElementById('summary');
+            if (passedTests === totalTests) {
+                summaryDiv.textContent = `🎉 ALL TESTS PASSED! (${passedTests}/${totalTests}) - NaN bug is FIXED!`;
+                summaryDiv.className = 'summary success';
+            } else {
+                summaryDiv.textContent = `❌ ${totalTests - passedTests} tests failed (${passedTests}/${totalTests} passed)`;
+                summaryDiv.className = 'summary error';
+            }
+        }
+
+        // Live testing
+        document.getElementById('live-input').addEventListener('input', async (e) => {
+            const input = e.target.value.trim();
+            const resultDiv = document.getElementById('live-result');
+            
+            if (!input) {
+                resultDiv.innerHTML = '';
+                return;
+            }
+            
+            try {
+                const { extractScriptureReferences } = await import('./src/utils/smartParseScriptureInput.js');
+                const results = extractScriptureReferences(input);
+                
+                if (results.length === 0) {
+                    resultDiv.innerHTML = '<div class="result-details">No scripture references found</div>';
+                } else {
+                    let html = '<div class="result-details">';
+                    results.forEach((ref, i) => {
+                        const hasNaN = ref.reference && ref.reference.includes('NaN');
+                        const status = hasNaN ? '❌' : '✅';
+                        const color = hasNaN ? 'color: red;' : 'color: green;';
+                        
+                        html += `<div style="${color}">
+                            ${status} Reference ${i + 1}: "${ref.reference}"<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;Book: ${ref.book}, Chapter: ${ref.chapter}, Verse: ${ref.verse || 'N/A'}
+                        </div>`;
+                    });
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result-details" style="color: red;">Error: ${error.message}</div>`;
+            }
+        });
+
+        // Run tests when page loads
+        runTests();
+    </script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getDisplayBookAbbrev, normalizeBookName } from '../utils/getDisplayBookAbbrev';
+import { buildScriptureReference } from '../utils/scriptureReferenceUtils';
 
 function parseReference(ref, fallbackBook, fallbackChapter) {
   // Log the raw ref for debugging
@@ -384,9 +385,12 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             {/* Header */}
             <div className="flex items-center justify-between p-3 md:p-4 border-b border-yellow-400/20 flex-shrink-0 bg-black/20">              <h2 className="text-lg md:text-xl font-semibold text-yellow-400 truncate pr-2">
                 {displayRef.book ? 
-                  (displayRef.verseRange ? 
-                    `${displayBook} ${displayRef.chapter}:${displayRef.verseRange}` : 
-                    `${displayBook} ${displayRef.chapter}`) : 
+                  buildScriptureReference({
+                    book: displayBook,
+                    chapter: displayRef.chapter,
+                    verse: displayRef.verseRange ? displayRef.verseRange.split('-')[0] : undefined,
+                    endVerse: displayRef.verseRange && displayRef.verseRange.includes('-') ? displayRef.verseRange.split('-')[1] : undefined
+                  }) :
                   'Loading Reference...'}
               </h2>
               <button 

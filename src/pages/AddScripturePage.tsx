@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { saveScriptureVerses } from "../services/firebaseService";
+import { buildScriptureReference } from "../utils/scriptureReferenceUtils";
 import {
   DndContext,
   closestCenter,
@@ -339,13 +340,16 @@ export default function AddScripturePage() {
         let batchLimitReached = false;
         let batchEndLine = 0;
         const pushVerse = () => {
-          if (currentVerseText.trim()) {
-            verses.push({
+          if (currentVerseText.trim()) {            verses.push({
               book: currentBook,
               book_lower: currentBook.toLowerCase(),
               chapter: currentChapter,
               linkedSermonID: "",
-              reference: `${currentBook} ${currentChapter}:${currentVerseNum}`,
+              reference: buildScriptureReference({
+                book: currentBook,
+                chapter: currentChapter,
+                verse: currentVerseNum
+              }),
               tags: suggestTagsFromText(currentVerseText),
               text: currentVerseText.trim(),
               translation,

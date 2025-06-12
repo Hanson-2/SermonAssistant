@@ -8,6 +8,7 @@ interface BasicRTEProps {
   onHtmlChange: (html: string) => void;
   onRefsChange?: (refs: any[]) => void;
   onTagSelect?: (tagName: string) => void;
+  onCompositionStateChange?: (isComposing: boolean) => void; // NEW
 }
 
 interface Tag {
@@ -15,7 +16,7 @@ interface Tag {
   name: string;
 }
 
-function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect }: BasicRTEProps) {
+function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onCompositionStateChange }: BasicRTEProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const lastSetHtml = useRef<string>('');
   const [isComposing, setIsComposing] = useState(false);
@@ -742,15 +743,17 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect }: BasicRTEPro
   // Handle composition events for international input
   const handleCompositionStart = useCallback(() => {
     setIsComposing(true);
-  }, []);
+    if (onCompositionStateChange) onCompositionStateChange(true); // NEW
+  }, [onCompositionStateChange]);
 
   const handleCompositionEnd = useCallback(() => {
     setIsComposing(false);
+    if (onCompositionStateChange) onCompositionStateChange(false); // NEW
     // Trigger content change after composition ends
     setTimeout(() => {
       handleContentChange();
     }, 0);
-  }, [handleContentChange]);
+  }, [handleContentChange, onCompositionStateChange]);
 
   // Set HTML content when prop changes
   useEffect(() => {

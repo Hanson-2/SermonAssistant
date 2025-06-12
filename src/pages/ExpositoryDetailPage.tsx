@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getSermon, updateSermonNotes, updateSermon, getScriptureVersesForChapter, getUserProfile } from "../services/firebaseService";
 import { Sermon } from "../components/SermonCard/SermonCard";
 import { extractScriptureReferences } from "../utils/smartParseScriptureInput";
-import { mergeConsecutiveVerses, ScriptureReference } from "../utils/mergeConsecutiveVerses";
+import { mergeConsecutiveVerses } from "../utils/mergeConsecutiveVerses";
 import CustomRichTextEditor from "../components/CustomRichTextEditor";
 import ScriptureMiniCard from "../components/ScriptureMiniCard";
 import ScriptureOverlay from "../components/ScriptureOverlay";
@@ -12,6 +12,7 @@ import TagOverlay from "../components/TagOverlay";
 import debounce from "lodash.debounce";
 import "./ExpositoryDetailPage.css";
 import { bookAliases } from "../hooks/useScriptureAutocomplete";
+import { buildScriptureReference, isValidVerseNumber } from '../utils/scriptureReferenceUtils';
 
 function splitSlides(notes: string): string[] {
   return notes.split(/\n\s*---+\s*\n/).map(s => s.trim());
@@ -21,19 +22,23 @@ function splitSlides(notes: string): string[] {
 async function fetchScriptureText(reference: string): Promise<string> {
   try {
     const [bookAndChapter, verseStr] = reference.split(":");
-    let [book, chapterStr] = bookAndChapter.trim().split(/\s+(?=\d+$)/);
+    const match = bookAndChapter.trim().match(/^([1-3]?\s?[A-Za-z .]+)\s*(\d+)$/);
+    if (!match) return "Invalid chapter reference.";
+    const book = match[1].replace(/\s+/g, ' ').trim();
+    const chapter = parseInt(match[2], 10);
+    if (isNaN(chapter)) return "Invalid chapter number.";
+
     let lookupBook = bookAliases[book.toLowerCase()] || book.charAt(0).toUpperCase() + book.slice(1).toLowerCase();
-    const chapter = parseInt(chapterStr, 10);
     const verse = verseStr ? parseInt(verseStr, 10) : null;
+
     const verses = await getScriptureVersesForChapter(lookupBook, String(chapter));
     if (!verses || verses.length === 0) return "No verses found.";
+
     if (verse) {
-      // Prefer EXB translation, fallback to any
-      let found = verses.find(v => Number(v.verse) === verse && v.translation === "EXB");
-      if (!found) found = verses.find(v => Number(v.verse) === verse);
+      let found = verses.find(v => Number(v.verse) === verse && v.translation === "EXB")
+              || verses.find(v => Number(v.verse) === verse);
       return found ? `${lookupBook} ${chapter}:${verse} ${found.text}` : "Verse not found.";
     } else {
-      // All verses in chapter, prefer EXB
       const exbVerses = verses.filter(v => v.translation === "EXB");
       const toShow = exbVerses.length > 0 ? exbVerses : verses;
       return toShow.map(v => `${lookupBook} ${chapter}:${v.verse} ${v.text}`).join("\n");
@@ -56,6 +61,34 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+// --- Debounce scripture reference extraction for stability ---
+const debouncedSetRefs = (rawRefsFromEffect: any[], setScriptureRefs: any, prevNormalizedRefs: any) => {
+  // Normalize refs immediately before setting state
+  const normalizedRefsFromEffect = rawRefsFromEffect.map(ref => {
+    let bookName = ref.book;
+    if (bookName) {
+      let localRawBook = bookName.replace(/\s/g, "").toLowerCase();
+      bookName = bookAliases[localRawBook] || bookName;
+    }
+    // Use strict builder
+    let referenceString = buildScriptureReference({ ...ref, book: bookName });
+    return { ...ref, book: bookName, reference: referenceString };
+  });
+  setScriptureRefs(prevNormalizedRefs => {
+    // Compare with previously set normalized refs
+    if (
+      !Array.isArray(prevNormalizedRefs) ||
+      normalizedRefsFromEffect.length !== prevNormalizedRefs.length ||
+      JSON.stringify(normalizedRefsFromEffect) !== JSON.stringify(prevNormalizedRefs)
+    ) {
+      // console.log('[ExpositoryDetailPage] debouncedSetRefs: Updating scriptureRefs from useEffect', normalizedRefsFromEffect);
+      return normalizedRefsFromEffect; // Set normalized refs
+    }
+    // console.log('[ExpositoryDetailPage] debouncedSetRefs: No change from useEffect, keeping existing scriptureRefs');
+    return prevNormalizedRefs;
+  });
+};
+
 export default function ExpositoryDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -69,52 +102,14 @@ export default function ExpositoryDetailPage() {
     chapter: number;
     verseRange: string;
     reference: string;
-  } | null>(null);  // --- Debounce scripture reference extraction for stability ---
-  const debouncedSetRefs = useCallback(
-    debounce((rawRefsFromEffect: any[]) => {
-      // Normalize refs immediately before setting state
-      const normalizedRefsFromEffect = rawRefsFromEffect.map(ref => {
-        let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
-        let bookName = bookAliases[localRawBook] || ref.book;
-        
-        // Build normalized reference string (handle chapter-only vs verse-specific)
-        let referenceString;
-        if (ref.verse !== undefined) {
-          // Verse-specific reference
-          referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
-          if (ref.endVerse && ref.endVerse !== ref.verse) {
-            referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
-          }
-        } else {
-          // Chapter-only reference
-          referenceString = `${bookName} ${ref.chapter}`;
-        }
-        
-        return { ...ref, book: bookName, reference: referenceString };
-      });
-
-      setScriptureRefs(prevNormalizedRefs => {
-        // Compare with previously set normalized refs
-        if (
-          !Array.isArray(prevNormalizedRefs) ||
-          normalizedRefsFromEffect.length !== prevNormalizedRefs.length ||
-          JSON.stringify(normalizedRefsFromEffect) !== JSON.stringify(prevNormalizedRefs)
-        ) {
-          // console.log('[ExpositoryDetailPage] debouncedSetRefs: Updating scriptureRefs from useEffect', normalizedRefsFromEffect);
-          return normalizedRefsFromEffect; // Set normalized refs
-        }
-        // console.log('[ExpositoryDetailPage] debouncedSetRefs: No change from useEffect, keeping existing scriptureRefs');
-        return prevNormalizedRefs;
-      });
-    }, 900),
-    [bookAliases] // bookAliases is stable, but good practice to list dependencies
-  );
+  } | null>(null);
   const [saveStatus, setSaveStatus] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
   const [overlayContent, setOverlayContent] = useState<string>("");
   const [overlayLoading, setOverlayLoading] = useState(false);
-  const [overlayError, setOverlayError] = useState<string | null>(null);  const [overlayTranslations, setOverlayTranslations] = useState<Array<{ code: string, label: string, text: string }>>([]);
+  const [overlayError, setOverlayError] = useState<string | null>(null);
+  const [overlayTranslations, setOverlayTranslations] = useState<Array<{ code: string, label: string, text: string }>>([]);
   const [overlayOpen, setOverlayOpen] = useState(false);
 
   // --- Editable sermon metadata state ---
@@ -130,13 +125,15 @@ export default function ExpositoryDetailPage() {
   const [defaultTranslation, setDefaultTranslation] = useState<string>('');
   
   // --- Tag management state ---
-  const [selectedTagFromDropdown, setSelectedTagFromDropdown] = useState<string | null>(null);  const [tagOverlayOpen, setTagOverlayOpen] = useState(false);
+  const [selectedTagFromDropdown, setSelectedTagFromDropdown] = useState<string | null>(null);
+  const [tagOverlayOpen, setTagOverlayOpen] = useState(false);
   // --- Per-slide Scripture Refs State ---
   const [slideScriptureRefs, setSlideScriptureRefs] = useState<Record<number, any[]>>({});
-  
-  const [slideTitles, setSlideTitles] = useState<string[]>([]);
+    const [slideTitles, setSlideTitles] = useState<string[]>([]);
   const [editingTitleIdx, setEditingTitleIdx] = useState<number | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);  const isMobile = useIsMobile();
+  const [draggedSlideIndex, setDraggedSlideIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const isMobile = useIsMobile();
   const [showTagsPanelOverlay, setShowTagsPanelOverlay] = useState(false);
   // Prevent background scroll when overlay is open
   useEffect(() => {
@@ -175,7 +172,8 @@ export default function ExpositoryDetailPage() {
       }
     };
     loadUserPreferences();
-  }, []);  useEffect(() => {
+  }, []);
+  useEffect(() => {
     if (!id) return;
     getSermon(id).then((data) => {
       if (data) {
@@ -224,7 +222,8 @@ export default function ExpositoryDetailPage() {
         navigate("/dashboard");
       }
     });
-  }, [id, navigate]);  const persistSlides = useCallback(() => {
+  }, [id, navigate]);
+  const persistSlides = useCallback(() => {
     if (!sermon) {
       console.log('[ExpositoryDetailPage] persistSlides: No sermon, skipping persistence');
       return;
@@ -271,7 +270,13 @@ export default function ExpositoryDetailPage() {
     }
   }, [slideScriptureRefs, sermon, debouncedPersistSlides]);
 
+  const [isComposing, setIsComposing] = useState(false); // NEW
   function updateSlideContent(newHtml: string) {
+    if (isComposing) {
+      // Defer update until composition ends
+      setTimeout(() => updateSlideContent(newHtml), 100);
+      return;
+    }
     setSlides((prevSlides) => {
       // Use a functional update for activeSlide to avoid stale closure
       return prevSlides.map((slide, idx) =>
@@ -284,28 +289,16 @@ export default function ExpositoryDetailPage() {
     // or directly by EditableRichText's onRefsChange calling handleRefsChange
   }
   function handleRefsChange(rawRefsFromEditableRichText: any[]) {
-    // Normalize book names using bookAliases and create the reference string
     const normalizedRefs = rawRefsFromEditableRichText.map(ref => {
-      let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
-      let bookName = bookAliases[localRawBook] || ref.book;
-      
-      // Build normalized reference string (handle chapter-only vs verse-specific)
-      let referenceString;
-      if (ref.verse !== undefined) {
-        // Verse-specific reference
-        referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
-        if (ref.endVerse && ref.endVerse !== ref.verse) {
-          referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
-        }
-      } else {
-        // Chapter-only reference
-        referenceString = `${bookName} ${ref.chapter}`;
+      let bookName = ref.book;
+      if (bookName) {
+        let localRawBook = bookName.replace(/\s/g, "").toLowerCase();
+        bookName = bookAliases[localRawBook] || bookName;
       }
-      
+      let referenceString = buildScriptureReference({ ...ref, book: bookName });
       return { ...ref, book: bookName, reference: referenceString };
     });
-    // console.log('[ExpositoryDetailPage] handleRefsChange: Directly setting scriptureRefs from EditableRichText', normalizedRefs);
-    setScriptureRefs(normalizedRefs); // Directly update state with normalized refs
+    setScriptureRefs(normalizedRefs);
   }
 
   function addSlide() {
@@ -358,50 +351,33 @@ export default function ExpositoryDetailPage() {
   // Listen for custom event to open overlay
   useEffect(() => {
     function handleShowScriptureOverlay(e: any) {
-      console.log(`[ExpositoryDetailPage] handleShowScriptureOverlay: overlayOpen=${overlayOpen}, lockedOverlayRef exists=${!!lockedOverlayRef}, eventDetail=`, JSON.stringify(e.detail));
-      // Prevent re-entry if overlay is already open AND we have a locked reference.
-      // This allows updating the reference if it was somehow closed and an event comes in before state fully settles.
       if (overlayOpen && lockedOverlayRef) {
-        console.log('[ExpositoryDetailPage] Overlay already open and locked, ignoring event.');
         return;
-      }      const detailBook = e.detail.book;
-      const detailChapter = e.detail.chapter;
-      const detailVerse = e.detail.verse;
-      const detailEndVerse = e.detail.endVerse;
-
-      let currentVerseRange, currentReference;
-      
-      // Handle chapter-only references (when verse is undefined)
-      if (detailVerse === undefined || detailVerse === null) {
-        currentVerseRange = ""; // No verse range for chapter-only
-        currentReference = `${detailBook} ${detailChapter}`;
-      } else {
-        // Handle verse-specific references
-        currentVerseRange = detailEndVerse && detailEndVerse !== detailVerse
-          ? `${detailVerse}-${detailEndVerse}`
-          : `${detailVerse}`;
-        currentReference = `${detailBook} ${detailChapter}:${currentVerseRange}`;
       }
-
+      let detailBook = e.detail.book;
+      let detailChapter = e.detail.chapter;
+      let detailVerse = e.detail.verse;
+      let detailEndVerse = e.detail.endVerse;
+      // Always use buildScriptureReference for overlay
+      let normalizedBook = detailBook;
+      if (normalizedBook) {
+        let localRawBook = normalizedBook.replace(/\s/g, "").toLowerCase();
+        normalizedBook = bookAliases[localRawBook] || (normalizedBook.charAt(0).toUpperCase() + normalizedBook.slice(1).toLowerCase());
+      }
       const refObj = {
-        book: detailBook,
+        book: normalizedBook,
         chapter: detailChapter,
-        verseRange: currentVerseRange,
-        reference: currentReference // Use the correctly ranged reference
+        verseRange: (isValidVerseNumber(detailVerse) ? (isValidVerseNumber(detailEndVerse) && detailEndVerse !== detailVerse ? `${Number(detailVerse)}-${Number(detailEndVerse)}` : `${Number(detailVerse)}`) : ""),
+        reference: buildScriptureReference({ book: normalizedBook, chapter: detailChapter, verse: detailVerse, endVerse: detailEndVerse })
       };
-      console.log('[ExpositoryDetailPage] Setting lockedOverlayRef and opening overlay with:', JSON.stringify(refObj));
       setLockedOverlayRef(refObj);
-      setOverlayOpen(true); // Open overlay after setting the ref
+      setOverlayOpen(true);
     }
 
-    console.log('[ExpositoryDetailPage] Adding showScriptureOverlay listener. Current overlayOpen:', overlayOpen, 'lockedOverlayRef exists:', !!lockedOverlayRef);
     window.addEventListener("showScriptureOverlay", handleShowScriptureOverlay);
     return () => {
-      console.log('[ExpositoryDetailPage] Removing showScriptureOverlay listener. Current overlayOpen:', overlayOpen, 'lockedOverlayRef exists:', !!lockedOverlayRef);
       window.removeEventListener("showScriptureOverlay", handleShowScriptureOverlay);
     };
-    // Re-run if overlayOpen changes, to ensure the listener's closure has the latest overlayOpen state.
-    // Or if lockedOverlayRef changes from null to non-null or vice-versa while open is true (edge case).
   }, [overlayOpen, lockedOverlayRef]);
   // When overlay closes, clear locked ref
   function handleOverlayClose() {
@@ -517,23 +493,20 @@ export default function ExpositoryDetailPage() {
       // If we already have slideScriptureRefs for this slide (from database or tag selection), use those
       const existingRefs = slideScriptureRefs[slideIndex];
       if (existingRefs && existingRefs.length > 0) {
-        return existingRefs;
+        return existingRefs.map(ref => ({
+          ...ref,
+          reference: buildScriptureReference(ref)
+        }));
       }
       // Only extract from text if no existing refs
       const rawRefs = extractScriptureReferences(slideText);
       const textBasedRefs = rawRefs.map(ref => {
-        let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
-        let bookName = bookAliases[localRawBook] || ref.book;
-        let referenceString;
-        // Handle chapter-only references (verse is undefined)
-        if (ref.verse === undefined) {
-          referenceString = `${bookName} ${ref.chapter}`;
-        } else {
-          referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
-          if (ref.endVerse && ref.endVerse !== ref.verse) {
-            referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
-          }
+        let bookName = ref.book;
+        if (bookName) {
+          let localRawBook = bookName.replace(/\s/g, "").toLowerCase();
+          bookName = bookAliases[localRawBook] || bookName;
         }
+        let referenceString = buildScriptureReference({ ...ref, book: bookName });
         return {
           ...ref,
           book: bookName,
@@ -563,36 +536,100 @@ export default function ExpositoryDetailPage() {
       return prev;
     });
   }, [slides, bookAliases]);
-
   // Editable sidebar title logic
   function handleTitleDoubleClick(idx: number) {
     setEditingTitleIdx(idx);
   }
-  function handleTitleMouseDown(idx: number) {
-    const timer = setTimeout(() => {
-      setEditingTitleIdx(idx);
-      setLongPressTimer(null);
-    }, 500); // 500ms long press
-    setLongPressTimer(timer);
+
+  // Drag and drop functionality for reordering slides
+  function handleDragStart(e: React.DragEvent, idx: number) {
+    setDraggedSlideIndex(idx);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', idx.toString());
+    
+    // Add visual feedback
+    const dragTarget = e.currentTarget as HTMLElement;
+    dragTarget.style.opacity = '0.5';
   }
-  function handleTitleMouseUp() {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
+
+  function handleDragEnd(e: React.DragEvent) {
+    setDraggedSlideIndex(null);
+    setDragOverIndex(null);
+    
+    // Remove visual feedback
+    const dragTarget = e.currentTarget as HTMLElement;
+    dragTarget.style.opacity = '';
+  }
+
+  function handleDragOver(e: React.DragEvent, idx: number) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(idx);
+  }
+
+  function handleDragLeave() {
+    setDragOverIndex(null);
+  }
+
+  function handleDrop(e: React.DragEvent, dropIndex: number) {
+    e.preventDefault();
+    const dragIndex = draggedSlideIndex;
+    
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDraggedSlideIndex(null);
+      setDragOverIndex(null);
+      return;
     }
-  }
-  function handleTitleTouchStart(idx: number) {
-    const timer = setTimeout(() => {
-      setEditingTitleIdx(idx);
-      setLongPressTimer(null);
-    }, 500); // 500ms long press
-    setLongPressTimer(timer);
-  }
-  function handleTitleTouchEnd() {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
+
+    // Reorder slides, slide titles, and scripture refs
+    setSlides(prevSlides => {
+      const newSlides = [...prevSlides];
+      const draggedSlide = newSlides[dragIndex];
+      newSlides.splice(dragIndex, 1);
+      newSlides.splice(dropIndex, 0, draggedSlide);
+      return newSlides;
+    });
+
+    setSlideTitles(prevTitles => {
+      const newTitles = [...prevTitles];
+      const draggedTitle = newTitles[dragIndex];
+      newTitles.splice(dragIndex, 1);
+      newTitles.splice(dropIndex, 0, draggedTitle);
+      return newTitles;
+    });
+
+    // Reorder scripture references
+    setSlideScriptureRefs(prevRefs => {
+      const newRefs: Record<number, any[]> = {};
+      const refsArray = Object.keys(prevRefs).sort((a, b) => Number(a) - Number(b)).map(key => prevRefs[Number(key)] || []);
+      
+      // Reorder the refs array
+      const draggedRefs = refsArray[dragIndex] || [];
+      refsArray.splice(dragIndex, 1);
+      refsArray.splice(dropIndex, 0, draggedRefs);
+      
+      // Rebuild the refs object with new indices
+      refsArray.forEach((refs, index) => {
+        newRefs[index] = refs;
+      });
+      
+      return newRefs;
+    });
+
+    // Update active slide if needed
+    if (activeSlide === dragIndex) {
+      setActiveSlide(dropIndex);
+    } else if (activeSlide > dragIndex && activeSlide <= dropIndex) {
+      setActiveSlide(activeSlide - 1);
+    } else if (activeSlide < dragIndex && activeSlide >= dropIndex) {
+      setActiveSlide(activeSlide + 1);
     }
+
+    // Persist changes
+    debouncedPersistSlides();
+
+    setDraggedSlideIndex(null);
+    setDragOverIndex(null);
   }
   function handleTitleChange(idx: number, value: string) {
     setSlideTitles(titles => titles.map((t, i) => (i === idx ? value : t)));
@@ -614,21 +651,15 @@ export default function ExpositoryDetailPage() {
     const refsBySlide = slides.map((slideText) => {
       const rawRefs = extractScriptureReferences(slideText);
       return rawRefs.map(ref => {
-        let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
-        let bookName = bookAliases[localRawBook] || ref.book;
-        let referenceString;
-        if (ref.verse === undefined) {
-          referenceString = `${bookName} ${ref.chapter}`;
-        } else {
-          referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
-          if (ref.endVerse && ref.endVerse !== ref.verse) {
-            referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
-          }
+        let bookName = ref.book;
+        if (bookName) {
+          let localRawBook = bookName.replace(/\s/g, "").toLowerCase();
+          bookName = bookAliases[localRawBook] || bookName;
         }
         return {
           ...ref,
           book: bookName,
-          reference: referenceString,
+          reference: buildScriptureReference({ ...ref, book: bookName }),
           sourceType: 'manual' as const,
           addedViaTag: false
         };
@@ -903,27 +934,40 @@ export default function ExpositoryDetailPage() {
       </div>      {/* Scripture mini cards banner */}
       <div className="expository-scripture-banner">        {(() => {
           const currentSlideRefs = slideScriptureRefs[activeSlide] || [];
-          console.log('[ExpositoryDetailPage] ====== RENDERING SCRIPTURE MINI CARDS ======');
-          console.log('[ExpositoryDetailPage] Active slide:', activeSlide);
-          console.log('[ExpositoryDetailPage] Raw currentSlideRefs:', JSON.stringify(currentSlideRefs, null, 2));
-          console.log('[ExpositoryDetailPage] About to call mergeConsecutiveVerses with:', currentSlideRefs.length, 'verses');
-          
-          const mergedRefs = mergeConsecutiveVerses(currentSlideRefs);
-          console.log('[ExpositoryDetailPage] Rendering scripture mini cards:', { 
-            original: currentSlideRefs.length, 
-            merged: mergedRefs.length,
-            originalRefs: currentSlideRefs,
-            mergedRefs: mergedRefs
+          // Normalize book name and reference for all refs before merging
+          const normalizedRefs = currentSlideRefs.map(ref => {
+            let bookName = ref.book;
+            if (bookName) {
+              let localRawBook = bookName.replace(/\s/g, "").toLowerCase();
+              bookName = bookAliases[localRawBook] || (bookName.charAt(0).toUpperCase() + bookName.slice(1).toLowerCase());
+            }
+            return {
+              ...ref,
+              book: bookName,
+              reference: buildScriptureReference({ ...ref, book: bookName })
+            };
           });
-          console.log('[ExpositoryDetailPage] Final mergedRefs for rendering:', JSON.stringify(mergedRefs, null, 2));
-          
-          return mergedRefs.map((ref, i) => (
-            <ScriptureMiniCard 
-              key={`${ref.reference}-${ref.addedViaTag ? 'tag' : 'manual'}-${i}`} 
-              verse={ref} 
-              onRemove={() => handleRemoveScriptureRef(ref)}
-            />
-          ));
+          const mergedRefs = mergeConsecutiveVerses(normalizedRefs);
+          return mergedRefs.map((ref, i) => {
+            // Force reference normalization at render time
+            let bookName = ref.book;
+            if (bookName) {
+              let localRawBook = bookName.replace(/\s/g, "").toLowerCase();
+              bookName = bookAliases[localRawBook] || (bookName.charAt(0).toUpperCase() + bookName.slice(1).toLowerCase());
+            }
+            const normalizedRef = {
+              ...ref,
+              book: bookName,
+              reference: buildScriptureReference({ ...ref, book: bookName })
+            };
+            return (
+              <ScriptureMiniCard 
+                key={`${normalizedRef.reference}-${normalizedRef.addedViaTag ? 'tag' : 'manual'}-${i}`} 
+                verse={normalizedRef} 
+                onRemove={() => handleRemoveScriptureRef(normalizedRef)}
+              />
+            );
+          });
         })()}
       </div><div className="expository-main-layout">
         <div className="expository-page-list">
@@ -942,15 +986,17 @@ export default function ExpositoryDetailPage() {
                     title={`Slide title input for Page ${idx + 1}`}
                   />                ) : (
                   <button
-                    className={`expository-page-list-item${activeSlide === idx ? ' active' : ''}`}
+                    className={`expository-page-list-item${activeSlide === idx ? ' active' : ''}${dragOverIndex === idx ? ' drag-over' : ''}`}
                     onClick={() => setActiveSlide(idx)}
                     onDoubleClick={() => handleTitleDoubleClick(idx)}
-                    onMouseDown={() => handleTitleMouseDown(idx)}
-                    onMouseUp={handleTitleMouseUp}
-                    onTouchStart={() => handleTitleTouchStart(idx)}
-                    onTouchEnd={() => handleTitleTouchEnd}
+                    draggable={true}
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, idx)}
                     tabIndex={0}
-                    title={slideTitles[idx] || `Page ${idx + 1}`}
+                    title={`${slideTitles[idx] || `Page ${idx + 1}`} - Click to navigate, double-click to edit, drag to reorder`}
                   >
                     {slideTitles[idx] || `Page ${idx + 1}`}
                   </button>
@@ -983,6 +1029,7 @@ export default function ExpositoryDetailPage() {
                 onRefsChange={handleRefsChange}
                 activeSlide={activeSlide}
                 onTagSelect={handleTagSelect}
+                onCompositionStateChange={setIsComposing} // NEW
               />
               <div className="expository-slide-status">
                 {saving ? <span className="saving">Saving...</span> : saveStatus && <span className="saved">{saveStatus}</span>}
