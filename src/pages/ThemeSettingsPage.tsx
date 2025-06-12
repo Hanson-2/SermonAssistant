@@ -437,7 +437,7 @@ export default function ThemeSettingsPage() {
                   title="Font Family"
                 >
                   {fontFamilies.map(font => (
-                    <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                    <option key={font.value} value={font.value}>
                       {font.name}
                     </option>
                   ))}

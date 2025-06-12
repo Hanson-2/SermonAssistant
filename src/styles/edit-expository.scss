@@ -1,5 +1,6 @@
 // Import theme variables
 @import './scss/variables';
+@import './scss/mixins';
 
 // Variables specific to this component
 $background-color-dark: rgba(17, 24, 39, 0.92);
@@ -294,10 +295,9 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  
-  @media (max-width: $mobile-breakpoint) {
-    backdrop-filter: blur(0);
+    @media (max-width: $mobile-breakpoint) {
     -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
     background-color: rgba(17, 24, 39, 0.8);
     width: 90%;
     padding: 1rem;
@@ -1076,5 +1076,269 @@ html, body {
 
   .available-tags-container {
     max-height: 150px;
+  }
+}
+
+/* Mobile Tags Button */
+.mobile-tags-button {
+  @include btn-base;
+  width: 100%;
+  background: linear-gradient(135deg, rgba($primary-gold, 0.1) 0%, rgba($primary-gold, 0.2) 100%);
+  color: $primary-gold;
+  border: 2px solid rgba($primary-gold, 0.3);
+  padding: $space-md $space-lg;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: none; // Hidden by default, shown only on mobile
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+
+  &:hover {
+    background: linear-gradient(135deg, rgba($primary-gold, 0.2) 0%, rgba($primary-gold, 0.3) 100%);
+    border-color: $primary-gold;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($primary-gold, 0.3);
+  }
+
+  @media (max-width: $mobile-breakpoint) {
+    display: flex !important;
+  }
+}
+
+/* Mobile Tags Overlay */
+.mobile-tags-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: none; // Hidden by default
+
+  @media (max-width: $mobile-breakpoint) {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+}
+
+.mobile-tags-overlay-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.mobile-tags-overlay-content {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  background: rgba($dark-bg-secondary, 0.98);
+  border: 1px solid rgba($primary-gold, 0.3);  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-tags-overlay-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba($primary-gold, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  h3 {
+    color: $primary-gold;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+  }
+}
+
+.mobile-tags-close-btn {
+  @include btn-base;
+  background: transparent;
+  color: $text-secondary;
+  border: none;
+  padding: $space-sm;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba($primary-gold, 0.1);
+    color: $primary-gold;
+    transform: scale(1.1);
+  }
+}
+
+.mobile-tags-overlay-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  
+  h4 {
+    color: $text-color-primary;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba($primary-gold, 0.2);
+  }
+}
+
+/* Mobile Selected Tags */
+.mobile-selected-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mobile-selected-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, $primary-gold 0%, $dark-gold 100%);
+  color: $dark-bg-primary;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-remove-tag-btn {
+  background: none;
+  border: none;
+  color: $dark-bg-primary;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Mobile Add Tag */
+.mobile-add-tag-container {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.mobile-tag-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background-color: $dark-bg-tertiary;
+  border: 1px solid rgba($primary-gold, 0.3);
+  border-radius: 6px;
+  color: $text-color-primary;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  
+  &:focus {
+    outline: none;
+    border-color: $primary-gold;
+    box-shadow: 0 0 0 2px rgba($primary-gold, 0.2);
+  }
+  
+  &::placeholder {
+    color: $text-secondary;
+  }
+}
+
+.mobile-add-tag-btn {
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #16a34a 0%, #166534 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(34, 197, 94, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+/* Mobile Available Tags */
+.mobile-available-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba($primary-gold, 0.2);
+}
+
+.mobile-available-tag {
+  background: rgba(55, 65, 81, 0.8);
+  color: $text-color-primary;
+  border: 1px solid rgba($primary-gold, 0.3);
+  padding: 0.5rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(75, 85, 99, 0.9);
+    border-color: rgba($primary-gold, 0.6);
+    transform: translateY(-1px);
+  }
+
+  &.selected {
+    background: linear-gradient(135deg, $primary-gold 0%, $dark-gold 100%);
+    color: $dark-bg-primary;
+    border-color: $primary-gold;
+    font-weight: 600;
+  }
+}
+
+/* Hide desktop tags section on mobile */
+@media (max-width: $mobile-breakpoint) {
+  .tag-management-section {
+    display: none !important;
   }
 }

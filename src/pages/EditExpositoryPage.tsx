@@ -7,6 +7,7 @@ import MiniSermonList from '../components/MiniSermonList';
 import SermonFolderDropdown from '../components/SermonFolderDropdown';
 import { getSermonFolders, getSermonSeriesFunc } from '../services/firebaseService';
 import { fetchTags, Tag } from '../services/tagService';
+import { X, Tag as TagIcon } from 'lucide-react';
 
 export default function EditExpositoryPage() {
   const { id: sermonId } = useParams();
@@ -23,11 +24,11 @@ export default function EditExpositoryPage() {
   const [seriesId, setSeriesId] = useState<string | undefined>(undefined);
   const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
   const [seriesList, setSeriesList] = useState<{ id: string; name: string }[]>([]);
-  
-  // Tag management state
+    // Tag management state
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newTagInput, setNewTagInput] = useState("");
+  const [mobileTagsOverlayOpen, setMobileTagsOverlayOpen] = useState(false);
 
   useEffect(() => {
     if (!sermonId) {
@@ -124,9 +125,12 @@ export default function EditExpositoryPage() {
       console.error('Failed to add new tag:', error);
     }
   };
-
   const handleRemoveTag = (tagName: string) => {
     setSelectedTags(prev => prev.filter(t => t !== tagName));
+  };
+
+  const toggleMobileTagsOverlay = () => {
+    setMobileTagsOverlayOpen(!mobileTagsOverlayOpen);
   };
 
   // Add handler for deleting an image
@@ -338,9 +342,17 @@ export default function EditExpositoryPage() {
                   </div>
                 </div>
               )}
-            </div>
-
-            <button type="submit" className="primary-action-button">Save Changes</button>
+            </div>            <button type="submit" className="primary-action-button">Save Changes</button>
+            
+            {/* Mobile-only Tags Button */}
+            <button 
+              type="button" 
+              className="mobile-tags-button show-mobile"
+              onClick={toggleMobileTagsOverlay}
+            >
+              <TagIcon size={20} />
+              Manage Tags ({selectedTags.length})
+            </button>
           </form>
           <div className="preview-label">Image Preview</div>
           <div className="large-preview-panel">
@@ -404,8 +416,7 @@ export default function EditExpositoryPage() {
                       padding: 0,
                       margin: 0,
                       pointerEvents: 'none',
-                    }}
-                  >
+                    }}                  >
                     ×
                   </span>
                 </button>
@@ -414,6 +425,96 @@ export default function EditExpositoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Tags Overlay */}
+      {mobileTagsOverlayOpen && (
+        <div className="mobile-tags-overlay show-mobile">
+          <div className="mobile-tags-overlay-backdrop" onClick={toggleMobileTagsOverlay} />
+          <div className="mobile-tags-overlay-content">
+            <div className="mobile-tags-overlay-header">
+              <h3>Manage Tags</h3>
+              <button 
+                onClick={toggleMobileTagsOverlay} 
+                className="mobile-tags-close-btn" 
+                aria-label="Close tags"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="mobile-tags-overlay-body">
+              {/* Selected Tags Display */}
+              {selectedTags.length > 0 && (
+                <div className="mobile-selected-tags-section">
+                  <h4>Selected Tags</h4>
+                  <div className="mobile-selected-tags-container">
+                    {selectedTags.map(tag => (
+                      <span key={tag} className="mobile-selected-tag">
+                        {normalizeTagForDisplay(tag)}
+                        <button
+                          type="button"
+                          className="mobile-remove-tag-btn"
+                          onClick={() => handleRemoveTag(tag)}
+                          aria-label={`Remove tag: ${tag}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Add New Tag Input */}
+              <div className="mobile-add-tag-section">
+                <h4>Add New Tag</h4>
+                <div className="mobile-add-tag-container">
+                  <input
+                    type="text"
+                    className="mobile-tag-input"
+                    placeholder="Enter new tag..."
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddNewTag();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="mobile-add-tag-btn"
+                    onClick={handleAddNewTag}
+                    disabled={!newTagInput.trim()}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Available Tags Selection */}
+              {availableTags.length > 0 && (
+                <div className="mobile-available-tags-section">
+                  <h4>Available Tags</h4>
+                  <div className="mobile-available-tags-container">
+                    {availableTags.map(tag => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        className={`mobile-available-tag ${selectedTags.includes(tag.name) ? 'selected' : ''}`}
+                        onClick={() => handleTagToggle(tag.name)}
+                      >
+                        {normalizeTagForDisplay(tag.name)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

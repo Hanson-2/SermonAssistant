@@ -1077,6 +1077,18 @@
   background: rgba(99, 102, 241, 0.1);
 }
 
+.expository-action-btn.tags-btn {
+  border-color: #facc15;
+  color: #facc15;
+}
+.expository-action-btn.tags-btn:hover,
+.expository-action-btn.tags-btn:focus {
+  background: rgba(250, 204, 21, 0.12);
+  color: #fffbe6;
+  border-color: #ffe066;
+  box-shadow: 0 4px 12px rgba(250, 204, 21, 0.15);
+}
+
 /* --- Tags Panel Integration --- */
 @media (min-width: 1025px) {
   .expository-main-content {
@@ -1093,5 +1105,120 @@
 @media (max-width: 1024px) {
   .expository-main-content {
     max-width: 100%; /* Full width when TagsPanel is hidden */
+  }
+}
+
+@media (max-width: 768px) {
+  .tags-panel {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+  }
+  .tags-section {
+    position: relative !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 100px !important; /* Increased bottom margin to lift above bottom navbar */
+    z-index: 50 !important; /* Ensure it's above other elements */
+    margin-top: 20px !important; /* Add top margin for separation */
+    border-top: 1px solid rgba(224, 201, 127, 0.3) !important;
+    padding-top: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .tags-section .tags-list {
+    max-height: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: center !important;
+    padding: 0 10px 80px 10px !important; /* Added bottom padding to prevent cutoff */
+    width: 100% !important;
+  }
+  
+  /* Make tag items more touch-friendly */
+  .tags-section .tag-item {
+    padding: 6px 12px !important;
+    margin: 3px !important;
+    min-height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 14px !important;
+  }
+}
+
+/* --- Mobile Tags Panel Overlay --- */
+.tags-panel-overlay-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.tags-panel-overlay-content {
+  background: #1e293b;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  border: 1px solid #374151;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tags-panel-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem 1.2rem 1.5rem;
+  border-bottom: 1px solid #374151;
+  background: #111827;
+}
+.tags-panel-overlay-header h3 {
+  color: #facc15;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+}
+.tags-panel-overlay-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.tags-panel-overlay-close:hover {
+  color: #fff;
+  background: rgba(239, 68, 68, 0.2);
+}
+@media (max-width: 768px) {
+  .tags-panel-overlay-content {
+    max-width: 98vw;
+    min-width: 0;
+    border-radius: 0.7rem;
+    padding: 0;
+  }
+  .tags-panel-overlay-header {
+    padding: 1rem 1.2rem;
   }
 }

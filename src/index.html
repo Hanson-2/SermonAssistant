@@ -1,2 +1,79 @@
-<!-- Google Fonts for the rich text editor -->
-<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Lato:400,700|Montserrat:400,700|Merriweather:400,700|Oswald:400,700|Open+Sans:400,700|Raleway:400,700|PT+Sans:400,700|Nunito:400,700|Playfair+Display:400,700|Source+Code+Pro:400,700|Fira+Mono:400,700|Inconsolata:400,700&display=swap" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sermon Notes Assistant</title>
+    <!-- Google Fonts for the rich text editor -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Lato:400,700|Montserrat:400,700|Merriweather:400,700|Oswald:400,700|Open+Sans:400,700|Raleway:400,700|PT+Sans:400,700|Nunito:400,700|Playfair+Display:400,700|Source+Code+Pro:400,700|Fira+Mono:400,700|Inconsolata:400,700&display=swap" rel="stylesheet">    <!-- Force immediate dark theme on all select elements -->
+    <style>
+      /* Global dark theme for all select elements */
+      select {
+        background-color: var(--bg-secondary, #242424) !important;
+        color: var(--text-primary, #f0f0f0) !important;
+        border: 1px solid var(--border-color, #444) !important;
+        font-family: inherit !important;
+        appearance: auto !important;
+        -webkit-appearance: auto !important;
+      }
+      
+      /* Force dark theme for dropdown options */
+      select option {
+        background-color: var(--bg-secondary, #242424) !important;
+        color: var(--text-primary, #f0f0f0) !important;
+        font-family: inherit !important;
+      }
+        /* Fix overlays and mobile elements */
+      @media (max-width: 768px) {
+        .mini-scripture-overlay {
+          top: 60px !important;
+          z-index: 9999 !important;
+          max-height: calc(100vh - 120px) !important;
+        }
+        
+        /* Fix scripture overlay for mobile */
+        .scripture-overlay-modern {
+          padding: 0.5rem !important;
+        }
+        
+        .scripture-overlay-card {
+          max-height: calc(100vh - 20px) !important;
+          width: calc(100vw - 16px) !important;
+          margin: 0 auto !important;
+        }
+            /* Fix presentation arrows */
+        .presentation-arrow {
+          bottom: 70px !important;
+          z-index: 9999 !important;
+        }
+        
+        /* Safari compatibility - webkit prefix for backdrop-filter */
+        .mini-scripture-overlay,
+        .presentation-footer,
+        .presentation-header,
+        .scripture-overlay-modern,
+        .scripture-overlay-card {
+          -webkit-backdrop-filter: blur(10px);
+        }
+        
+        /* Fix presentation page hamburger menu */
+        .hamburger-btn {
+          display: flex !important;
+          z-index: 9999 !important;
+        }
+      }
+      
+      /* Safari compatibility - webkit prefix for backdrop-filter */
+      .mini-scripture-overlay,
+      .presentation-footer,
+      .presentation-header {
+        -webkit-backdrop-filter: blur(10px);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

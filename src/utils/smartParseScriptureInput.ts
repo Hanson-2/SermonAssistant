@@ -101,41 +101,16 @@ export function extractScriptureReferences(text: string): ScriptureReference[] {
         refs.push({ book, chapter, verse });
       }
     } else if (type === 'chapter') {
-      const [fullMatch, rawToken, chapStr] = match;
-      const matchStart = match.index;
-      const matchEnd = matchStart + fullMatch.length;
+      const [rawToken, chapStr] = match;
 
-      // Check if this overlaps with any existing reference
-      const overlaps = refs.some(ref => {
-        // Try to find the position of this reference in the text
-        const possibleMatches = [];
-        
-        if (ref.verse !== undefined) {
-          // Verse-specific reference
-          possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}`);
-          possibleMatches.push(`${ref.book} ${ref.chapter}:${ref.verse}-${ref.endVerse || ref.verse}`);
-        } else {
-          // Chapter-only reference
-          possibleMatches.push(`${ref.book} ${ref.chapter}`);
-        }
-        
-        return possibleMatches.some(refText => {
-          const refIndex = text.indexOf(refText);
-          if (refIndex === -1) return false;
-          const refEnd = refIndex + refText.length;
-          // Check for overlap
-          return !(matchEnd <= refIndex || matchStart >= refEnd);
-        });
-      });
-      
-      if (overlaps) continue;
-      
-      // Normalize alias key (strip dots/spaces, lowercase)
+      // Fix: Only skip if the exact same chapter-only reference is already present
       const key = rawToken.replace(/[.\s]/g, "").toLowerCase();
-      // Map to canonical book name, or clean up raw token
       const book = bookAliases[key] || rawToken.replace(/[.]/g, " ").trim();
-      
       const chapter = parseInt(chapStr, 10);
+      const alreadyPresent = refs.some(ref =>
+        ref.book === book && ref.chapter === chapter && ref.verse === undefined
+      );
+      if (alreadyPresent) continue;
       
       refs.push({ book, chapter }); // No verse for chapter-only references
     }

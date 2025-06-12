@@ -698,11 +698,25 @@
   cursor: pointer;
 }
 
-.form-group select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
+/* Fix font family dropdown for dark theme */
+select {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 0.5rem !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
 }
+
+/* Dropdown options styling - limited browser support */
+select option {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  font-family: inherit !important;
+}
+
+/* Remove inline styles on option elements in ThemeSettingsPage.tsx */
 
 /* Checkbox Groups */
 .checkbox-group {

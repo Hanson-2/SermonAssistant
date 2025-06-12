@@ -138,6 +138,8 @@ export default function PresentationPage() {
     endVerse?: string;
     reference: string;
   } | null>(null);
+  // Mobile hamburger menu state
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Load sermon data
   useEffect(() => {
@@ -786,8 +788,25 @@ export default function PresentationPage() {
       endVerse: ref.endVerse?.toString(),
       reference
     });
-    setScriptureOverlayOpen(true);
-  }, [defaultTranslation]);
+    setScriptureOverlayOpen(true);  }, [defaultTranslation]);
+  // Toggle functions
+  const toggleMenu = () => setMenuOpen(!menuOpen);
+  
+  // Navigation functions for hamburger menu
+  const navigateToEdit = () => {
+    if (id) {
+      // Navigate to the edit page for this sermon
+      navigate(`/expository/${id}`);
+    } else {
+      // Fallback to dashboard if no ID
+      navigate('/dashboard');
+    }
+  };
+    // Function to export to PowerPoint
+  const exportToPPTX = () => {
+    // Use the existing PowerPoint export function
+    exportToPowerPoint();
+  };
 
   if (loading) {
     return (
@@ -813,15 +832,30 @@ export default function PresentationPage() {
     <div className={`presentation-page ${isFullscreen ? 'fullscreen' : ''}`}>
       {/* Background overlay */}
       <div className="presentation-bg-overlay" />
-      
-      {/* Header - hidden in fullscreen */}
+        {/* Header - hidden in fullscreen */}
       {!isFullscreen && (        <header className="presentation-header">
           <div className="presentation-header-content">
-            <div className="presentation-title-area">
-              <h1 className="presentation-title">{sermon.title}</h1>
-              <p className="presentation-date">{sermon.date}</p>
+            {/* Left side: Hamburger menu + Title */}
+            <div className="presentation-left-section">
+              {/* Hamburger menu button for mobile - positioned on left */}
+              {typeof window !== 'undefined' && window.innerWidth <= 700 && (
+                <button 
+                  className="hamburger-btn header-hamburger"
+                  onClick={toggleMenu} 
+                  aria-label="Toggle menu"
+                >
+                  ☰
+                </button>
+              )}
+              
+              <div className="presentation-title-area">
+                <h1 className="presentation-title">{sermon.title}</h1>
+                <p className="presentation-date">{sermon.date}</p>
+              </div>
             </div>
-              <div className="presentation-controls">
+            
+            {/* Right side: Desktop controls */}
+            <div className="presentation-controls">
               {/* Back to Edit Button */}
               <button
                 onClick={() => navigate(`/expository/${id}`)}
@@ -831,8 +865,7 @@ export default function PresentationPage() {
                 <span className="back-btn-text">Back to Edit</span>
               </button>
               
-              {/* Export to PowerPoint Button */}
-              <button
+              {/* Export to PowerPoint Button */}              <button
                 onClick={exportToPowerPoint}
                 className="presentation-control-btn export-ppt-btn"
                 title="Export to PowerPoint"
@@ -899,7 +932,7 @@ export default function PresentationPage() {
             </div>
           </div>
         </header>
-      )}      {/* Main presentation area */}
+      )}{/* Main presentation area */}
       <main className="presentation-main">
         {/* Scripture references above content */}
         {currentSlideScriptureRefs.length > 0 && (
@@ -925,10 +958,20 @@ export default function PresentationPage() {
               ))}
             </div>
           </Motion.div>
-        )}
-
-        <div className="presentation-slide-container">
-          {/* Slide content */}          <div className="presentation-slide-area">
+        )}        <div className="presentation-slide-container">
+          {/* Navigation arrows - moved OUTSIDE slide area */}
+          <button
+            onClick={goToPreviousSlide}
+            disabled={currentSlide === 0}
+            className={`presentation-nav-btn presentation-nav-prev ${isTransitioning ? 'fade-out' : 'fade-in'}`}
+            aria-label="Previous slide"
+            title="Previous slide (←)"
+          >
+            <ChevronLeft size={32} />
+          </button>
+          
+          {/* Slide content */}
+          <div className="presentation-slide-area">
             <AnimatePresence mode="wait">
               <Motion.div
                 key={currentSlide}
@@ -940,32 +983,23 @@ export default function PresentationPage() {
                   dangerouslySetInnerHTML={{ __html: slides[currentSlide] }}
                 />
               </Motion.div>
-            </AnimatePresence>{/* Navigation arrows */}
-            <button
-              onClick={goToPreviousSlide}
-              disabled={currentSlide === 0}
-              className={`presentation-nav-btn presentation-nav-prev ${isTransitioning ? 'fade-out' : 'fade-in'}`}
-              aria-label="Previous slide"
-              title="Previous slide (←)"
-            >
-              <ChevronLeft size={32} />
-            </button>
-            <button
-              onClick={goToNextSlide}
-              disabled={currentSlide === slides.length - 1}
-              className={`presentation-nav-btn presentation-nav-next ${isTransitioning ? 'fade-out' : 'fade-in'}`}
-              aria-label="Next slide"
-              title="Next slide (→)"
-            >
-              <ChevronRight size={32} />
-            </button>
+            </AnimatePresence>
           </div>
+          
+          <button
+            onClick={goToNextSlide}
+            disabled={currentSlide === slides.length - 1}
+            className={`presentation-nav-btn presentation-nav-next ${isTransitioning ? 'fade-out' : 'fade-in'}`}
+            aria-label="Next slide"
+            title="Next slide (→)"
+          >
+            <ChevronRight size={32} />
+          </button>
         </div>
-      </main>
-
-      {/* Footer with slide indicators and controls */}
+      </main>      {/* Footer with slide indicators only */}
       <footer className="presentation-footer">
-        <div className="presentation-footer-content">          {/* Slide indicators */}
+        <div className="presentation-footer-content">          
+          {/* Slide indicators */}
           <div className="presentation-slide-indicators">
             {slides.map((_, index) => (
               <button
@@ -982,30 +1016,30 @@ export default function PresentationPage() {
             ))}
           </div>
 
-          {/* Slide counter and controls */}
+          {/* Footer controls: slide counter and icons */}
           <div className="presentation-footer-controls">
             <div className="presentation-slide-counter">
               {currentSlide + 1} / {slides.length}
             </div>
-            
-            {isFullscreen && (
-              <div className="presentation-fullscreen-controls">
-                <button
-                  onClick={() => goToSlide(0)}
-                  className="presentation-control-btn"
-                  title="Go to first slide (Home)"
-                >
-                  <Home size={16} />
-                </button>
-                <button
-                  onClick={toggleFullscreen}
-                  className="presentation-control-btn"
-                  title="Exit fullscreen (Esc)"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            )}          </div>
+            <button
+              className="presentation-footer-btn"
+              title="Go to Home"
+              onClick={() => goToSlide(0)}
+              aria-label="Go to Home"
+              style={{ borderRadius: 0, background: 'none', border: 'none', boxShadow: 'none', padding: 0, marginLeft: 8, marginRight: 0 }}
+            >
+              <Home size={22} />
+            </button>
+            <button
+              className="presentation-footer-btn presentation-footer-close"
+              title="Close Presentation"
+              onClick={() => navigate(-1)}
+              aria-label="Close Presentation"
+              style={{ borderRadius: 0, background: 'none', border: 'none', boxShadow: 'none', padding: 0, marginLeft: 8, marginRight: 0, color: 'var(--error-border, #e57373)' }}
+            >
+              <X size={22} />
+            </button>
+          </div>
         </div>
       </footer>      {/* Scripture Overlay */}
       <ScriptureOverlay
@@ -1015,8 +1049,23 @@ export default function PresentationPage() {
         chapter={selectedScripture?.chapter || ''}
         verseRange={selectedScripture?.verse || ''}
         reference={selectedScripture?.reference || ''}
-        defaultTranslation={defaultTranslation}
-      />
+        defaultTranslation={defaultTranslation}      />
+
+      {/* Mobile action buttons overlay (only when hamburger menu is open) */}
+      {menuOpen && (
+        <>
+          <div className="menu-overlay" onClick={toggleMenu} />          <div className={`action-buttons ${menuOpen ? 'open' : ''}`}>
+            <button onClick={() => navigate(`/expository/${id}`)}>Back to Edit</button>
+            <button onClick={exportToPowerPoint}>Download to PPT</button>
+            <button onClick={() => setShowAnimationDropdown(!showAnimationDropdown)}>
+              Animation
+            </button>
+            <button onClick={toggleFullscreen}>
+              {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

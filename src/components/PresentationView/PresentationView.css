@@ -345,6 +345,11 @@
   .presentation-slide-counter {
     order: 1;
   }
+  .presentation-arrow {
+    position: fixed !important;
+    bottom: 80px !important; /* Well above bottom navbar */
+    z-index: 9999 !important; /* Much higher than navbar */
+  }
 }
 
 /* Touch-friendly navigation for mobile */

@@ -1,0 +1,20 @@
+.expository-tags-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  background: rgba(17, 23, 39, 0.97);
+  border-top: 2px solid #232b3e;
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.25);
+  padding: 0;
+  display: block;
+}
+
+@media (min-width: 769px) {
+  .expository-tags-bottom-bar {
+    display: none;
+  }
+}
+
+/* Ensure the tags panel inside is horizontal on mobile (already handled by .tags-panel media queries) */

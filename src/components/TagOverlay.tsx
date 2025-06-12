@@ -96,16 +96,14 @@ const TagOverlay: React.FC<TagOverlayProps> = ({ tagName, isOpen, onClose, onVer
   const handleClearSelection = () => {
     setSelectedVerses(new Set());
   };  const handleAddToExpository = () => {
+    // Use the same key logic as in handleVerseToggle
     const selectedVerseObjects: any[] = [];
-    
     Object.entries(verses).forEach(([book, chapters]) => {
       Object.entries(chapters).forEach(([chapterNum, chapterVerses]) => {
         chapterVerses.forEach(verse => {
-          // Handle optional fields safely
           const verseBook = verse.book || book;
           const verseChapter = verse.chapter || parseInt(chapterNum);
-          const verseKey = `${verseBook}-${verseChapter}-${verse.verse}`;
-          
+          const verseKey = verse.id ? verse.id : `${verseBook}-${verseChapter}-${verse.verse}-${verse.translation}`;
           if (selectedVerses.has(verseKey)) {
             selectedVerseObjects.push({
               book: verseBook,
@@ -118,7 +116,7 @@ const TagOverlay: React.FC<TagOverlayProps> = ({ tagName, isOpen, onClose, onVer
         });
       });
     });
-
+    console.log('[TagOverlay] handleAddToExpository selectedVerseObjects:', selectedVerseObjects);
     if (selectedVerseObjects.length > 0) {
       onVerseSelect(selectedVerseObjects);
       setSelectedVerses(new Set());
@@ -183,7 +181,8 @@ const TagOverlay: React.FC<TagOverlayProps> = ({ tagName, isOpen, onClose, onVer
                           {chapterVerses.map((verse) => {
                             const verseBook = verse.book || book;
                             const verseChapter = verse.chapter || parseInt(chapterNum);
-                            const verseKey = `${verseBook}-${verseChapter}-${verse.verse}`;
+                            // Use verse.id if available, otherwise include translation for uniqueness
+                            const verseKey = verse.id ? verse.id : `${verseBook}-${verseChapter}-${verse.verse}-${verse.translation}`;
                             const isSelected = selectedVerses.has(verseKey);
                             return (
                               <div 

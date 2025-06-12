@@ -6,7 +6,7 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
-  "orientation": "landscape-primary",
+  "orientation": "any",
   "background_color": "#000000",
   "theme_color": "#f8d77f",
   "description": "A comprehensive tool for managing, organizing, and searching bible expository notes with advanced features for pastors and church members.",

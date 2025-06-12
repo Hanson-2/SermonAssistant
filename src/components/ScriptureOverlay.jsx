@@ -433,11 +433,10 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
                     Loading scripture...
                   </div>
                 ) : (
-                  <>
-                    {active.verses && active.verses.length > 0 ? (
+                  <>                    {active.verses && active.verses.length > 0 ? (
                       <div className="space-y-3 text-gray-200">
-                        {active.verses.map((verse) => (
-                          <div key={verse.verse} className="flex items-start text-sm md:text-base leading-relaxed">
+                        {active.verses.map((verse, index) => (
+                          <div key={`${current}-${verse.verse}-${index}-${displayRef.book}-${displayRef.chapter}`} className="flex items-start text-sm md:text-base leading-relaxed">
                             <span className="font-semibold text-yellow-500/90 mr-2 w-7 text-right flex-shrink-0 pt-px">{verse.verse}</span>
                             <p className="flex-1">{verse.text}</p>
                           </div>

@@ -1,0 +1,78 @@
+/* Mobile fixes for ScriptureOverlay component */
+
+/* General mobile fixes */
+@media (max-width: 768px) {
+  .scripture-overlay-modern {
+    padding: 8px !important;
+    align-items: flex-start !important;
+    padding-top: 60px !important;
+    z-index: 99999 !important; /* Ensure it's above all other elements */
+  }
+  
+  .scripture-overlay-card {
+    width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 120px) !important;
+    border-radius: 8px !important;
+    position: relative !important;
+    z-index: 100000 !important; /* Even higher z-index */
+  }
+  
+  /* Make header more compact */
+  .scripture-overlay-card .flex.items-center.justify-between {
+    padding: 10px !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    background-color: rgba(0, 0, 0, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+  
+  /* Ensure content is scrollable */
+  .scripture-overlay-card .flex-grow.overflow-y-auto {
+    max-height: calc(100vh - 180px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important; /* Smooth scrolling on iOS */
+  }
+  
+  /* Improve verse rendering */
+  .scripture-overlay-card .space-y-3 {
+    padding: 0.5rem !important;
+    margin-bottom: 60px !important; /* Add space at the bottom to prevent content being hidden behind navbar */
+  }
+  
+  /* Smaller translation buttons */
+  .scripture-overlay-card .gap-2 button {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Make buttons easier to tap */
+  .scripture-overlay-card button {
+    min-height: 36px !important;
+    min-width: 36px !important;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .scripture-overlay-modern {
+    padding: 4px !important;
+    padding-top: 50px !important;
+  }
+  
+  .scripture-overlay-card {
+    width: calc(100vw - 8px) !important;
+    max-height: calc(100vh - 100px) !important;
+  }
+  
+  /* Even smaller header */
+  .scripture-overlay-card h2 {
+    font-size: 16px !important;
+  }
+}
+
+/* Fix for Safari */
+.scripture-overlay-modern {
+  -webkit-backdrop-filter: blur(10px);
+}

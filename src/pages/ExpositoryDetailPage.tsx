@@ -43,6 +43,19 @@ async function fetchScriptureText(reference: string): Promise<string> {
   }
 }
 
+// Add a hook to detect mobile
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= breakpoint);
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth <= breakpoint);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export default function ExpositoryDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -123,7 +136,19 @@ export default function ExpositoryDetailPage() {
   
   const [slideTitles, setSlideTitles] = useState<string[]>([]);
   const [editingTitleIdx, setEditingTitleIdx] = useState<number | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);  useEffect(() => {
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);  const isMobile = useIsMobile();
+  const [showTagsPanelOverlay, setShowTagsPanelOverlay] = useState(false);
+  // Prevent background scroll when overlay is open
+  useEffect(() => {
+    if (showTagsPanelOverlay) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [showTagsPanelOverlay]);
+
+  useEffect(() => {
     // Load user's default translation from their profile
     const loadUserPreferences = async () => {
       try {
@@ -492,17 +517,14 @@ export default function ExpositoryDetailPage() {
       // If we already have slideScriptureRefs for this slide (from database or tag selection), use those
       const existingRefs = slideScriptureRefs[slideIndex];
       if (existingRefs && existingRefs.length > 0) {
-        console.log(`[ExpositoryDetailPage] Slide ${slideIndex} already has refs, skipping text extraction`);
         return existingRefs;
       }
-
       // Only extract from text if no existing refs
       const rawRefs = extractScriptureReferences(slideText);
       const textBasedRefs = rawRefs.map(ref => {
         let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
         let bookName = bookAliases[localRawBook] || ref.book;
         let referenceString;
-        
         // Handle chapter-only references (verse is undefined)
         if (ref.verse === undefined) {
           referenceString = `${bookName} ${ref.chapter}`;
@@ -512,19 +534,16 @@ export default function ExpositoryDetailPage() {
             referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
           }
         }
-        
-        return { 
-          ...ref, 
-          book: bookName, 
+        return {
+          ...ref,
+          book: bookName,
           reference: referenceString,
           sourceType: 'manual' as const,
           addedViaTag: false
         };
       });
-
       return textBasedRefs;
     });
-
     // Convert to object format and only update if there are changes
     const refsObject = refsBySlide.reduce((acc, refs, index) => {
       acc[index] = refs;
@@ -533,7 +552,6 @@ export default function ExpositoryDetailPage() {
 
     // Only update if different from current state
     if (JSON.stringify(refsObject) !== JSON.stringify(slideScriptureRefs)) {
-      console.log('[ExpositoryDetailPage] Updating slideScriptureRefs from text extraction:', refsObject);
       setSlideScriptureRefs(refsObject);
     }
 
@@ -590,36 +608,49 @@ export default function ExpositoryDetailPage() {
     }
   }
 
-  // Only update scriptureRefs if overlay is not open AND lockedOverlayRef is null
+  // Fix: Always use only text-based refs for each slide, and do not merge with existingRefs (which may contain stale or duplicate refs)
   useEffect(() => {
-    if (overlayOpen || lockedOverlayRef) return; // Freeze mini-cards/refs while overlay is open or locked
-    const allText = slides.join("\n\n");
-    const rawRefs = extractScriptureReferences(allText);
-    // console.log('[ExpositoryDetailPage] useEffect[slides]: Calling debouncedSetRefs with rawRefs', rawRefs);
-    debouncedSetRefs(rawRefs); // debouncedSetRefs now handles normalization internally
-  }, [slides, debouncedSetRefs, overlayOpen, lockedOverlayRef]);
+    // For each slide, extract all scripture refs from text
+    const refsBySlide = slides.map((slideText) => {
+      const rawRefs = extractScriptureReferences(slideText);
+      return rawRefs.map(ref => {
+        let localRawBook = ref.book.replace(/\s/g, "").toLowerCase();
+        let bookName = bookAliases[localRawBook] || ref.book;
+        let referenceString;
+        if (ref.verse === undefined) {
+          referenceString = `${bookName} ${ref.chapter}`;
+        } else {
+          referenceString = `${bookName} ${ref.chapter}:${ref.verse}`;
+          if (ref.endVerse && ref.endVerse !== ref.verse) {
+            referenceString = `${bookName} ${ref.chapter}:${ref.verse}-${ref.endVerse}`;
+          }
+        }
+        return {
+          ...ref,
+          book: bookName,
+          reference: referenceString,
+          sourceType: 'manual' as const,
+          addedViaTag: false
+        };
+      });
+    });
+    // Convert to object format and only update if there are changes
+    const refsObject = refsBySlide.reduce((acc, refs, index) => {
+      acc[index] = refs;
+      return acc;
+    }, {} as Record<number, any[]>);
+    if (JSON.stringify(refsObject) !== JSON.stringify(slideScriptureRefs)) {
+      setSlideScriptureRefs(refsObject);
+    }
+    setSlideTitles(prev => {
+      if (!prev || prev.length !== slides.length) {
+        return slides.map((_, idx) => `Page ${idx + 1}`);
+      }
+      return prev;
+    });
+  }, [slides, bookAliases]);
 
-  // Memoized html for the current slide, always valid
-  const currentSlideHtml = useMemo(() => {
-    if (!Array.isArray(slides) || slides.length === 0) return "";
-    if (activeSlide < 0 || activeSlide >= slides.length) return "";
-    return slides[activeSlide] || "";
-  }, [slides, activeSlide]);
-
-  // --- Tag management functions ---
-  const handleTagSelect = useCallback((tagName: string) => {
-    setSelectedTagFromDropdown(tagName);
-    setTagOverlayOpen(true);
-  }, []);
-  const handleTagOverlayClose = useCallback(() => {
-    setTagOverlayOpen(false);
-    setSelectedTagFromDropdown(null);
-  }, []);
-
-  const handleTagClick = useCallback((tagName: string) => {
-    setSelectedTagFromDropdown(tagName);
-    setTagOverlayOpen(true);
-  }, []);  // Function to remove a scripture reference from current slide
+  // Function to remove a scripture reference from current slide
   const handleRemoveScriptureRef = useCallback((refToRemove: any) => {
     const currentRefs = slideScriptureRefs[activeSlide] || [];
     const updatedRefs = currentRefs.filter(ref => ref.reference !== refToRemove.reference);
@@ -748,6 +779,26 @@ export default function ExpositoryDetailPage() {
     console.log('[ExpositoryDetailPage] ====== TEST VERSES ADDED ======');
   }, [activeSlide, slideScriptureRefs]);
 
+  // --- Tag management functions ---
+  const handleTagSelect = useCallback((tagName: string) => {
+    setSelectedTagFromDropdown(tagName);
+    setTagOverlayOpen(true);
+  }, []);
+  const handleTagOverlayClose = useCallback(() => {
+    setTagOverlayOpen(false);
+    setSelectedTagFromDropdown(null);
+  }, []);
+  const handleTagClick = useCallback((tagName: string) => {
+    setSelectedTagFromDropdown(tagName);
+    setTagOverlayOpen(true);
+  }, []);
+
+  const currentSlideHtml = useMemo(() => {
+    if (!Array.isArray(slides) || slides.length === 0) return "";
+    if (activeSlide < 0 || activeSlide >= slides.length) return "";
+    return slides[activeSlide] || "";
+  }, [slides, activeSlide]);
+
   if (!sermon) {
     return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   }
@@ -769,6 +820,7 @@ export default function ExpositoryDetailPage() {
         >
           Presentation
         </button>
+        {/* Tags button removed for desktop layout as requested */}
       </div>
 
       <div className="expository-sticky-banner">
@@ -896,7 +948,7 @@ export default function ExpositoryDetailPage() {
                     onMouseDown={() => handleTitleMouseDown(idx)}
                     onMouseUp={handleTitleMouseUp}
                     onTouchStart={() => handleTitleTouchStart(idx)}
-                    onTouchEnd={handleTitleTouchEnd}
+                    onTouchEnd={() => handleTitleTouchEnd}
                     tabIndex={0}
                     title={slideTitles[idx] || `Page ${idx + 1}`}
                   >
@@ -951,21 +1003,35 @@ export default function ExpositoryDetailPage() {
               </div>
             </div>
           </div>
-        </div>        {/* Tags Panel */}
-        <TagsPanel
-          expositoryTags={sermon?.tags || []}
-          onVerseSelect={handleVerseSelectionFromTag}
-          onTagClick={handleTagClick}
-        />
+        </div>
+        {/* Only show TagsPanel on desktop/tablet */}
+        {!isMobile && (
+          <TagsPanel
+            expositoryTags={sermon?.tags || []}
+            onVerseSelect={handleVerseSelectionFromTag}
+            onTagClick={handleTagClick}
+          />
+        )}
       </div>
 
-      {/* Tag Overlay - Moved outside main container for full-screen display */}
-      {selectedTagFromDropdown && tagOverlayOpen && (
+      {/* TagOverlay for viewing verses for a tag (all devices) */}
+      {tagOverlayOpen && (
         <TagOverlay
-          tagName={selectedTagFromDropdown}
+          tagName={selectedTagFromDropdown || ""}
           isOpen={tagOverlayOpen}
           onClose={handleTagOverlayClose}
           onVerseSelect={handleVerseSelectionFromTag}
+        />
+      )}
+      {isMobile && tagOverlayOpen && selectedTagFromDropdown && (
+        <TagOverlay
+          tagName={selectedTagFromDropdown}
+          isOpen={tagOverlayOpen}
+          onClose={() => setTagOverlayOpen(false)}
+          onVerseSelect={(verses) => {
+            handleVerseSelectionFromTag(verses);
+            setTagOverlayOpen(false);
+          }}
         />
       )}
     </div>

@@ -1,0 +1,10 @@
+@media (max-width: 768px) {
+  .mini-scripture-overlay {
+    z-index: 9999 !important; /* Much higher to ensure above all other elements */
+    top: 60px !important; /* Adjust to be below navbar height */
+    max-height: calc(100vh - 120px) !important; /* Prevent overlay from extending behind navbar */
+    overflow-y: auto !important;
+  }
+}
+
+/* ...existing code... */
