@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Authentication Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #2a2a2a;
+        }
+        .debug-info {
+            font-family: monospace;
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .test-button {
+            background: #e0c97f;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #f0d98f;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success { background: #155724; border: 1px solid #155724; }
+        .status.error { background: #721c24; border: 1px solid #721c24; }
+        .status.info { background: #1c5282; border: 1px solid #1c5282; }
+        
+        /* Theme-dependent styles to test theme application */
+        .theme-test-element {
+            background: var(--primary-color, #e0c97f);
+            color: #000;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Theme Authentication Debug Test</h1>
+    
+    <div class="debug-section">
+        <h2>Authentication State</h2>
+        <div id="auth-status" class="debug-info">Checking authentication...</div>
+        <button id="login-btn" class="test-button" onclick="testLogin()">Test Login</button>
+        <button id="logout-btn" class="test-button" onclick="testLogout()">Test Logout</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Theme Application Test</h2>
+        <div class="theme-test-element">
+            This element should use the primary color from theme settings
+        </div>
+        <div id="theme-status" class="debug-info">Checking theme...</div>
+        <button class="test-button" onclick="checkThemeVariables()">Check CSS Variables</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Theme Loading Timeline</h2>
+        <div id="theme-timeline" class="debug-info">Monitoring theme loading events...</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Current CSS Variables</h2>
+        <div id="css-variables" class="debug-info">Loading...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-4UtnZg2Kt8Y8nQ4nDHpNqr1_7rh8x9A",
+            authDomain: "sermon-notes-assistant.firebaseapp.com",
+            projectId: "sermon-notes-assistant",
+            storageBucket: "sermon-notes-assistant.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abc123def456"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let timelineEvents = [];
+
+        function addTimelineEvent(event) {
+            const timestamp = new Date().toLocaleTimeString();
+            timelineEvents.push(`[${timestamp}] ${event}`);
+            updateTimeline();
+        }
+
+        function updateTimeline() {
+            document.getElementById('theme-timeline').innerHTML = timelineEvents.join('<br>');
+        }
+
+        function updateAuthStatus(user) {
+            const authStatus = document.getElementById('auth-status');
+            if (user) {
+                authStatus.innerHTML = `Authenticated: ${user.email}<br>UID: ${user.uid}`;
+                addTimelineEvent(`User authenticated: ${user.email}`);
+            } else {
+                authStatus.innerHTML = 'Not authenticated';
+                addTimelineEvent('User logged out');
+            }
+        }
+
+        function checkThemeVariables() {
+            const root = document.documentElement;
+            const computedStyles = getComputedStyle(root);
+            
+            const variables = {
+                '--primary-color': computedStyles.getPropertyValue('--primary-color'),
+                '--accent-color': computedStyles.getPropertyValue('--accent-color'),
+                '--font-family': computedStyles.getPropertyValue('--font-family'),
+                'data-theme': root.getAttribute('data-theme'),
+                'data-font-size': root.getAttribute('data-font-size')
+            };
+            
+            document.getElementById('css-variables').innerHTML = 
+                Object.entries(variables)
+                    .map(([key, value]) => `${key}: ${value || 'not set'}`)
+                    .join('<br>');
+            
+            addTimelineEvent('CSS variables checked');
+        }
+
+        async function loadThemeFromFirebase(user) {
+            try {
+                addTimelineEvent('Loading theme from Firebase...');
+                const userDoc = doc(db, 'users', user.uid);
+                const userSnapshot = await getDoc(userDoc);
+                
+                if (userSnapshot.exists()) {
+                    const userData = userSnapshot.data();
+                    if (userData.themeSettings) {
+                        addTimelineEvent('Theme settings found in Firebase');
+                        applyThemeSettings(userData.themeSettings);
+                        return userData.themeSettings;
+                    } else {
+                        addTimelineEvent('No theme settings in Firebase user doc');
+                    }
+                } else {
+                    addTimelineEvent('No Firebase user doc found');
+                }
+            } catch (error) {
+                addTimelineEvent(`Firebase theme loading error: ${error.message}`);
+                console.error('Error loading theme from Firebase:', error);
+            }
+            return null;
+        }
+
+        function applyThemeSettings(themeSettings) {
+            const root = document.documentElement;
+            
+            if (themeSettings.primaryColor) {
+                root.style.setProperty('--primary-color', themeSettings.primaryColor);
+                addTimelineEvent(`Primary color applied: ${themeSettings.primaryColor}`);
+            }
+            
+            if (themeSettings.accentColor) {
+                root.style.setProperty('--accent-color', themeSettings.accentColor);
+                addTimelineEvent(`Accent color applied: ${themeSettings.accentColor}`);
+            }
+            
+            if (themeSettings.fontFamily) {
+                root.style.setProperty('--font-family', themeSettings.fontFamily);
+                addTimelineEvent(`Font family applied: ${themeSettings.fontFamily}`);
+            }
+            
+            root.setAttribute('data-theme', themeSettings.themeMode || 'dark');
+            root.setAttribute('data-font-size', themeSettings.fontSize || 'medium');
+            
+            addTimelineEvent('Theme settings applied to DOM');
+            
+            // Update the theme status
+            document.getElementById('theme-status').innerHTML = 
+                `Theme loaded from Firebase:<br>${JSON.stringify(themeSettings, null, 2)}`;
+        }
+
+        // Authentication state listener
+        onAuthStateChanged(auth, async (user) => {
+            updateAuthStatus(user);
+            
+            if (user) {
+                // User is signed in, load theme
+                await loadThemeFromFirebase(user);
+            } else {
+                // User is signed out, use defaults
+                addTimelineEvent('Applying default theme (user logged out)');
+                applyThemeSettings({
+                    primaryColor: '#e0c97f',
+                    accentColor: '#3b82f6',
+                    fontFamily: 'Georgia, serif',
+                    themeMode: 'dark',
+                    fontSize: 'medium'
+                });
+            }
+            
+            checkThemeVariables();
+        });
+
+        // Global functions for buttons
+        window.testLogin = async function() {
+            try {
+                // Use a test account - replace with actual test credentials
+                const email = prompt('Enter email for testing:');
+                const password = prompt('Enter password for testing:');
+                
+                if (email && password) {
+                    addTimelineEvent('Attempting login...');
+                    await signInWithEmailAndPassword(auth, email, password);
+                    addTimelineEvent('Login successful');
+                }
+            } catch (error) {
+                addTimelineEvent(`Login error: ${error.message}`);
+                console.error('Login error:', error);
+            }
+        };
+
+        window.testLogout = async function() {
+            try {
+                addTimelineEvent('Attempting logout...');
+                await signOut(auth);
+                addTimelineEvent('Logout successful');
+            } catch (error) {
+                addTimelineEvent(`Logout error: ${error.message}`);
+                console.error('Logout error:', error);
+            }
+        };
+
+        window.checkThemeVariables = checkThemeVariables;
+
+        // Initial check
+        addTimelineEvent('Debug page loaded');
+        checkThemeVariables();
+    </script>
+</body>
+</html>
