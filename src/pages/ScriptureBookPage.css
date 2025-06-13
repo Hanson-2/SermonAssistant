@@ -423,17 +423,14 @@
   left: 2rem;
   background: linear-gradient(135deg, #232b3e 0%, #1a202c 100%);
   color: #fff;
-  border: 2px solid var(--primary-color, #e0c97f);
+  border: 2px solid #2563eb;
   border-radius: 0.5rem;
   padding: 0.75rem 1.25rem;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -443,22 +440,15 @@
 
 .back-to-books-btn:hover {
   background: linear-gradient(135deg, #374151 0%, #232b3e 100%);
-  color: var(--primary-color, #e0c97f);
-  border-color: var(--primary-hover, #f3e3b2);
+  color: #facc15;
+  border-color: #facc15;
   transform: translateY(-1px);
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.4),
-    inset 0 1px 2px rgba(255, 255, 255, 0.15),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.3),
-    0 0 0 1px var(--primary-color, #e0c97f);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .back-to-books-btn:active {
   transform: translateY(0);
-  box-shadow: 
-    0 2px 6px rgba(0, 0, 0, 0.3),
-    inset 0 2px 4px rgba(0, 0, 0, 0.4),
-    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 /* Mobile responsiveness for back button */
