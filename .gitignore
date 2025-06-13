@@ -12,10 +12,19 @@ dist
 dist-ssr
 *.local
 
-# Firebase/Secrets
+# Firebase/Secrets - IMPORTANT: Keep these files secure!
 .env
+.env.local
+.env.production
+.env.development
 scripts/serviceAccountKey.json
 scripts/exported_files.txt
+firebase-private-key.json
+**/serviceAccount*.json
+
+# Security sensitive files
+add-exb-auth-admin.js
+*.html.backup
 
 # Editor directories and files
 .vscode/*

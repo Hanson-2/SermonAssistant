@@ -12,16 +12,15 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';        // ⚠️ SECURITY WARNING: Replace these values with your actual Firebase config
         const firebaseConfig = {
-            apiKey: "AIzaSyAWH6KZnxrRZfnmCA8116qbj_8uGjGliaU",
+            apiKey: "YOUR_FIREBASE_API_KEY", // Replace with actual API key
             authDomain: "sermon-notes-assistant.firebaseapp.com",
             projectId: "sermon-notes-assistant",
             storageBucket: "sermon-notes-assistant.firebasestorage.app",
-            messagingSenderId: "741896945073",
-            appId: "1:741896945073:web:00c666850aead6b4d89190",
-            measurementId: "G-59CREPD9PF"
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Replace with actual sender ID
+            appId: "YOUR_APP_ID", // Replace with actual app ID
+            measurementId: "YOUR_MEASUREMENT_ID" // Replace with actual measurement ID
         };
 
         const app = initializeApp(firebaseConfig);

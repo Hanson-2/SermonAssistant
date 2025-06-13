@@ -1,3 +1,7 @@
+/* Updated: Force black background - Override any gold gradients */
+/* Cache bust: ${Date.now()} */
+/* Remove this problematic rule that was breaking everything */
+
 /* Splash Background Container */
 .splash-container {
   position: fixed;
@@ -12,13 +16,15 @@
     #0d0d0d 50%,
     #1a1a1a 75%,
     #000000 100%
-  );
+  ) !important;/* Add subtle blur to background */
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
   opacity: 1;
-  transition: opacity 1s ease-in-out;
+  transition: opacity 0.8s ease-in-out; /* Slightly slower exit */
   overflow: hidden;
 }
 
@@ -34,21 +40,209 @@
   align-items: center;
   justify-content: center;
   z-index: 1;
+  max-width: 90vw;
+  text-align: center;
 }
 
-/* Logo Styling */
+/* Logo Styling with Blur Effect */
 .splash-logo {
   width: 400px;
   max-width: 85vw;
   height: auto;
-  /* Removed glow: filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.3)); */
   opacity: 1;
   transform: scale(1);
+  transition: opacity 0.6s ease-in; /* Slightly slower */
+}
+
+.splash-logo.blurred {
+  filter: blur(1.5px);
 }
 
 .splash-logo.exit {
   opacity: 0;
-  transition: opacity 0.8s ease-in;
+  transition: opacity 0.5s ease-in; /* Quick exit */
+}
+
+/* Scripture Seeds Header */
+.scripture-seeds-header {
+  font-size: 2.2rem;  
+  font-weight: 800;
+  background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1.5rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'Georgia', serif;
+  position: relative;
+  /* Removed text-shadow that was causing blur */
+}
+
+/* Horizontal divider under Scripture Seeds header */
+.scripture-seeds-header::after {
+  content: '';
+  position: absolute;
+  bottom: -0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ffd700, #ffed4e, #ffd700, transparent);
+  border-radius: 1px;
+  box-shadow: 0 1px 3px rgba(255, 215, 0, 0.5);
+}
+
+/* Enhanced Content Overlay Styling */
+.content-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  
+  /* FORCE BLACK BACKGROUND - OVERRIDE EVERYTHING */
+  background: #000000 !important;
+  background-color: #000000 !important;
+  background-image: none !important;
+  
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
+  
+  /* Gold border using outline instead of pseudo-element */
+  border: 6px solid #ffd700;
+  outline: 2px solid #b8860b;
+  
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  max-width: 700px;
+  width: 90vw;
+  opacity: 1;
+  
+  /* Gradual in-animation, quick out */
+  animation: fadeInUpGradual 1.2s ease-out 0.3s both;
+  
+  /* Enhanced shadow for depth */
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 0 0 8px #daa520; /* Gold outer glow */
+}
+
+/* EMERGENCY BLACK BACKGROUND OVERRIDE */
+div.content-overlay,
+.splash-content .content-overlay,
+.splash-container .content-overlay,
+.force-black-bg {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  background-image: none !important;
+}
+
+/* Removed problematic pseudo-element - using border/outline instead */
+
+.content-overlay.exit {
+  opacity: 0;
+  transform: translate(-50%, -50%) translateY(10px) scale(0.95);
+  transition: all 0.4s ease-in; /* Quick exit */
+}
+
+/* Verse Content Styling */
+.verse-content {
+  color: #ffffff;
+  line-height: 1.7;
+}
+
+.verse-reference {
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1.5rem;
+  font-family: 'Georgia', serif;
+  /* Removed blurry text-shadow */
+}
+
+.verse-text {
+  font-size: 1.8rem;
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+  color: #f8f8f8;
+  font-family: 'Georgia', serif;
+  font-weight: 400;
+  /* Removed blurry text-shadow */
+}
+
+.verse-translation {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #d4af37;
+  text-align: right;
+  margin-top: 1rem;
+  font-family: 'Georgia', serif;
+  /* Removed blurry text-shadow */
+}
+
+/* Fact Content Styling */
+.fact-content {
+  color: #ffffff;
+  line-height: 1.7;
+}
+
+.fact-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1.5rem;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+  font-family: 'Georgia', serif;
+}
+
+.fact-text {
+  font-size: 1.6rem;
+  line-height: 1.8;
+  color: #f8f8f8;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+  font-family: 'Georgia', serif;
+  font-weight: 400;
+}
+
+/* Fallback Content Styling */
+.fallback-content {
+  color: #ffffff;
+}
+
+.fallback-text {
+  font-size: 1.6rem;
+  font-style: italic;
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+  font-family: 'Georgia', serif;
+}
+
+/* Enhanced Animations */
+@keyframes fadeInUpGradual {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(40px) scale(0.9);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) translateY(15px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0) scale(1);
+  }
 }
 
 /* Mobile Responsiveness */
@@ -57,11 +251,92 @@
     width: 300px;
     max-width: 80vw;
   }
+  
+  .scripture-seeds-header {
+    font-size: 1.8rem;
+    margin-bottom: 1.2rem;
+    letter-spacing: 1.5px;
+  }
+  
+  .content-overlay {
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    max-width: 95vw;
+  }
+  
+  .verse-text, .fact-text {
+    font-size: 1.5rem;
+    line-height: 1.7;
+  }
+  
+  .verse-reference, .fact-title {
+    font-size: 1.4rem;
+  }
+  
+  .verse-translation {
+    font-size: 1.1rem;
+  }
+  
+  .fallback-text {
+    font-size: 1.4rem;
+  }
 }
 
 @media (max-width: 480px) {
   .splash-logo {
     width: 250px;
     max-width: 75vw;
+  }
+  
+  .scripture-seeds-header {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+  }
+  
+  .scripture-seeds-header::after {
+    width: 90%;
+    bottom: -0.5rem;
+  }
+  
+  .content-overlay {
+    padding: 2rem 1.5rem;
+    border-radius: 14px;
+    width: 95vw;
+  }
+  
+  .verse-text, .fact-text {
+    font-size: 1.3rem;
+    line-height: 1.6;
+  }
+  
+  .verse-reference, .fact-title {
+    font-size: 1.2rem;
+  }
+  
+  .verse-translation {
+    font-size: 1rem;
+  }
+  
+  .fallback-text {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .content-overlay {
+    padding: 1.8rem 1.2rem;
+  }
+  
+  .scripture-seeds-header {
+    font-size: 1.3rem;
+  }
+  
+  .verse-text, .fact-text {
+    font-size: 1.2rem;
+  }
+  
+  .verse-reference, .fact-title {
+    font-size: 1.1rem;
   }
 }
