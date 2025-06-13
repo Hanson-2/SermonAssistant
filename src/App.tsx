@@ -32,6 +32,7 @@ import ImportExportPage from "./pages/ImportExportPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import ThemeSettingsPage from "./pages/ThemeSettingsPage";
 import SimpleTestEditorPage from "./pages/SimpleTestEditorPage";
+import DuplicateVerseCleanupPage from "./pages/DuplicateVerseCleanupPage";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -74,10 +75,9 @@ function App() {
             <Route path="/scripture-search" element={<UniversalSearchPage />} />
             <Route path="/currently-added-scripture" element={<CurrentlyAddedScripturePage />} />
             <Route path="/themes-and-topics" element={<ThemesAndTopicsPage />} />
-            <Route path="/themes-and-topics/:tag" element={<TaggedVersesPage />} />
-
-            {/* Admin Pages */}
+            <Route path="/themes-and-topics/:tag" element={<TaggedVersesPage />} />            {/* Admin Pages */}
             <Route path="/tag-management" element={<TagManagementPage />} />
+            <Route path="/duplicate-cleanup" element={<DuplicateVerseCleanupPage />} />
 
             {/* Login Page */}
             <Route path="/login" element={<LoginPage />} />          {/* About Page */}

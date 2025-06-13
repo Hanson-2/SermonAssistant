@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { listChaptersForBook, getScriptureVersesForChapter } from "../services/firebaseService";
 import { auth } from "../lib/firebase";
 import "./ScriptureBookPage.css";
@@ -7,6 +7,7 @@ import "./ScriptureBookPage.css";
 export default function ScriptureBookPage() {
   // Correctly use 'bookName' from route params
   const { bookName } = useParams<{ bookName: string }>(); 
+  const navigate = useNavigate();
   const [chapters, setChapters] = useState<string[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +37,6 @@ export default function ScriptureBookPage() {
     }
     fetchChapters();
   }, [bookName]); // Depend on bookName
-
   useEffect(() => {
     async function fetchVerses() {
       // Use bookName
@@ -45,22 +45,34 @@ export default function ScriptureBookPage() {
       setVersesLoading(true);
       const verses = await getScriptureVersesForChapter(bookName, selectedChapter);
       console.log("[ScriptureBookPage] Fetched verses raw:", verses); // Added log
-      // Group by translation
+      
+      // Group by translation with case normalization to prevent duplicates
       const grouped: Record<string, { verse: string, text: string }[]> = {};
       for (const v of verses) {
-        if (!grouped[v.translation]) grouped[v.translation] = [];
+        // Normalize translation to uppercase for consistent display
+        const normalizedTranslation = v.translation.toUpperCase();
+        if (!grouped[normalizedTranslation]) grouped[normalizedTranslation] = [];
         // Assuming getScriptureVersesForChapter returns objects with 'verse' as verse number string
-        grouped[v.translation].push({ verse: v.verse, text: v.text });
+        grouped[normalizedTranslation].push({ verse: v.verse, text: v.text });
       }
+      
       setVersesByTranslation(grouped);
-      // Default to first translation
-      const firstTranslation = Object.keys(grouped)[0] || null;
+      
+      // Get available translations and prioritize user's preferred translation
+      const availableTranslations = Object.keys(grouped);
+      
+      // If user has EXB access and EXB is available, prioritize it
+      let firstTranslation = availableTranslations[0] || null;
+      if (userId === "89UdurybrVSwbPmp4boEMeYdVzk1" && availableTranslations.includes("EXB")) {
+        firstTranslation = "EXB";
+      }
+      
       console.log("[ScriptureBookPage] First translation:", firstTranslation, "All grouped:", grouped); // Added log
       setSelectedTranslation(firstTranslation);
       setVersesLoading(false);
     }
     if (selectedChapter) fetchVerses();
-  }, [bookName, selectedChapter]); // Depend on bookName
+  }, [bookName, selectedChapter, userId]); // Depend on bookName and userId
 
   useEffect(() => {
     // Scroll fade-in/out for verse cards
@@ -83,9 +95,17 @@ export default function ScriptureBookPage() {
     items.forEach((item) => observer.observe(item!));
     return () => observer.disconnect();
   }, [selectedTranslation, versesByTranslation, selectedChapter]);
-
   return (
     <div className="scripture-book-layout">
+      {/* Back button */}
+      <button 
+        onClick={() => navigate('/currently-added-scripture')}
+        className="back-to-books-btn"
+        title="Back to Books"
+      >
+        ← Back to Books
+      </button>
+      
       {/* Display bookName */}
       <h1 className="scripture-book-title gradient-gold-text">{bookName}</h1>
       {loading ? (
@@ -119,19 +139,35 @@ export default function ScriptureBookPage() {
             </div>
           ) : (
             Object.keys(versesByTranslation).length > 0 && (
-              <>
-                <div className="translation-toggle-group">
-                  {Object.keys(versesByTranslation)
-                    .filter(tr => tr !== "EXB" || userId === "89UdurybrVSwbPmp4boEMeYdVzk1")
-                    .map((tr) => (
+              <>                <div className="translation-toggle-group">
+                  {(() => {
+                    // Get all available translations
+                    const allTranslations = Object.keys(versesByTranslation);
+                    
+                    // Filter out EXB for non-authorized users, but avoid duplicates
+                    const filteredTranslations = allTranslations.filter(tr => 
+                      tr !== "EXB" || userId === "89UdurybrVSwbPmp4boEMeYdVzk1"
+                    );
+                    
+                    // Sort translations to prioritize user's preferred translation (EXB) first if available
+                    const sortedTranslations = [...filteredTranslations].sort((a, b) => {
+                      if (userId === "89UdurybrVSwbPmp4boEMeYdVzk1") {
+                        if (a === "EXB" && b !== "EXB") return -1;
+                        if (b === "EXB" && a !== "EXB") return 1;
+                      }
+                      return a.localeCompare(b);
+                    });
+                    
+                    return sortedTranslations.map((tr) => (
                       <button
                         key={tr}
                         className={`translation-toggle-btn modern-translation-btn${selectedTranslation === tr ? " selected" : ""}`}
                         onClick={() => setSelectedTranslation(tr)}
                       >
-                        {tr}
+                        {tr.toUpperCase()}
                       </button>
-                    ))}
+                    ));
+                  })()}
                 </div>
                 <ul className="chapter-verse-list verse-card-list scroll-fade-list">
                   {selectedTranslation &&

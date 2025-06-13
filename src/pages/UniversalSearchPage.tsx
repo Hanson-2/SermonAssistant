@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { auth, db } from "../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { deleteVerseById, updateVerseTextById } from "../services/firebaseService";
 import "./UniversalSearchPage.scss";
 
@@ -100,9 +102,10 @@ const UniversalSearchPage: React.FC = () => {
   const [tagLoadError, setTagLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [totalHits, setTotalHits] = useState(0);
-  const [currentResults, setCurrentResults] = useState<Verse[]>([]);
-  const [sortOrder, setSortOrder] = useState<string>("chronological"); 
+  const [totalHits, setTotalHits] = useState(0);  const [currentResults, setCurrentResults] = useState<Verse[]>([]);
+  const [sortOrder, setSortOrder] = useState<string>("chronological");   const [userId, setUserId] = useState<string | null>(null);
+  const [isExbAuthorized, setIsExbAuthorized] = useState<boolean>(false);
+  const [defaultBibleVersion, setDefaultBibleVersion] = useState<string | null>(null);
 
   // New state for collapsible sections and hits per page
   const [isTranslationsCollapsed, setIsTranslationsCollapsed] = useState(false);
@@ -112,8 +115,36 @@ const UniversalSearchPage: React.FC = () => {
   const [editingVerseId, setEditingVerseId] = useState<string | null>(null);
   const [editText, setEditText] = useState<string>("");
   const [savingEdit, setSavingEdit] = useState(false);
-
-  const functions = getFunctions();
+  const functions = getFunctions();  // Auth state listener with authorization check and default Bible version
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {      setUserId(user ? user.uid : null);
+      if (user) {
+        // Check authorization and default Bible version in Firestore
+        try {
+          const userDoc = await getDoc(doc(db, "userProfiles", user.uid));          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            
+            setIsExbAuthorized(userData.exbAuthorized === true);
+              // Check for defaultBibleVersion in both root and preferences
+            const defaultVersion = userData.defaultBibleVersion || userData.preferences?.defaultBibleVersion || null;
+            setDefaultBibleVersion(defaultVersion);
+          } else {
+            // User document doesn't exist, default to false
+            setIsExbAuthorized(false);
+            setDefaultBibleVersion(null);
+          }
+        } catch (error) {
+          console.error("UniversalSearch - Error checking user profile:", error);
+          setIsExbAuthorized(false);
+          setDefaultBibleVersion(null);
+        }
+      } else {
+        setIsExbAuthorized(false);
+        setDefaultBibleVersion(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const sortVerses = useCallback((verses: Verse[]) => {
     if (sortOrder === "chronological") {
@@ -127,50 +158,86 @@ const UniversalSearchPage: React.FC = () => {
     }
     return verses;
   }, [sortOrder]);
-
+  // Fetch initial data (tags and translations)
   useEffect(() => {
     const fetchInitialData = async () => {
       // Fetch Tags
-      setIsLoadingTags(true); // Set loading true for tags
+      setIsLoadingTags(true);
       try {
         const getAllUniqueTagsCallable = httpsCallable<
           void,
-          { uniqueTags: Tag[] } // Updated to expect uniqueTags
+          { uniqueTags: Tag[] }
         >(functions, "getAllUniqueTags");
         const result = await getAllUniqueTagsCallable();
-        // Ensure result.data.uniqueTags is used, matching the backend
         const fetchedTags = result.data.uniqueTags || []; 
         setAvailableTags(fetchedTags.map(tag => ({ ...tag, displayName: tag.displayName || tag.name })));
       } catch (err: any) {
         console.error("Error fetching tags:", err);
         setTagLoadError(`Failed to load tags: ${err.message || "Unknown error"}`);
       } finally {
-        setIsLoadingTags(false); // Set loading false for tags
+        setIsLoadingTags(false);
       }
 
       // Fetch Translations
-      setIsLoadingTranslations(true); // Set loading true for translations
+      setIsLoadingTranslations(true);
       try {
         const getAllUniqueTranslationsCallable = httpsCallable<
           void,
           { uniqueTranslations: Translation[] }
-        >(functions, "getAllUniqueTranslations");
-        const result = await getAllUniqueTranslationsCallable();
-        const fetchedTranslations = result.data.uniqueTranslations || [];
-        setAvailableTranslations(fetchedTranslations);
-        // Set a default translation if none are selected and translations are available
-        if (fetchedTranslations.length > 0 && selectedTranslations.length === 0) {
-          setSelectedTranslations([fetchedTranslations[0].id]);
-        }
+        >(functions, "getAllUniqueTranslations");        const result = await getAllUniqueTranslationsCallable();
+        let fetchedTranslations = result.data.uniqueTranslations || [];
+        
+        // Filter out restricted translations for non-authorized users
+        const filteredTranslations = fetchedTranslations.filter(tr => 
+          tr.id.toUpperCase() !== "EXB" || isExbAuthorized
+        );
+        
+        // Sort translations to prioritize user's preferred translation first if available
+        const sortedTranslations = [...filteredTranslations].sort((a, b) => {
+          // Prioritize user's default Bible version first
+          if (defaultBibleVersion) {
+            if (a.id.toUpperCase() === defaultBibleVersion.toUpperCase() && 
+                b.id.toUpperCase() !== defaultBibleVersion.toUpperCase()) return -1;
+            if (b.id.toUpperCase() === defaultBibleVersion.toUpperCase() && 
+                a.id.toUpperCase() !== defaultBibleVersion.toUpperCase()) return 1;
+          }          return a.displayName.localeCompare(b.displayName);
+        });
+        
+        setAvailableTranslations(sortedTranslations);
       } catch (err: any) {
         console.error("Error fetching translations:", err);
         setTranslationLoadError(`Failed to load translations: ${err.message || "Unknown error"}`);
       } finally {
-        setIsLoadingTranslations(false); // Set loading false for translations
+        setIsLoadingTranslations(false);
       }
-    };
-    fetchInitialData();
-  }, [functions, selectedTranslations.length]); // Added selectedTranslations.length to dependencies to re-evaluate default selection
+    };    fetchInitialData();
+  }, [functions, userId, isExbAuthorized, defaultBibleVersion]);  // Set default translation when translations are loaded and user auth is established
+  useEffect(() => {
+    if (availableTranslations.length > 0) {
+      let shouldUpdateSelection = selectedTranslations.length === 0;
+      
+      // Also update if preferred translation becomes available
+      if (defaultBibleVersion && selectedTranslations.length > 0) {
+        const hasPreferredSelected = selectedTranslations.some(id => id.toUpperCase() === defaultBibleVersion.toUpperCase());
+        const preferredIsAvailable = availableTranslations.some(tr => tr.id.toUpperCase() === defaultBibleVersion.toUpperCase());        if (!hasPreferredSelected && preferredIsAvailable) {
+          shouldUpdateSelection = true;
+        }
+      }
+        if (shouldUpdateSelection) {
+        let defaultTranslationId = availableTranslations[0].id;
+        
+        // Use user's preferred translation if available
+        if (defaultBibleVersion) {
+          const preferredTranslation = availableTranslations.find(tr => tr.id.toUpperCase() === defaultBibleVersion.toUpperCase());
+          if (preferredTranslation) {
+            defaultTranslationId = preferredTranslation.id;
+          }
+        }
+        
+        setSelectedTranslations([defaultTranslationId]);
+      }
+    }
+  }, [availableTranslations, defaultBibleVersion]);
 
   const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
     setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
@@ -215,19 +282,14 @@ const UniversalSearchPage: React.FC = () => {
         translations: selectedTranslations,
         page: pageToFetch,
         hitsPerPage: selectedHitsPerPage, // Use state variable for hitsPerPage
-      };
-      if (selectedTestaments.length > 0) searchParams.testaments = selectedTestaments;
+      };      if (selectedTestaments.length > 0) searchParams.testaments = selectedTestaments;
       if (selectedGroups.length > 0) searchParams.commonGroups = selectedGroups; // Ensure backend expects commonGroups
       if (selectedBooks.length > 0) searchParams.books = selectedBooks;
       if (selectedTags.length > 0) searchParams.tags = selectedTags;
 
-      console.log("Calling Firebase Function with params:", searchParams);
-
       const response = await universalScriptureSearch(searchParams);
       // Adjust destructuring to match the flat structure from the function
       const { results, nbHits, page, nbPages } = response.data as { results: Verse[]; nbHits: number; page: number; nbPages: number; hitsPerPage: number };
-
-      console.log("Received response from Firebase Function:", response.data);
 
       if (results && results.length > 0) {
         const sortedResults = sortVerses(results);

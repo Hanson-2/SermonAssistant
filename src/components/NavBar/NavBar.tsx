@@ -91,10 +91,10 @@ export default function NavBar() {
             <Link to="/smart-categorization" className="custom-folder-dropdown-option" role="menuitem">Smart Categorization</Link>
             <Link to="/advanced-search" className="custom-folder-dropdown-option" role="menuitem">Search Expositions</Link>
             <Link to="/sermon-series-management" className="custom-folder-dropdown-option" role="menuitem">Series Management</Link>
-            <Link to="/analytics-dashboard" className="custom-folder-dropdown-option" role="menuitem">Analytics Dashboard</Link>
-            <div className="border-t border-gray-600 my-1 mx-4" role="separator"></div>
+            <Link to="/analytics-dashboard" className="custom-folder-dropdown-option" role="menuitem">Analytics Dashboard</Link>            <div className="border-t border-gray-600 my-1 mx-4" role="separator"></div>
             <span className="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wide" role="presentation">Data Management</span>
             <Link to="/tag-management" className="custom-folder-dropdown-option" role="menuitem">Tag Management</Link>
+            <Link to="/duplicate-cleanup" className="custom-folder-dropdown-option" role="menuitem">Duplicate Cleanup</Link>
             <Link to="/import-export" className="custom-folder-dropdown-option" role="menuitem">Import/Export</Link>
           </CustomNavDropdown>
           <span className="navbar-separator">|</span>
@@ -162,10 +162,10 @@ export default function NavBar() {
                   <Link to="/advanced-search" onClick={closeMenu} className="mobile-sub">Search Expositions</Link>
                   <Link to="/sermon-series-management" onClick={closeMenu} className="mobile-sub">Series Management</Link>
                   <Link to="/analytics-dashboard" onClick={closeMenu} className="mobile-sub">Analytics Dashboard</Link>
-                  
-                  <div className="mobile-divider"></div>
+                    <div className="mobile-divider"></div>
                   <span className="mobile-label mobile-label-sm">Data Management</span>
                   <Link to="/tag-management" onClick={closeMenu} className="mobile-sub">Tag Management</Link>
+                  <Link to="/duplicate-cleanup" onClick={closeMenu} className="mobile-sub">Duplicate Cleanup</Link>
                   <Link to="/import-export" onClick={closeMenu} className="mobile-sub">Import/Export</Link>
                 </div>
 

@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { fetchTags, addTag, updateTag, deleteTag, Tag } from '../services/tagService';
 import { batchUpdateVerseTags, BatchVerseTagUpdate } from '../services/firebaseService';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { auth, db } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import './TagManagementPage.scss';
 
 interface Verse {
@@ -49,11 +51,12 @@ export default function TagManagementPage() {
   const [batchTagsToRemove, setBatchTagsToRemove] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
   // Translation selection state
   const [availableTranslations, setAvailableTranslations] = useState<Translation[]>([]);
   const [selectedTranslations, setSelectedTranslations] = useState<string[]>([]);
-  const [translationLoadError, setTranslationLoadError] = useState<string | null>(null);
+  const [translationLoadError, setTranslationLoadError] = useState<string | null>(null);  const [userId, setUserId] = useState<string | null>(null);
+  const [isExbAuthorized, setIsExbAuthorized] = useState<boolean>(false);
+  const [defaultBibleVersion, setDefaultBibleVersion] = useState<string | null>(null);
 
   const functions = getFunctions();
   const [activeOverlayTagId, setActiveOverlayTagId] = useState<string | null>(null);
@@ -73,9 +76,7 @@ export default function TagManagementPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // Fetch available translations
+  }, []);  // Fetch available translations
   const fetchTranslations = useCallback(async () => {
     try {
       const getAllUniqueTranslationsCallable = httpsCallable<
@@ -83,26 +84,100 @@ export default function TagManagementPage() {
         UniqueTranslationsResponse
       >(functions, 'getAllUniqueTranslations');
       const result = await getAllUniqueTranslationsCallable();
-      const fetchedTranslations = result.data.uniqueTranslations || [];
-      setAvailableTranslations(fetchedTranslations);
-      if (fetchedTranslations.length > 0 && selectedTranslations.length === 0) {
-        setSelectedTranslations([fetchedTranslations[0].id]);
-      }
-    } catch (err: any) {
+      let fetchedTranslations = result.data.uniqueTranslations || [];
+      
+      // Filter out restricted translations for non-authorized users
+      const filteredTranslations = fetchedTranslations.filter(tr => 
+        tr.id.toUpperCase() !== "EXB" || isExbAuthorized
+      );
+      
+      // Sort translations to prioritize user's preferred translation first if available
+      const sortedTranslations = [...filteredTranslations].sort((a, b) => {
+        // Prioritize user's default Bible version first
+        if (defaultBibleVersion) {
+          if (a.id.toUpperCase() === defaultBibleVersion.toUpperCase() && 
+              b.id.toUpperCase() !== defaultBibleVersion.toUpperCase()) return -1;
+          if (b.id.toUpperCase() === defaultBibleVersion.toUpperCase() && 
+              a.id.toUpperCase() !== defaultBibleVersion.toUpperCase()) return 1;
+        }
+        return a.displayName.localeCompare(b.displayName);
+      });
+      
+      setAvailableTranslations(sortedTranslations);} catch (err: any) {
       setTranslationLoadError(err.message || 'Failed to load translations.');
     }
-  }, [functions, selectedTranslations.length]);
+  }, [functions, isExbAuthorized, defaultBibleVersion]);  // Auth state listener with authorization check and default Bible version
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {      setUserId(user ? user.uid : null);
+      if (user) {
+        // Check authorization and default Bible version in Firestore
+        try {
+          const userDoc = await getDoc(doc(db, "userProfiles", user.uid));          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            
+            setIsExbAuthorized(userData.exbAuthorized === true);
+              // Check for defaultBibleVersion in both root and preferences
+            const defaultVersion = userData.defaultBibleVersion || userData.preferences?.defaultBibleVersion || null;
+            setDefaultBibleVersion(defaultVersion);
+          } else {
+            setIsExbAuthorized(false);
+            setDefaultBibleVersion(null);
+          }
+        } catch (error) {
+          console.error("TagManagement - Error checking user profile:", error);
+          setIsExbAuthorized(false);
+          setDefaultBibleVersion(null);
+        }
+      } else {
+        setIsExbAuthorized(false);
+        setDefaultBibleVersion(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);  // Set default translation when translations are loaded and user auth is established
+  useEffect(() => {
+    if (availableTranslations.length > 0) {
+      let shouldUpdateSelection = selectedTranslations.length === 0;
+      
+      // Also update if preferred translation becomes available
+      if (defaultBibleVersion && selectedTranslations.length > 0) {
+        const hasPreferredSelected = selectedTranslations.some(id => id.toUpperCase() === defaultBibleVersion.toUpperCase());
+        const preferredIsAvailable = availableTranslations.some(tr => tr.id.toUpperCase() === defaultBibleVersion.toUpperCase());        if (!hasPreferredSelected && preferredIsAvailable) {
+          shouldUpdateSelection = true;
+        }
+      }
+        if (shouldUpdateSelection) {
+        let defaultTranslationId = availableTranslations[0].id;
+        
+        // Use user's preferred translation if available
+        if (defaultBibleVersion) {
+          const preferredTranslation = availableTranslations.find(tr => tr.id.toUpperCase() === defaultBibleVersion.toUpperCase());
+          if (preferredTranslation) {
+            defaultTranslationId = preferredTranslation.id;
+          }
+        }
+        
+        setSelectedTranslations([defaultTranslationId]);
+      }
+    }  }, [availableTranslations, isExbAuthorized, defaultBibleVersion]);
+
+  // Separate effect to fetch translations when auth state is ready
+  useEffect(() => {
+    if (userId !== null) { // Only fetch when auth state is determined (user logged in or not)
+      fetchTranslations();
+    }
+  }, [fetchTranslations, userId]);
 
   useEffect(() => {
     fetchTagsList();
-    fetchTranslations();
+    // fetchTranslations is called by its own useEffect when dependencies change
 
     const handleResize = () => {
       setIsMobileView(window.innerWidth <= 700);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [fetchTagsList, fetchTranslations]);
+  }, [fetchTagsList]);
 
   // Helper to normalize tag display
   function normalizeTagForDisplay(tag: string): string {
@@ -291,7 +366,6 @@ export default function TagManagementPage() {
                     handleTagClick(tag.id);
                   }                }}
                 aria-label={`Tag ${tag.name}`}
-                aria-expanded={activeOverlayTagId === tag.id ? "true" : "false"}
               >
                 <span className="tag-label">{tag.name}</span>
                 {/* Desktop: Icon Overlay */}

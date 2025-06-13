@@ -1,0 +1,588 @@
+@import '../styles/scss/variables';
+@import '../styles/scss/mixins';
+
+// Define warning color locally since it's not in variables
+$warning-color: #f59e0b;
+
+// Animations
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.duplicate-cleanup-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: $text-light;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+
+  // Ensure centering on all screen sizes
+  @media (max-width: 1240px) {
+    margin: 0 auto;
+    padding: 20px;
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    padding: 15px;
+    width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+    width: 100%;
+  }
+
+  // Override any global styles that might interfere
+  * {
+    box-sizing: border-box;
+  }
+  .page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    width: 100%;
+    
+    h1 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 2.5rem;
+      color: $primary-gold;
+      margin-bottom: 10px;
+      width: 100%;
+      
+      .icon {
+        font-size: 2.2rem;
+        color: $warning-color;
+      }
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: $text-secondary;
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+  }  .stats-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+    justify-items: center;
+    width: 100%;
+    text-align: center;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+
+    .stat-card {
+      background: $dark-bg-secondary;
+      border: 1px solid $dark-border;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      width: 100%;
+      
+      .stat-label {
+        font-size: 0.9rem;
+        color: $text-secondary;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+      }
+      
+      .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: $primary-gold;
+        text-align: center;
+        
+        .stat-total {
+          font-size: 1rem;
+          color: $text-secondary;
+          font-weight: normal;
+        }
+      }
+    }
+  }  .action-bar {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: center !important;
+    margin: 0 auto 30px auto;
+    padding: 20px;
+    background: $dark-bg-secondary;
+    border: 1px solid $dark-border;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 10px;
+      align-items: center !important;
+    }
+
+    .btn {
+      @include button-base;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+
+      .icon {
+        font-size: 1rem;
+
+        &.spinning {
+          animation: spin 1s linear infinite;
+        }
+      }
+
+      &.btn-primary {
+        @include button-primary;
+      }
+
+      &.btn-secondary {
+        @include button-secondary;
+      }
+
+      &.btn-outline {        background: transparent;
+        border: 1px solid $dark-border;
+        color: $text-light;
+
+        &:hover {
+          background: $dark-border;
+        }
+      }
+
+      &.btn-danger {
+        background: $danger-color;
+        color: white;
+
+        &:hover {
+          background: darken($danger-color, 10%);
+        }        &:disabled {
+          background: $dark-border;
+          color: $text-secondary;
+          cursor: not-allowed;
+        }
+      }
+    }    .selection-controls {
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+
+      @media (max-width: 768px) {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    .filter-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      
+      .filter-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: $text-light;
+        font-weight: 500;
+        white-space: nowrap;
+        
+        .icon {
+          font-size: 1rem;
+          color: $primary-gold;
+        }
+      }
+      
+      .translation-filter {
+        background: $dark-bg-primary;
+        border: 1px solid $dark-border;
+        border-radius: 4px;
+        color: $text-light;
+        padding: 8px 12px;
+        min-width: 180px;
+        font-size: 0.9rem;
+        
+        &:focus {
+          outline: none;
+          border-color: $primary-gold;
+          box-shadow: 0 0 0 2px rgba($primary-gold, 0.2);
+        }
+        
+        option {
+          background: $dark-bg-primary;
+          color: $text-light;
+        }
+      }
+    }
+  }
+  .progress-section {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: $dark-bg-secondary;
+    border: 1px solid $dark-border;
+    border-radius: 8px;
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      
+      h3 {
+        color: $primary-gold;
+        margin: 0;
+        font-size: 1.2rem;
+      }
+      
+      .progress-percentage {
+        color: $text-light;
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: $dark-border;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 10px;
+
+      .progress-fill {
+        height: 100%;
+        background: $success-color;
+        transition: width 0.3s ease;
+          &.analyze-progress {
+          background: linear-gradient(
+            90deg,
+            $primary-gold 0%,
+            lighten($primary-gold, 20%) 50%,
+            $primary-gold 100%
+          );
+          background-size: 200px 100%;
+          animation: shimmer 2s infinite;
+        }
+      }
+    }
+
+    .progress-text {
+      text-align: center;
+      color: $text-secondary;
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+  }
+
+  .duplicates-section {
+    h2 {
+      color: $primary-gold;
+      margin-bottom: 10px;
+      font-size: 1.8rem;
+    }
+
+    .help-text {
+      color: $text-secondary;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: rgba($info-color, 0.1);
+      border-left: 4px solid $info-color;
+      border-radius: 4px;
+    }
+  }
+
+  .duplicate-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .duplicate-group {
+    background: $dark-bg-secondary;
+    border: 2px solid $dark-border;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &.selected {
+      border-color: $primary-gold;
+      box-shadow: 0 0 0 1px rgba($primary-gold, 0.3);
+    }
+
+    .group-header {
+      background: lighten($dark-bg-secondary, 5%);
+      padding: 15px 20px;
+      border-bottom: 1px solid $dark-border;
+
+      .group-selector {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        font-size: 1.1rem;
+
+        input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          accent-color: $primary-gold;
+        }
+
+        strong {
+          color: $primary-gold;
+        }
+
+        .translation {
+          color: $text-secondary;
+          font-style: italic;
+        }        .count {
+          margin-left: auto;
+          background: $warning-color;
+          color: $dark-bg-primary;
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: bold;
+        }
+      }
+    }
+
+    .verses-list {
+      padding: 0;
+    }
+
+    .verse-item {
+      padding: 15px 20px;
+      border-bottom: 1px solid $dark-border;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &.keep {      background: rgba($success-color, 0.1);
+      border-left: 4px solid $success-color;
+      }
+
+      &.duplicate {
+        background: rgba($danger-color, 0.1);
+        border-left: 4px solid $danger-color;
+      }
+
+      .verse-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+
+        .verse-label {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-weight: bold;
+          font-size: 0.9rem;
+
+          .icon {
+            font-size: 1rem;
+
+            &.keep-icon {
+              color: $success-color;
+            }
+
+            &.delete-icon {
+              color: $danger-color;
+            }
+          }
+        }
+
+        .verse-meta {
+          flex: 1;
+          font-size: 0.8rem;
+          color: $text-secondary;
+
+          .date {
+            margin-left: 10px;
+          }
+        }
+
+        .btn-small {
+          padding: 6px 10px;
+          font-size: 0.8rem;
+          min-width: auto;
+
+          .icon {
+            font-size: 0.9rem;
+          }
+        }
+      }      .verse-text {
+        color: $text-light;
+        line-height: 1.6;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: rgba($dark-bg-primary, 0.5);
+        border-radius: 4px;
+        font-style: italic;
+      }
+
+      .verse-tags {
+        font-size: 0.8rem;
+        color: $text-secondary;
+
+        &::before {
+          content: "🏷️ ";
+        }
+      }
+    }
+  }
+  .no-duplicates {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba($success-color, 0.1);
+    border: 2px solid $success-color;
+    border-radius: 12px;
+    margin-top: 40px;
+
+    &.filtered {
+      background: rgba($primary-gold, 0.1);
+      border-color: $primary-gold;
+      
+      .icon {
+        color: $primary-gold;
+      }
+      
+      h3 {
+        color: $primary-gold;
+      }
+    }
+
+    .icon {
+      font-size: 4rem;
+      color: $success-color;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      color: $success-color;
+      margin-bottom: 10px;
+      font-size: 1.8rem;
+    }
+
+    p {
+      color: $text-secondary;
+      font-size: 1.1rem;
+    }
+  }
+
+  // Additional centering utilities to override any potential CSS conflicts
+  // Force centering with high specificity
+  &, & > * {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .page-header,
+  .stats-section,
+  .action-bar,
+  .progress-section,
+  .duplicates-section {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+  }
+
+  .action-bar {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .stats-section {
+    justify-items: center !important;
+    text-align: center !important;
+  }
+
+  .page-header h1 {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  // Force center alignment for all flex containers
+  .action-bar,
+  .page-header,
+  .stats-section {
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  // Responsive Design
+  @media (max-width: 768px) {
+    padding: 15px;
+
+    .page-header h1 {
+      font-size: 2rem;
+    }
+
+    .stats-section {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+
+    .action-bar {
+      flex-direction: column;
+      align-items: stretch;
+
+      .btn {
+        justify-content: center;
+      }
+
+      .selection-controls {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+
+    .duplicate-group {
+      .group-header .group-selector {
+        flex-wrap: wrap;
+        gap: 8px;
+
+        .count {
+          margin-left: 0;
+        }
+      }
+
+      .verse-item .verse-header {
+        flex-wrap: wrap;
+        gap: 8px;
+
+        .verse-meta {
+          order: 3;
+          flex-basis: 100%;
+        }
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

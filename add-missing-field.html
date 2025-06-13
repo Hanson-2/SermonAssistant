@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Missing defaultBibleVersion Field</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover { background-color: #45a049; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .status { margin-top: 20px; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        pre { background-color: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Missing defaultBibleVersion Field</h1>
+        <p>This will add the missing <code>defaultBibleVersion: "exb"</code> field to your user profile.</p>
+        
+        <div id="userInfo"></div>
+        <button id="updateBtn">Add defaultBibleVersion Field</button>
+        <div id="status"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWH6KZnxrRZfnmCA8116qbj_8uGjGliaU",
+            authDomain: "sermon-notes-assistant.firebaseapp.com",
+            projectId: "sermon-notes-assistant",
+            storageBucket: "sermon-notes-assistant.firebasestorage.app",
+            messagingSenderId: "741896945073",
+            appId: "1:741896945073:web:00c666850aead6b4d89190",
+            measurementId: "G-59CREPD9PF"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let currentUser = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            const userInfoDiv = document.getElementById('userInfo');
+            
+            if (user) {
+                try {
+                    const userDocRef = doc(db, 'userProfiles', user.uid);
+                    const userDoc = await getDoc(userDocRef);
+                    
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        
+                        userInfoDiv.innerHTML = `
+                            <div class="info">
+                                <strong>✅ User Profile Found</strong><br>
+                                <strong>User ID:</strong> ${user.uid}<br>
+                                <strong>Email:</strong> ${user.email}<br>
+                                <strong>exbAuthorized:</strong> ${userData.exbAuthorized || 'false'}<br>
+                                <strong>defaultBibleVersion:</strong> ${userData.defaultBibleVersion || '❌ MISSING'}
+                            </div>
+                            <h3>📋 All Current Fields:</h3>
+                            <div style="font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                                ${Object.keys(userData).join(', ')}
+                            </div>
+                            <h3>📊 Full Profile Data:</h3>
+                            <pre>${JSON.stringify(userData, null, 2)}</pre>
+                        `;
+                        
+                        if (userData.defaultBibleVersion) {
+                            userInfoDiv.innerHTML += `
+                                <div class="success">
+                                    ✅ defaultBibleVersion field already exists: "${userData.defaultBibleVersion}"
+                                </div>
+                            `;
+                            document.getElementById('updateBtn').disabled = true;
+                            document.getElementById('updateBtn').textContent = 'Field Already Exists';
+                        } else {
+                            userInfoDiv.innerHTML += `
+                                <div class="warning">
+                                    ⚠️ defaultBibleVersion field is missing! Click the button below to add it.
+                                </div>
+                            `;
+                        }
+                    } else {
+                        userInfoDiv.innerHTML = `<div class="error">❌ User profile not found</div>`;
+                        document.getElementById('updateBtn').disabled = true;
+                    }
+                } catch (error) {
+                    userInfoDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                    document.getElementById('updateBtn').disabled = true;
+                }
+            } else {
+                userInfoDiv.innerHTML = `<div class="error">❌ Not logged in. Please log in to your app first.</div>`;
+                document.getElementById('updateBtn').disabled = true;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('updateBtn').addEventListener('click', addDefaultBibleVersion);
+        });
+
+        async function addDefaultBibleVersion() {
+            if (!currentUser) {
+                showStatus('Please log in first.', 'error');
+                return;
+            }
+
+            const updateBtn = document.getElementById('updateBtn');
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Adding Field...';
+
+            try {
+                const userDocRef = doc(db, 'userProfiles', currentUser.uid);
+                
+                await updateDoc(userDocRef, {
+                    defaultBibleVersion: 'exb',
+                    updatedAt: new Date()
+                });
+
+                showStatus('✅ SUCCESS! defaultBibleVersion field added. Now refresh your Tag Management page and EXB should appear first and be selected automatically!', 'success');
+                
+                // Refresh display
+                setTimeout(async () => {
+                    const userDoc = await getDoc(userDocRef);
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        document.getElementById('userInfo').innerHTML += `
+                            <div class="success">
+                                <h3>🎉 UPDATED PROFILE:</h3>
+                                <strong>defaultBibleVersion:</strong> ${userData.defaultBibleVersion} ✅<br>
+                                <strong>All fields now:</strong> ${Object.keys(userData).join(', ')}
+                            </div>
+                        `;
+                    }
+                }, 1000);
+                
+                updateBtn.textContent = '✅ Field Added Successfully';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Add defaultBibleVersion Field';
+            }
+        }
+
+        function showStatus(message, type) {
+            document.getElementById('status').innerHTML = `<div class="${type}">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
