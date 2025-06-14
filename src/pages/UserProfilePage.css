@@ -72,7 +72,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 400px;
+  min-height: 60vh;
+  padding: 2rem;
   color: #e2e8f0;
 }
 
@@ -281,11 +282,18 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(59, 130, 246, 0.8);
+  background: rgba(0, 0, 0, 0.8);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.avatar-loading .modern-loader-container {
+  padding: 0;
+  gap: 0;
 }
 
 .avatar-loading .loading-spinner {

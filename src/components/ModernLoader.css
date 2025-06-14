@@ -1,0 +1,198 @@
+/* Modern Loader Component - Theme-appropriate design */
+.modern-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.modern-loader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Size variants */
+.modern-loader.small {
+  width: 40px;
+  height: 40px;
+}
+
+.modern-loader.medium {
+  width: 60px;
+  height: 60px;
+}
+
+.modern-loader.large {
+  width: 80px;
+  height: 80px;
+}
+
+/* Animated rings */
+.loader-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  animation: rotate 2s linear infinite;
+}
+
+.modern-loader.small .loader-ring {
+  width: 100%;
+  height: 100%;
+}
+
+.modern-loader.medium .loader-ring {
+  width: 100%;
+  height: 100%;
+}
+
+.modern-loader.large .loader-ring {
+  width: 100%;
+  height: 100%;
+}
+
+/* Ring colors and timing - theme colors */
+.loader-ring:nth-child(1) {
+  border-top: 2px solid var(--primary-gold, #ffd700);
+  border-right: 2px solid transparent;
+  animation-duration: 1.5s;
+  animation-direction: normal;
+}
+
+.loader-ring:nth-child(2) {
+  border-top: 2px solid rgba(255, 215, 0, 0.6);
+  border-left: 2px solid transparent;
+  animation-duration: 2s;
+  animation-direction: reverse;
+  width: 85%;
+  height: 85%;
+}
+
+.loader-ring:nth-child(3) {
+  border-top: 2px solid rgba(255, 215, 0, 0.3);
+  border-bottom: 2px solid transparent;
+  animation-duration: 2.5s;
+  animation-direction: normal;
+  width: 70%;
+  height: 70%;
+}
+
+/* Inner pulsing core */
+.loader-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30%;
+  height: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-pulse {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, var(--primary-gold, #ffd700) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Loading text */
+.modern-loader-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-gold, #ffd700);
+  text-align: center;
+  margin: 0;
+  opacity: 0.8;
+  animation: textFade 2s ease-in-out infinite;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.02em;
+}
+
+@keyframes textFade {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modern-loader-container {
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .modern-loader-text {
+    font-size: 0.9rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .loader-ring:nth-child(1) {
+    border-top-color: #ffffff;
+  }
+  
+  .loader-ring:nth-child(2) {
+    border-top-color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .loader-ring:nth-child(3) {
+    border-top-color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .loader-pulse {
+    background: radial-gradient(circle, #ffffff 0%, transparent 70%);
+  }
+  
+  .modern-loader-text {
+    color: #ffffff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .loader-ring {
+    animation-duration: 4s;
+  }
+  
+  .loader-pulse {
+    animation: none;
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  
+  .modern-loader-text {
+    animation: none;
+    opacity: 0.8;
+  }
+}

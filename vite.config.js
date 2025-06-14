@@ -34,11 +34,30 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html'
+      },
+      output: {
+        manualChunks: {
+          // Firebase chunk
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage'],
+          // React chunk  
+          react: ['react', 'react-dom', 'react-router-dom'],
+          // UI libraries
+          ui: ['framer-motion', '@dnd-kit/core', '@dnd-kit/sortable'],
+          // Large utilities
+          utils: ['pptxgenjs', 'lodash.debounce']
+        }
       }
     },
     assetsInclude: ['**/*.webmanifest'],
     target: 'esnext',
-    sourcemap: true
+    sourcemap: false, // Disable source maps for production
+    minify: 'terser', // Use terser for better minification
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.logs in production
+        drop_debugger: true
+      }
+    }
   },
   // Ensure proper module resolution
   optimizeDeps: {

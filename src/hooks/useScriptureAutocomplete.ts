@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../lib/firebase.js"; // adjust path for explicit file extension
-import { debounce } from "lodash";
+import debounce from "lodash.debounce";
 
 // Export bookAliases from useScriptureAutocomplete for use in other files
 export type BookAliasesType = { [key: string]: string };
@@ -101,9 +101,8 @@ function normalizeRef(text: string) {
 
 export function useScriptureAutocomplete(noteText: string, translation = "EXB") {
   const [suggestions, setSuggestions] = useState<any[]>([]);
-
   useEffect(() => {
-    const debouncedSearch = debounce(async () => {
+    const debouncedSearch: (() => Promise<void>) & { cancel: () => void } = debounce(async () => {
       const parts = noteText.split(/\s+/).slice(-6); // last few words
       const match = parts.join(" ");
       const ref = normalizeRef(match);
@@ -120,7 +119,7 @@ export function useScriptureAutocomplete(noteText: string, translation = "EXB") 
       const results = await getDocs(q);
       const data = results.docs.map(doc => doc.data());
       setSuggestions(data);
-    }, 400);
+    }, 400) as any; // lodash.debounce returns a function with a cancel method, but types may not match exactly
 
     debouncedSearch();
     return () => debouncedSearch.cancel();

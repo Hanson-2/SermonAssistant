@@ -15,6 +15,7 @@ import {
 } from '../services/firebaseService';
 import './UserProfilePage.css';
 import '../styles/theme_patch_all_pages.css';
+import { ModernLoader } from '../components/ModernLoader';
 
 interface Translation {
   id: string;
@@ -297,22 +298,15 @@ const UserProfilePage: React.FC = () => {
     } finally {
       setUploadingPhoto(false);
     }
-  };
-  if (loading) {
+  };  if (loading) {
     return (
       <div className="profile-page">
         <div className="profile-loading">
-          <div className="lds-roller">
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-          </div>
-          <p className="loading-text">Loading profile...</p>
+          <ModernLoader 
+            text="Loading profile..." 
+            size="large"
+            className="profile-modern-loader"
+          />
         </div>
       </div>
     );
@@ -327,13 +321,15 @@ const UserProfilePage: React.FC = () => {
                 src={user?.photoURL || 'https://via.placeholder.com/100x100/3b82f6/ffffff?text=👤'} 
                 alt="Profile"
                 className="avatar-image"
-                onClick={handleProfilePhotoClick}
-              />
+                onClick={handleProfilePhotoClick}              />
               {uploadingPhoto && (
                 <div className="avatar-loading">
-                  <div className="loading-spinner"></div>
+                  <ModernLoader 
+                    size="small"
+                    className="avatar-modern-loader"
+                  />
                 </div>
-              )}              <div className="avatar-overlay" onClick={handleProfilePhotoClick}>
+              )}<div className="avatar-overlay" onClick={handleProfilePhotoClick}>
                 <div className="avatar-overlay-content">
                   <span className="avatar-overlay-icon">📷</span>
                   <span className="avatar-overlay-text">
