@@ -116,6 +116,9 @@ export default function NewExpositoryPage() {
       tags: selectedTags,
     };
 
+    console.log('NewExpository - Saving sermon with imagePosition:', imagePosition);
+    console.log('NewExpository - Full sermon data:', sermonData);
+
     // Only include folderId and seriesId if they have values
     if (folderId) {
       sermonData.folderId = folderId;
@@ -269,10 +272,12 @@ export default function NewExpositoryPage() {
             <button type="submit" className="primary-action-button">Add Expository</button>
           </form>          <div className="preview-label">Image Preview</div>
           <div className="large-preview-panel">
-            {(imageFile || selectedImageUrl) ? (
-              <ImagePositionAdjuster
+            {(imageFile || selectedImageUrl) ? (              <ImagePositionAdjuster
                 imageUrl={imageFile ? URL.createObjectURL(imageFile) : selectedImageUrl}
-                onPositionChange={setImagePosition}
+                onPositionChange={(position) => {
+                  console.log('NewExpositoryPage - Position changed to:', position);
+                  setImagePosition(position);
+                }}
                 initialPosition={imagePosition}
               />
             ) : (

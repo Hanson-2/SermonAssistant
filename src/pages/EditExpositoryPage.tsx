@@ -157,8 +157,7 @@ export default function EditExpositoryPage() {
       if (uploadedUrl) {
         finalImageUrl = uploadedUrl;
       }
-    }
-      // Create update object with only defined values
+    }      // Create update object with only defined values
     const updateData: any = {
       title: title.trim() || "Untitled Sermon",
       description: description.trim() || "No description provided.",
@@ -166,6 +165,9 @@ export default function EditExpositoryPage() {
       imagePosition,
       tags: selectedTags,
     };
+    
+    console.log('EditExpository - Updating sermon with imagePosition:', imagePosition);
+    console.log('EditExpository - Full update data:', updateData);
     
     // Only include folderId and seriesId if they have values
     if (folderId) {
@@ -357,10 +359,12 @@ export default function EditExpositoryPage() {
             </button>
           </form>          <div className="preview-label">Image Preview</div>
           <div className="large-preview-panel">
-            {imagePreview ? (
-              <ImagePositionAdjuster
+            {imagePreview ? (              <ImagePositionAdjuster
                 imageUrl={imagePreview}
-                onPositionChange={setImagePosition}
+                onPositionChange={(position) => {
+                  console.log('EditExpositoryPage - Position changed to:', position);
+                  setImagePosition(position);
+                }}
                 initialPosition={imagePosition}
               />
             ) : (

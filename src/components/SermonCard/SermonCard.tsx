@@ -69,6 +69,13 @@ const SermonCard: React.FC<SermonCardProps> = ({
   const location = useLocation();
   const prevLocationRef = useRef(location.pathname);
 
+  // Debug log for image position (moved outside of JSX)
+  const imagePosition = sermon.imagePosition || 'center';
+  console.log('SermonCard - Using imagePosition:', imagePosition, 'for sermon:', sermon.title);
+  
+  // Normalize position for background-position CSS property
+  const normalizedPosition = imagePosition === 'center center' ? 'center' : imagePosition;
+
   // Add click outside handler to close card
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -330,11 +337,11 @@ const SermonCard: React.FC<SermonCardProps> = ({
             ? `url("${sermon.imageUrl}")`
             : 'linear-gradient(90deg, #1e293b 0%, #374151 100%)',
           backgroundSize: 'cover',
-          backgroundPosition: sermon.imagePosition || 'center',
+          backgroundPosition: normalizedPosition,
           backgroundRepeat: 'no-repeat',
           backgroundBlendMode: 'overlay',
         }}
-      >        <div className="sermon-card-gradient-overlay"></div>
+      ><div className="sermon-card-gradient-overlay"></div>
         
         {/* Selection checkbox overlay */}
         {isSelectable && (
