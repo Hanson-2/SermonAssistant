@@ -8,6 +8,7 @@ import SermonFolderDropdown from '../components/SermonFolderDropdown';
 import { getSermonFolders, getSermonSeriesFunc } from '../services/firebaseService';
 import { fetchTags, Tag } from '../services/tagService';
 import { X, Tag as TagIcon } from 'lucide-react';
+import ImagePositionAdjuster from '../components/ImagePositionAdjuster';
 
 export default function EditExpositoryPage() {
   const { id: sermonId } = useParams();
@@ -16,6 +17,7 @@ export default function EditExpositoryPage() {
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [imagePosition, setImagePosition] = useState<string>("center center");
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -47,11 +49,11 @@ export default function EditExpositoryPage() {
     window.addEventListener('resize', handleResize);
     
     setLoading(true);    getSermon(sermonId)
-      .then(sermon => {
-        if (sermon) {
+      .then(sermon => {        if (sermon) {
           setTitle(sermon.title || "");
           setDescription(sermon.description || "");
           setImagePreview(sermon.imageUrl || "");
+          setImagePosition(sermon.imagePosition || "center center");
           setFolderId(sermon.folderId);
           setSeriesId(sermon.seriesId);
           setSelectedTags(sermon.tags || []);
@@ -156,12 +158,12 @@ export default function EditExpositoryPage() {
         finalImageUrl = uploadedUrl;
       }
     }
-    
-    // Create update object with only defined values
+      // Create update object with only defined values
     const updateData: any = {
       title: title.trim() || "Untitled Sermon",
       description: description.trim() || "No description provided.",
       imageUrl: finalImageUrl || "",
+      imagePosition,
       tags: selectedTags,
     };
     
@@ -353,14 +355,18 @@ export default function EditExpositoryPage() {
               <TagIcon size={20} />
               Manage Tags ({selectedTags.length})
             </button>
-          </form>
-          <div className="preview-label">Image Preview</div>
+          </form>          <div className="preview-label">Image Preview</div>
           <div className="large-preview-panel">
             {imagePreview ? (
-              <img src={imagePreview} alt="Selected preview" className="preview-image-large" />
+              <ImagePositionAdjuster
+                imageUrl={imagePreview}
+                onPositionChange={setImagePosition}
+                initialPosition={imagePosition}
+              />
             ) : (
               <div className="empty-preview-placeholder">No Image Selected</div>
-            )}        </div>
+            )}
+          </div>
         </div>
 
         <div className="vertical-divider blue-divider desktop-only-element"></div><div className="existing-images-column mobile-no-border">

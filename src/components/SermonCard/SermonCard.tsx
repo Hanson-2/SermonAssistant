@@ -19,6 +19,7 @@ export type Sermon = {
   description: string;
   date: string;
   imageUrl?: string;
+  imagePosition?: string;
   notes?: Record<string, string>;
   folderId?: string;
   tags?: string[];
@@ -117,8 +118,7 @@ const SermonCard: React.FC<SermonCardProps> = ({
     }
   };  const handleEdit = () => navigate(`/expository/${sermon.id}`);
   const handlePresentation = () => navigate(`/presentation/${sermon.id}`);
-  const handleDuplicate = async () => {
-    const { id, ...copyData } = sermon;
+  const handleDuplicate = async () => {    const { id, ...copyData } = sermon;
     // Ensure required fields for NewSermonData are present
     await createSermon({
       ...copyData,
@@ -126,7 +126,6 @@ const SermonCard: React.FC<SermonCardProps> = ({
       bibleChapter: (sermon as any).bibleChapter || "",
       bibleStartVerse: (sermon as any).bibleStartVerse || "",
       bibleEndVerse: (sermon as any).bibleEndVerse || "",
-      dateAdded: undefined
     });
     alert("Duplicated successfully.");
   };
@@ -331,7 +330,7 @@ const SermonCard: React.FC<SermonCardProps> = ({
             ? `url("${sermon.imageUrl}")`
             : 'linear-gradient(90deg, #1e293b 0%, #374151 100%)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: sermon.imagePosition || 'center',
           backgroundRepeat: 'no-repeat',
           backgroundBlendMode: 'overlay',
         }}

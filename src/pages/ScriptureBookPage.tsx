@@ -92,7 +92,7 @@ export default function ScriptureBookPage() {
         className="back-to-books-btn"
         title="Back to Books"
       >
-        ← Back to Books
+        ΓåÉ Back to Books
       </button>
       
       {/* Display bookName */}

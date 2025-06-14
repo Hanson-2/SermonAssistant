@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Bible Fact Collection Access</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Test Bible Fact Collection Access</h1>
+    <div id="result"></div>
+    <button onclick="testCollection()">Test bibleFactOfTheDay Collection</button>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
+        import { getFirestore, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js';
+
+        // Note: You'll need to add your actual Firebase config here
+        const firebaseConfig = {
+            // Your Firebase config
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.testCollection = async function() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+
+            try {
+                console.log('Testing bibleFactOfTheDay collection access...');
+                
+                // Test 1: Try to get all documents
+                const bibleFactRef = collection(db, "bibleFactOfTheDay");
+                const allDocs = await getDocs(bibleFactRef);
+                
+                console.log('All documents count:', allDocs.size);
+                
+                if (allDocs.empty) {
+                    resultDiv.innerHTML = '<p style="color: red;">❌ No documents found in bibleFactOfTheDay collection</p>';
+                    return;
+                }
+
+                // Test 2: Try the same query as the splash screen
+                const randomSample = await getDocs(query(bibleFactRef, orderBy("__name__"), limit(100)));
+                console.log('Random sample count:', randomSample.size);
+
+                // Test 3: Show some sample data
+                let sampleData = [];
+                randomSample.docs.slice(0, 3).forEach(doc => {
+                    const data = doc.data();
+                    sampleData.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+
+                resultDiv.innerHTML = `
+                    <h2>✅ Success!</h2>
+                    <p><strong>Total documents:</strong> ${allDocs.size}</p>
+                    <p><strong>Random sample:</strong> ${randomSample.size}</p>
+                    <h3>Sample Data:</h3>
+                    <pre>${JSON.stringify(sampleData, null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                console.error('Error testing collection:', error);
+                resultDiv.innerHTML = `
+                    <p style="color: red;">❌ Error: ${error.message}</p>
+                    <p>Check console for full error details</p>
+                `;
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('result').innerHTML = '<p>✅ User authenticated. Click button to test collection.</p>';
+            } else {
+                document.getElementById('result').innerHTML = '<p>❌ Please log in first</p>';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -11,6 +11,7 @@ import {
   where,
   setDoc,
   writeBatch, // Import writeBatch
+  serverTimestamp, // Import serverTimestamp
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, listAll, deleteObject } from "firebase/storage";
 import type { Scripture } from "./scriptureParser";
@@ -94,7 +95,29 @@ export async function getSermon(id: string): Promise<Sermon | null> {
 export async function createSermon(data: NewSermonData) {
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
-  return await addDoc(sermonsRef, { ...data, userID: user.uid });
+  
+  console.log('[createSermon] Input data:', data);
+  
+  // Start with input data, then override with required fields
+  const sermonData = { 
+    ...data, 
+    userID: user.uid
+  };
+  
+  // Remove any undefined fields to prevent Firebase errors
+  Object.keys(sermonData).forEach(key => {
+    if (sermonData[key] === undefined) {
+      console.log('[createSermon] Removing undefined field:', key);
+      delete sermonData[key];
+    }
+  });
+  
+  // Set dateAdded after cleaning undefined fields
+  sermonData.dateAdded = serverTimestamp();
+  
+  console.log('[createSermon] Final sermon data:', sermonData);
+  
+  return await addDoc(sermonsRef, sermonData);
 }
 
 // Update an existing sermon
@@ -620,6 +643,7 @@ export type Sermon = {
   description: string;
   date: string;
   imageUrl?: string;
+  imagePosition?: string; // CSS object-position value for image positioning
   notes?: Record<string, string>;
   slideScriptureRefs?: Record<number, any[]>; // New: per-slide scripture references
   folderId?: string; // New: folder assignment
@@ -650,7 +674,11 @@ export async function fetchSermonsByFolder(folderId: string | null): Promise<Ser
   return snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as object) } as Sermon));
 }
 
-export type NewSermonData = Omit<Sermon, "id"> & { isArchived?: boolean; imageOnly?: boolean };
+export type NewSermonData = Omit<Sermon, "id" | "dateAdded"> & { 
+  isArchived?: boolean; 
+  imageOnly?: boolean; 
+  dateAdded?: any; // Optional since it will be auto-set by createSermon
+};
 
 // --- User Profile Management ---
 

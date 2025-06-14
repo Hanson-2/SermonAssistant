@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { deleteVerseById, updateVerseTextById } from "../services/firebaseService";
+import { deleteVerseById, updateVerseTextById, getUserProfile } from "../services/firebaseService";
+import { auth } from "../lib/firebase";
 import "./UniversalSearchPage.scss";
 
 // REMOVE OLD STATIC TRANSLATION DATA
@@ -96,6 +97,7 @@ const UniversalSearchPage: React.FC = () => {
   const [selectedTranslations, setSelectedTranslations] = useState<string[]>([]);
   const [availableTranslations, setAvailableTranslations] = useState<Translation[]>([]);
   const [translationLoadError, setTranslationLoadError] = useState<string | null>(null);
+  const [userDefaultTranslation, setUserDefaultTranslation] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [tagLoadError, setTagLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -106,14 +108,22 @@ const UniversalSearchPage: React.FC = () => {
 
   // New state for collapsible sections and hits per page
   const [isTranslationsCollapsed, setIsTranslationsCollapsed] = useState(false);
-  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
-  const [selectedHitsPerPage, setSelectedHitsPerPage] = useState(50); // Default 50
+  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);  const [selectedHitsPerPage, setSelectedHitsPerPage] = useState(50); // Default 50
   const [deletingVerseId, setDeletingVerseId] = useState<string | null>(null);
   const [editingVerseId, setEditingVerseId] = useState<string | null>(null);
   const [editText, setEditText] = useState<string>("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const functions = getFunctions();
+
+  // Auth listener to get current user ID for EXB restriction
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUserId(user ? user.uid : null);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const sortVerses = useCallback((verses: Verse[]) => {
     if (sortOrder === "chronological") {
@@ -146,34 +156,176 @@ const UniversalSearchPage: React.FC = () => {
         setTagLoadError(`Failed to load tags: ${err.message || "Unknown error"}`);
       } finally {
         setIsLoadingTags(false); // Set loading false for tags
-      }
+      }      // Fetch Translations with intelligent prioritization
+      setIsLoadingTranslations(true);
+      try {        // First, get user's preferred translation from Firestore profile
+        let userDefaultTranslation: string | null = null;
+        try {
+          console.log('[UniversalSearch] Fetching user profile for default translation...');
+          const userProfile = await getUserProfile();
+          userDefaultTranslation = userProfile?.preferences?.defaultBibleVersion || null;
+          console.log('[UniversalSearch] User default translation from Firestore:', userDefaultTranslation);
+          setUserDefaultTranslation(userDefaultTranslation); // Store in state for UI display
+        } catch (profileError) {
+          console.error('[UniversalSearch] Error fetching user profile:', profileError);
+          userDefaultTranslation = localStorage.getItem('defaultTranslation');
+          userDefaultTranslation = localStorage.getItem('defaultBibleVersion');
+          console.log('[UniversalSearch] Fallback to localStorage default translation:', userDefaultTranslation);
+          setUserDefaultTranslation(userDefaultTranslation); // Store in state for UI display
+        }
 
-      // Fetch Translations
-      setIsLoadingTranslations(true); // Set loading true for translations
-      try {
         const getAllUniqueTranslationsCallable = httpsCallable<
           void,
           { uniqueTranslations: Translation[] }
-        >(functions, "getAllUniqueTranslations");
-        const result = await getAllUniqueTranslationsCallable();
+        >(functions, "getAllUniqueTranslations");        const result = await getAllUniqueTranslationsCallable();
         const fetchedTranslations = result.data.uniqueTranslations || [];
-        setAvailableTranslations(fetchedTranslations);
-        // Set a default translation if none are selected and translations are available
-        if (fetchedTranslations.length > 0 && selectedTranslations.length === 0) {
-          setSelectedTranslations([fetchedTranslations[0].id]);
+        
+        // Filter out EXB translation unless user is authorized
+        const filteredTranslations = fetchedTranslations.filter((translation) => 
+          translation.id.toUpperCase() !== "EXB" || userId === "89UdurybrVSwbPmp4boEMeYdVzk1"
+        );
+        
+        console.log('[UniversalSearch] Filtered translations (EXB restricted):', filteredTranslations.map(t => `${t.id} (${t.displayName})`));
+        
+        // Advanced prioritization system - prioritize translations based on user preferences and common usage
+        const prioritizeTranslations = (translations: Translation[], userDefault: string | null): Translation[] => {
+          // Define priority order based on common usage and user-friendly translations
+          const priorityOrder = [
+            'kjv',           // King James Version - most requested
+            'nkjv',          // New King James Version
+            'esv',           // English Standard Version  
+            'niv',           // New International Version
+            'nasb',          // New American Standard Bible
+            'nlt',           // New Living Translation
+            'csb',           // Christian Standard Bible
+            'msg',           // The Message
+            'amp',           // Amplified Bible
+            'net_bible',     // NET Bible
+            'rsv',           // Revised Standard Version
+            'nasb95',        // NASB 1995
+            'web',           // World English Bible
+            'ylt',           // Young's Literal Translation
+            'asv',           // American Standard Version
+            'darby',         // Darby Translation
+            'geneva'         // Geneva Bible
+          ];
+            
+          // Check localStorage for user's previously selected translations (secondary preference)
+          const userPreferredTranslations = JSON.parse(localStorage.getItem('preferredTranslations') || '[]');
+          
+          console.log('[UniversalSearch] Prioritizing translations with user default:', userDefault);
+          console.log('[UniversalSearch] User preferred translations from localStorage:', userPreferredTranslations);
+          
+          // Sort translations: user's Firestore default first, then localStorage preferences, then priority order, then alphabetical
+          return [...translations].sort((a, b) => {
+            // First priority: user's Firestore default translation
+            if (userDefault) {
+              const aIsDefault = a.id.toLowerCase() === userDefault.toLowerCase();
+              const bIsDefault = b.id.toLowerCase() === userDefault.toLowerCase();
+              if (aIsDefault && !bIsDefault) return -1;
+              if (bIsDefault && !aIsDefault) return 1;
+            }
+            
+            // Second priority: user's previous selections from localStorage
+            const aUserPref = userPreferredTranslations.indexOf(a.id);
+            const bUserPref = userPreferredTranslations.indexOf(b.id);
+            if (aUserPref !== -1 && bUserPref !== -1) return aUserPref - bUserPref;
+            if (aUserPref !== -1) return -1;
+            if (bUserPref !== -1) return 1;
+            
+            // Third priority: predefined priority order
+            const aPriority = priorityOrder.indexOf(a.id.toLowerCase());
+            const bPriority = priorityOrder.indexOf(b.id.toLowerCase());
+            if (aPriority !== -1 && bPriority !== -1) return aPriority - bPriority;
+            if (aPriority !== -1) return -1;
+            if (bPriority !== -1) return 1;
+            
+            // Final fallback: alphabetical by display name
+            return a.displayName.localeCompare(b.displayName);
+          });        };            const prioritizedTranslations = prioritizeTranslations(filteredTranslations, userDefaultTranslation);
+        console.log('[UniversalSearch] Prioritized translations:', prioritizedTranslations.map(t => `${t.id} (${t.displayName})`));
+        setAvailableTranslations(prioritizedTranslations);        // Immediately set the default translation when translations are loaded
+        if (prioritizedTranslations.length > 0) {
+          // Priority: 1) User's Firestore default, 2) localStorage default, 3) first prioritized translation
+          let defaultTranslation = userDefaultTranslation;
+          
+          // Verify the user's default exists in available translations (case-insensitive)
+          if (defaultTranslation && !prioritizedTranslations.find(t => t.id.toLowerCase() === defaultTranslation!.toLowerCase())) {
+            console.log('[UniversalSearch] User default translation not available, falling back to localStorage...');
+            defaultTranslation = localStorage.getItem('defaultTranslation');
+          }
+          
+          // Final fallback to first available translation (use consistent case-insensitive comparison)
+          if (!defaultTranslation || !prioritizedTranslations.find(t => t.id.toLowerCase() === defaultTranslation!.toLowerCase())) {
+            defaultTranslation = prioritizedTranslations[0].id;
+            console.log('[UniversalSearch] Using first prioritized translation as default:', defaultTranslation);
+          }
+          
+          console.log('[UniversalSearch] Setting initial default translation:', defaultTranslation);
+          setSelectedTranslations([defaultTranslation]);
+          
+          // Save this as user's preference for future sessions (localStorage backup)
+          localStorage.setItem('defaultTranslation', defaultTranslation);
         }
+        
       } catch (err: any) {
         console.error("Error fetching translations:", err);
         setTranslationLoadError(`Failed to load translations: ${err.message || "Unknown error"}`);
       } finally {
-        setIsLoadingTranslations(false); // Set loading false for translations
-      }
-    };
-    fetchInitialData();
-  }, [functions, selectedTranslations.length]); // Added selectedTranslations.length to dependencies to re-evaluate default selection
+        setIsLoadingTranslations(false);
+      }};    fetchInitialData();
+  }, [functions, userId]); // Re-run when userId changes (auth loads) to get user's default translation
 
+  // Additional effect to ensure default translation is maintained
+  useEffect(() => {
+    // If no translations are selected but we have available translations and user data, set the default
+    if (availableTranslations.length > 0 && selectedTranslations.length === 0 && userId !== null) {
+      const defaultTranslation = getUserDefaultTranslation();
+      if (defaultTranslation) {
+        console.log('[UniversalSearch] Restoring default translation on load:', defaultTranslation);
+        setSelectedTranslations([defaultTranslation]);
+      }
+    }
+  }, [availableTranslations, selectedTranslations.length, userId, userDefaultTranslation]);
   const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
     setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
+  };
+
+  // Helper function to get the user's default translation
+  const getUserDefaultTranslation = (): string | null => {
+    // Priority: 1) User's Firestore default, 2) localStorage default, 3) first prioritized translation
+    let defaultTranslation = userDefaultTranslation;
+    
+    // Verify the user's default exists in available translations (case-insensitive)
+    if (defaultTranslation && !availableTranslations.find(t => t.id.toLowerCase() === defaultTranslation!.toLowerCase())) {
+      defaultTranslation = localStorage.getItem('defaultTranslation');
+    }
+    
+    // Final fallback to first available translation
+    if (!defaultTranslation || !availableTranslations.find(t => t.id.toLowerCase() === defaultTranslation!.toLowerCase())) {
+      defaultTranslation = availableTranslations.length > 0 ? availableTranslations[0].id : null;
+    }
+    
+    return defaultTranslation;
+  };
+
+  // Enhanced translation toggle with preference saving
+  const toggleTranslation = (translationId: string) => {
+    setSelectedTranslations(prev => {
+      const newSelection = prev.includes(translationId) 
+        ? prev.filter(id => id !== translationId) 
+        : [...prev, translationId];
+      
+      // Save user's translation preferences
+      localStorage.setItem('preferredTranslations', JSON.stringify(newSelection));
+      
+      // If this is the only selected translation, make it the default
+      if (newSelection.length === 1) {
+        localStorage.setItem('defaultTranslation', newSelection[0]);
+      }
+      
+      return newSelection;
+    });
   };
 
   const handleSearch = useCallback(async (pageToFetch = 0) => {
@@ -259,23 +411,23 @@ const UniversalSearchPage: React.FC = () => {
   const handleTagClick = (tagId: string) => { // Changed parameter to tagId
     toggleFilter(setSelectedTags, tagId);
   };
-
   const handleTranslationSelect = (translationId: string) => {
-    toggleFilter(setSelectedTranslations, translationId);
-  };
-
-  const clearFilters = () => {
+    toggleTranslation(translationId);
+  };  const clearFilters = () => {
     setSearchQuery('');
     setSelectedTestaments([]);
     setSelectedGroups([]);
     setSelectedBooks([]);
     setSelectedTags([]);
-    // setSelectedTranslations(AVAILABLE_TRANSLATIONS.length > 0 ? [AVAILABLE_TRANSLATIONS[0].id] : []); // Reset to default
-    if (availableTranslations.length > 0) {
-      setSelectedTranslations([availableTranslations[0].id]);
+    
+    // Reset to user's default translation
+    const defaultTranslation = getUserDefaultTranslation();
+    if (defaultTranslation) {
+      setSelectedTranslations([defaultTranslation]);
     } else {
       setSelectedTranslations([]);
     }
+    
     setCurrentResults([]);
     setError(null);
     setCurrentPage(0);
@@ -370,21 +522,26 @@ const UniversalSearchPage: React.FC = () => {
             Translations (Required) {isTranslationsCollapsed ? '+' : '−'}
           </h3>
           {!isTranslationsCollapsed && (
-            <>
-              {translationLoadError && <p className="search-error">{translationLoadError}</p>}
+            <>              {translationLoadError && <p className="search-error">{translationLoadError}</p>}
               {isLoadingTranslations ? <p className="loading-indicator">Loading translations...</p> : (
-                <div className="translation-buttons">
-                  {availableTranslations.map((translation) => (
-                    <button
-                      key={translation.id}
-                      onClick={() => handleTranslationSelect(translation.id)}
-                      className={`translation-btn ${selectedTranslations.includes(translation.id) ? "selected" : ""}`}
-                      title={translation.displayName}
-                    >
-                      {translation.name.toUpperCase()} 
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <p className="translation-help-text">Translations are ordered by your preferences and popularity. Your selections are saved for future sessions.</p>                  <div className="translation-buttons">
+                  {availableTranslations.map((translation) => {
+                    const isUserDefault = userDefaultTranslation && translation.id.toLowerCase() === userDefaultTranslation.toLowerCase();
+                    return (
+                      <button
+                        key={translation.id}
+                        onClick={() => handleTranslationSelect(translation.id)}
+                        className={`translation-btn ${selectedTranslations.includes(translation.id) ? "selected" : ""} ${isUserDefault ? "user-default" : ""}`}
+                        title={`${translation.displayName}${isUserDefault ? ' (Your Default)' : ''}`}
+                      >
+                        {translation.name.toUpperCase()} 
+                        {isUserDefault && <span className="default-indicator">★</span>}
+                      </button>
+                    );
+                  })}
+                  </div>
+                </>
               )}
             </>
           )}

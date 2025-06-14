@@ -5,12 +5,14 @@ import '../styles/edit-expository.scss';
 import MiniSermonList from '../components/MiniSermonList';
 import SermonFolderDropdown from '../components/SermonFolderDropdown';
 import { fetchTags, Tag } from '../services/tagService';
+import ImagePositionAdjuster from '../components/ImagePositionAdjuster';
 
 export default function NewExpositoryPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string>("");
+  const [imagePosition, setImagePosition] = useState<string>("center center");
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -92,23 +94,21 @@ export default function NewExpositoryPage() {
     if (!title || !description) {
       alert("Please fill in title and description.");
       return;
-    }
-
-    // Use either uploaded file or selected existing image
+    }    // Use either uploaded file or selected existing image
     let imageUrl = selectedImageUrl;
     if (imageFile) {
       imageUrl = await uploadExpositoryImage(imageFile);
-    }    const currentDate = new Date().toISOString().split('T')[0]; // Generate date in YYYY-MM-DD format
+    }
 
-    // Create sermon data with only defined values
+    const currentDate = new Date().toISOString().split('T')[0]; // Generate date in YYYY-MM-DD format    // Create sermon data with only defined values
     const sermonData: any = {
       title,
       description,
       date: currentDate,
       imageUrl,
+      imagePosition,
       isArchived: false,
       imageOnly: false,
-      dateAdded: undefined,
       bibleBook: undefined,
       bibleChapter: undefined,
       bibleStartVerse: undefined,
@@ -267,14 +267,14 @@ export default function NewExpositoryPage() {
             </div>
 
             <button type="submit" className="primary-action-button">Add Expository</button>
-          </form>
-
-          <div className="preview-label">Image Preview</div>
+          </form>          <div className="preview-label">Image Preview</div>
           <div className="large-preview-panel">
-            {imageFile ? (
-              <img src={URL.createObjectURL(imageFile)} alt="Selected preview" className="preview-image-large" />
-            ) : selectedImageUrl ? (
-              <img src={selectedImageUrl} alt="Selected preview" className="preview-image-large" />
+            {(imageFile || selectedImageUrl) ? (
+              <ImagePositionAdjuster
+                imageUrl={imageFile ? URL.createObjectURL(imageFile) : selectedImageUrl}
+                onPositionChange={setImagePosition}
+                initialPosition={imagePosition}
+              />
             ) : (
               <div className="empty-preview-placeholder">No Image Selected</div>
             )}
