@@ -45,7 +45,11 @@ export default defineConfig({
           ui: ['framer-motion', '@dnd-kit/core', '@dnd-kit/sortable'],
           // Large utilities
           utils: ['pptxgenjs', 'lodash.debounce']
-        }
+        },
+        // Ensure consistent file extensions
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
     },
     assetsInclude: ['**/*.webmanifest'],
@@ -57,6 +61,10 @@ export default defineConfig({
         drop_console: true, // Remove console.logs in production
         drop_debugger: true
       }
+    },
+    // Ensure proper module format
+    modulePreload: {
+      polyfill: true
     }
   },
   // Ensure proper module resolution
