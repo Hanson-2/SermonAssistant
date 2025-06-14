@@ -106,11 +106,9 @@ export const ImagePositionAdjuster: React.FC<ImagePositionAdjusterProps> = ({
     const touch = e.touches[0];
     const rect = containerRef.current.getBoundingClientRect();
     const deltaX = touch.clientX - dragStart.x;
-    const deltaY = touch.clientY - dragStart.y;
-
-    // Calculate movement as percentage of container size with improved sensitivity
-    const moveXPercent = (deltaX / rect.width) * 30; // Adjusted sensitivity
-    const moveYPercent = (deltaY / rect.height) * 30; // Adjusted sensitivity
+    const deltaY = touch.clientY - dragStart.y;    // Calculate movement as percentage of container size with improved sensitivity
+    const moveXPercent = (deltaX / rect.width) * SENSITIVITY_MULTIPLIER; // Adjusted sensitivity
+    const moveYPercent = (deltaY / rect.height) * SENSITIVITY_MULTIPLIER; // Adjusted sensitivity
 
     // Parse current position
     const currentPos = objectPosition.split(' ');
