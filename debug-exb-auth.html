@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug EXB Authorization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #2a2a2a;
+        }
+        .debug-info {
+            font-family: monospace;
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .test-button {
+            background: #e0c97f;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #f0d98f;
+        }
+    </style>
+</head>
+<body>
+    <h1>EXB Authorization Debug Test</h1>
+    
+    <div class="debug-section">
+        <h2>Authentication State</h2>
+        <div id="auth-status" class="debug-info">Checking authentication...</div>
+        <button class="test-button" onclick="checkAuthStatus()">Refresh Auth Status</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>EXB Authorization Test</h2>
+        <div id="exb-status" class="debug-info">Checking EXB authorization...</div>
+        <button class="test-button" onclick="checkEXBAuthorization()">Test EXB Authorization</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Translation Loading Test</h2>
+        <div id="translation-status" class="debug-info">Checking translations...</div>
+        <button class="test-button" onclick="testTranslationLoading()">Test Translation Loading</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-functions.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-4UtnZg2Kt8Y8nQ4nDHpNqr1_7rh8x9A",
+            authDomain: "sermon-notes-assistant.firebaseapp.com",
+            projectId: "sermon-notes-assistant",
+            storageBucket: "sermon-notes-assistant.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abc123def456"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app);
+
+        let currentUser = null;
+
+        // Monitor auth state changes
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            updateAuthStatus(user);
+            checkEXBAuthorization();
+        });
+
+        function updateAuthStatus(user) {
+            const authStatus = document.getElementById('auth-status');
+            if (user) {
+                authStatus.textContent = `Authenticated: ${user.email}\nUID: ${user.uid}\nUID Length: ${user.uid.length}`;
+            } else {
+                authStatus.textContent = 'Not authenticated';
+            }
+        }
+
+        window.checkAuthStatus = function() {
+            updateAuthStatus(currentUser);
+        };
+
+        window.checkEXBAuthorization = function() {
+            const exbStatus = document.getElementById('exb-status');
+            const expectedUserId = "89UdurybrVSwbPmp4boEMeYdVzk1";
+            
+            if (!currentUser) {
+                exbStatus.textContent = 'No user authenticated - cannot check EXB authorization';
+                return;
+            }
+
+            const userId = currentUser.uid;
+            const isAuthorized = userId === expectedUserId;
+            
+            exbStatus.textContent = `Current User ID: "${userId}"
+Expected User ID: "${expectedUserId}"
+User ID Match: ${isAuthorized}
+User ID Type: ${typeof userId}
+Expected ID Type: ${typeof expectedUserId}
+Lengths Match: ${userId.length === expectedUserId.length}
+Character by Character:
+${Array.from(userId).map((char, i) => `  ${i}: "${char}" vs "${expectedUserId[i]}" (${char === expectedUserId[i] ? 'MATCH' : 'MISMATCH'})`).join('\n')}`;
+        };
+
+        window.testTranslationLoading = async function() {
+            const translationStatus = document.getElementById('translation-status');
+            
+            try {
+                translationStatus.textContent = 'Loading translations...';
+                
+                // Test the same call that UniversalSearchPage makes
+                const getAllUniqueTranslationsCallable = httpsCallable(functions, "getAllUniqueTranslations");
+                const result = await getAllUniqueTranslationsCallable();
+                const translations = result.data.uniqueTranslations || [];
+                
+                // Check for EXB specifically
+                const exbTranslations = translations.filter(t => t.id.toUpperCase() === "EXB");
+                const expectedUserId = "89UdurybrVSwbPmp4boEMeYdVzk1";
+                const userId = currentUser?.uid;
+                const isAuthorized = userId === expectedUserId;
+                
+                // Apply the same filtering logic as UniversalSearchPage
+                const filteredTranslations = translations.filter((translation) => {
+                    const isEXB = translation.id.toUpperCase() === "EXB";
+                    const shouldInclude = !isEXB || isAuthorized;
+                    return shouldInclude;
+                });
+                
+                const exbFiltered = filteredTranslations.filter(t => t.id.toUpperCase() === "EXB");
+                
+                translationStatus.textContent = `Total translations loaded: ${translations.length}
+EXB translations in raw data: ${exbTranslations.length}
+${exbTranslations.map(t => `  - ${t.id} (${t.name}) - ${t.displayName}`).join('\n')}
+
+Current User ID: "${userId}"
+Expected User ID: "${expectedUserId}"
+Is Authorized: ${isAuthorized}
+
+After EXB filtering: ${filteredTranslations.length} translations
+EXB translations after filtering: ${exbFiltered.length}
+${exbFiltered.map(t => `  - ${t.id} (${t.name}) - ${t.displayName}`).join('\n')}
+
+First 10 filtered translations:
+${filteredTranslations.slice(0, 10).map(t => `  - ${t.id} (${t.displayName})`).join('\n')}`;
+                
+            } catch (error) {
+                translationStatus.textContent = `Error loading translations: ${error.message}`;
+                console.error('Translation loading error:', error);
+            }
+        };
+
+        // Auto-run checks when page loads
+        setTimeout(() => {
+            if (currentUser) {
+                checkEXBAuthorization();
+                testTranslationLoading();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

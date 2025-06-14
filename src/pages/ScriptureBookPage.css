@@ -58,32 +58,75 @@
   color: #facc15;
 }
 
-.translation-toggle-group {
+.translation-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
   justify-content: center;
+  /* Full width on desktop, proper wrapping */
+  padding: 0 1rem;
 }
-.translation-toggle-btn {
-  background: #232b3e;
-  color: #fff;
-  border: 1px solid #2563eb;
-  border-radius: 0.4rem;
-  padding: 0.4rem 1.1rem;
+
+.translation-btn {
+  background: #23232b;
+  color: #ffd700;
+  border: 1.5px solid #e0c97f;
+  border-radius: 0.5rem;
+  font-weight: 600;
   font-size: 1rem;
-  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  padding: 0.7rem 1.5rem;
+  margin: 0;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+  white-space: nowrap;
 }
-.translation-toggle-btn.selected, .translation-toggle-btn:active {
-  background: #2563eb;
-  color: #fff;
-  border-color: #facc15;
-  transform: scale(1.08);
+
+.translation-btn:hover {
+  background: #2a2a32;
+  color: #fffbe6;
+  border-color: #ffe082;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
-.translation-toggle-btn:hover {
-  background: #374151;
-  color: #facc15;
+
+.translation-btn.selected {
+  background: #2a2a32;
+  color: #fffbe6;
+  border-color: #ffe082;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  font-weight: 700;
+}
+
+/* User's default translation styling */
+.translation-btn.user-default {
+  background: #2a2a32;
+  color: #fffbe6;
+  border-color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+  position: relative;
+}
+
+.translation-btn.user-default:hover {
+  background: #2a2a32;
+  color: #fffbe6;
+  border-color: #ffd700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 0 8px rgba(255, 215, 0, 0.4);
+}
+
+.translation-btn.user-default.selected {
+  background: #2a2a32;
+  color: #fffbe6;
+  border-color: #ffd700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 0 8px rgba(255, 215, 0, 0.5);
+  font-weight: 700;
+}
+
+.default-indicator {
+  color: #ffd700;
+  font-size: 0.9em;
+  margin-left: 4px;
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.8);
 }
 
 .chapter-text-animate {
@@ -192,35 +235,6 @@
   /* box-shadow: 0 0 8px #facc1599, 0 2px 8px rgba(0,0,0,0.5); */ /* Optional: adjust hover shadow if it implies gold too much */
 }
 
-.modern-translation-btn {
-  background: linear-gradient(135deg, #232b3e 60%, #000 100%);
-  color: #fff;
-  border: 2px solid transparent;
-  border-image: linear-gradient(45deg, #FFD700, #FFA500) 1;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  transition: transform 0.12s, color 0.18s, box-shadow 0.18s;
-  padding: 0.4rem 1.1rem;
-  font-size: 1rem;
-  margin-bottom: 0.1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-}
-.modern-translation-btn.selected, .modern-translation-btn:active {
-  background: #374151; /* Darker background for selection, instead of gold gradient */
-  color: #fff !important;
-  /* border-color: #facc15; */ /* Removed gold border */
-  border-color: #2563eb; /* Keep a consistent border color or choose another non-gold one */
-  font-weight: bold;
-  transform: scale(1.08);
-  /* box-shadow: 0 0 0 2px #facc15, 0 4px 12px rgba(0,0,0,0.7); */ /* Removed gold box-shadow */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.7); /* Simplified box-shadow */
-}
-.modern-translation-btn:hover {
-  color: #facc15; /* Keep gold hover for text if desired, or change */
-  background: #232b3e;
-  /* box-shadow: 0 0 8px #facc1599, 0 2px 8px rgba(0,0,0,0.5); */ /* Optional: adjust hover shadow if it implies gold too much */
-}
-
 .chapter-translation-divider {
   width: 100%;
   max-width: 700px;
@@ -312,107 +326,208 @@
   transform: translateY(0);
 }
 
-/* Loading Indicator Styles */
+/* Loading Indicator Styles - Enhanced Biblical Theme */
 .loading-indicator-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  /* background-color: #0a0a0a; */ /* Optional: if you want a dark background for the container itself */
+  min-height: 200px;
 }
 
 .loading-text {
   font-family: 'Trajan Pro', serif; /* Match title font */
   color: #ffd700; /* Gold color */
-  font-size: 1.4rem; /* Adjust as needed */
-  font-weight: 700; /* Bolder */
-  margin-bottom: 1.5rem; /* Space between text and spinner */
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-shadow: var(--text-shadow-gold);
+  text-align: center;
+  letter-spacing: 1px;
 }
 
-.lds-roller {
-  display: inline-block;
+/* Biblical Scroll Loading Animation */
+.biblical-scroll-loader {
+  position: relative;
+  width: 120px;
+  height: 80px;
+  margin: 1rem 0;
+}
+
+.scroll-body {
+  width: 100%;
+  height: 60px;
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d09a 50%, #d4c088 100%);
+  border-radius: 8px 8px 12px 12px;
+  position: relative;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: scrollGlow 2s ease-in-out infinite alternate;
+}
+
+.scroll-body:before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  width: calc(100% - 30px);
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #8b7355 20%, #8b7355 80%, transparent 100%);
+  animation: textReveal 3s ease-in-out infinite;
+}
+
+.scroll-body:after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: calc(100% - 40px);
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #8b7355 30%, #8b7355 70%, transparent 100%);
+  animation: textReveal 3s ease-in-out infinite 0.5s;
+}
+
+.scroll-ends {
+  position: absolute;
+  top: -10px;
+  width: 100%;
+  height: 80px;
+  pointer-events: none;
+}
+
+.scroll-end {
+  position: absolute;
+  width: 12px;
+  height: 80px;
+  background: linear-gradient(135deg, #8b4513 0%, #654321 50%, #4a2c17 100%);
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.scroll-end:first-child {
+  left: -6px;
+  animation: scrollRotateLeft 4s ease-in-out infinite;
+}
+
+.scroll-end:last-child {
+  right: -6px;
+  animation: scrollRotateRight 4s ease-in-out infinite;
+}
+
+/* Cross/Christian Symbol Alternative Loader */
+.christian-cross-loader {
   position: relative;
   width: 80px;
   height: 80px;
+  margin: 1rem 0;
 }
-.lds-roller div {
-  animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  transform-origin: 40px 40px;
-}
-.lds-roller div:after {
-  content: " ";
-  display: block;
+
+.cross-vertical {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  left: 50%;
+  top: 10%;
+  width: 6px;
+  height: 70%;
+  background: linear-gradient(180deg, #ffd700 0%, #e6c200 50%, #ccaa00 100%);
+  border-radius: 3px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  animation: crossGlow 2s ease-in-out infinite alternate;
+}
+
+.cross-horizontal {
+  position: absolute;
+  left: 25%;
+  top: 35%;
+  width: 50%;
+  height: 6px;
+  background: linear-gradient(90deg, #ffd700 0%, #e6c200 50%, #ccaa00 100%);
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  animation: crossGlow 2s ease-in-out infinite alternate 0.5s;
+}
+
+.cross-radiance {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
   border-radius: 50%;
-  background: #ffd700; /* Gold color */
-  margin: -4px 0 0 -4px;
+  animation: radianceExpand 3s ease-in-out infinite;
 }
-.lds-roller div:nth-child(1) {
-  animation-delay: -0.036s;
-}
-.lds-roller div:nth-child(1):after {
-  top: 63px;
-  left: 63px;
-}
-.lds-roller div:nth-child(2) {
-  animation-delay: -0.072s;
-}
-.lds-roller div:nth-child(2):after {
-  top: 68px;
-  left: 56px;
-}
-.lds-roller div:nth-child(3) {
-  animation-delay: -0.108s;
-}
-.lds-roller div:nth-child(3):after {
-  top: 71px;
-  left: 48px;
-}
-.lds-roller div:nth-child(4) {
-  animation-delay: -0.144s;
-}
-.lds-roller div:nth-child(4):after {
-  top: 72px;
-  left: 40px;
-}
-.lds-roller div:nth-child(5) {
-  animation-delay: -0.18s;
-}
-.lds-roller div:nth-child(5):after {
-  top: 71px;
-  left: 32px;
-}
-.lds-roller div:nth-child(6) {
-  animation-delay: -0.216s;
-}
-.lds-roller div:nth-child(6):after {
-  top: 68px;
-  left: 24px;
-}
-.lds-roller div:nth-child(7) {
-  animation-delay: -0.252s;
-}
-.lds-roller div:nth-child(7):after {
-  top: 63px;
-  left: 17px;
-}
-.lds-roller div:nth-child(8) {
-  animation-delay: -0.288s;
-}
-.lds-roller div:nth-child(8):after {
-  top: 56px;
-  left: 12px;
-}
-@keyframes lds-roller {
+
+/* Keyframe Animations */
+@keyframes scrollGlow {
   0% {
-    transform: rotate(0deg);
+    box-shadow: 
+      0 4px 8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
   100% {
-    transform: rotate(360deg);
+    box-shadow: 
+      0 6px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      0 0 15px rgba(255, 215, 0, 0.2);
+  }
+}
+
+@keyframes textReveal {
+  0%, 100% { opacity: 0.3; transform: scaleX(0.3); }
+  50% { opacity: 0.8; transform: scaleX(1); }
+}
+
+@keyframes scrollRotateLeft {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(-15deg); }
+}
+
+@keyframes scrollRotateRight {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(15deg); }
+}
+
+@keyframes crossGlow {
+  0% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    filter: brightness(1);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes radianceExpand {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .loading-text {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .biblical-scroll-loader {
+    width: 100px;
+    height: 70px;
+  }
+  
+  .christian-cross-loader {
+    width: 60px;
+    height: 60px;
   }
 }
 

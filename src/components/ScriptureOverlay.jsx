@@ -5,6 +5,8 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getDisplayBookAbbrev, normalizeBookName } from '../utils/getDisplayBookAbbrev';
 import { buildScriptureReference } from '../utils/scriptureReferenceUtils';
+import { httpsCallable, getFunctions } from 'firebase/functions';
+import { getUserProfile } from '../services/firebaseService';
 
 function parseReference(ref, fallbackBook, fallbackChapter) {
   // Log the raw ref for debugging
@@ -80,17 +82,18 @@ function parseReference(ref, fallbackBook, fallbackChapter) {
  *  - defaultTranslation?: string // NEW: user's preferred translation
  */
 export default function ScriptureOverlay({ open, onClose, book, chapter, verseRange, reference, defaultTranslation }) {
-  console.log('[ScriptureOverlay] Component rendered with props:', {
-    open,
-    book,
-    chapter,
-    verseRange,
-    reference,
-    defaultTranslation: defaultTranslation || 'undefined/empty'
-  });
-
   const [lockedProps, setLockedProps] = useState(null);
-  const hasOpenedAndLocked = useRef(false); // Tracks if initial props have been locked for the current "open" session
+  const hasOpenedAndLocked = useRef(false);
+  const [translations, setTranslations] = useState([]);
+  const [current, setCurrent] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [displayRef, setDisplayRef] = useState({ book: '', chapter: '', verseRange: '' });
+  
+  // Add state for managing available translations (like Universal Search)
+  const [availableTranslations, setAvailableTranslations] = useState([]);
+  const [userDefaultTranslation, setUserDefaultTranslation] = useState(null);
+  
+  const functions = getFunctions();
 
   useEffect(() => {
     console.log(`[ScriptureOverlay] LockEffect: open=${open}, hasOpenedAndLocked=${hasOpenedAndLocked.current}, lockedPropsPresent=${!!lockedProps}, Incoming:`, { book, chapter, verseRange, reference });
@@ -112,21 +115,87 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
     // This effect's job is to manage the lockedProps state based on the open signal and initial props.
     // It should react if 'open' changes, or if the initial set of props to be locked changes before first lock.
   }, [open, book, chapter, verseRange, reference, lockedProps]); // Include lockedProps to handle reset if it becomes null externally
-
   const effective = useMemo(() => {
     // Prioritize lockedProps if they exist, otherwise use current props.
     // This ensures that once locked, those props are used until cleared.
     return lockedProps || { book, chapter, verseRange, reference };
   }, [lockedProps, book, chapter, verseRange, reference]);
-
-  const [translations, setTranslations] = useState([]);
-  const [current, setCurrent] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [displayRef, setDisplayRef] = useState({ book: effective.book, chapter: effective.chapter, verseRange: effective.verseRange });
-
   useEffect(() => {
     console.log("[ScriptureOverlay] Effective props updated:", effective);
   }, [effective]);
+
+  // Load available translations and user preferences (like Universal Search)
+  useEffect(() => {
+    const loadTranslationsAndUserPrefs = async () => {
+      try {
+        // First, get user's preferred translation from Firestore profile
+        let userDefaultTranslation = null;
+        try {
+          console.log('[ScriptureOverlay] Fetching user profile for default translation...');
+          const userProfile = await getUserProfile();
+          userDefaultTranslation = userProfile?.preferences?.defaultBibleVersion || null;
+          console.log('[ScriptureOverlay] User default translation from Firestore:', userDefaultTranslation);
+          setUserDefaultTranslation(userDefaultTranslation);
+        } catch (profileError) {
+          console.error('[ScriptureOverlay] Error fetching user profile:', profileError);
+          userDefaultTranslation = localStorage.getItem('defaultTranslation') || localStorage.getItem('defaultBibleVersion');
+          console.log('[ScriptureOverlay] Fallback to localStorage default translation:', userDefaultTranslation);
+          setUserDefaultTranslation(userDefaultTranslation);
+        }
+
+        // Get all unique translations using Firebase Functions (like Universal Search)
+        const getAllUniqueTranslationsCallable = httpsCallable(functions, "getAllUniqueTranslations");
+        const result = await getAllUniqueTranslationsCallable();
+        const fetchedTranslations = result.data.uniqueTranslations || [];
+        
+        // Use the same prioritization logic as Universal Search
+        const prioritizeTranslations = (translations, userDefault) => {
+          const priorityOrder = [
+            'kjv', 'nkjv', 'esv', 'niv', 'nasb', 'nlt', 'csb', 'msg', 'amp', 
+            'net_bible', 'rsv', 'nasb95', 'web', 'ylt', 'asv', 'darby', 'geneva'
+          ];
+          
+          const userPreferredTranslations = JSON.parse(localStorage.getItem('preferredTranslations') || '[]');
+          
+          return [...translations].sort((a, b) => {
+            // First priority: user's Firestore default translation
+            if (userDefault) {
+              const aIsDefault = a.id.toLowerCase() === userDefault.toLowerCase();
+              const bIsDefault = b.id.toLowerCase() === userDefault.toLowerCase();
+              if (aIsDefault && !bIsDefault) return -1;
+              if (bIsDefault && !aIsDefault) return 1;
+            }
+            
+            // Second priority: user's previous selections from localStorage
+            const aUserPref = userPreferredTranslations.indexOf(a.id);
+            const bUserPref = userPreferredTranslations.indexOf(b.id);
+            if (aUserPref !== -1 && bUserPref !== -1) return aUserPref - bUserPref;
+            if (aUserPref !== -1) return -1;
+            if (bUserPref !== -1) return 1;
+            
+            // Third priority: predefined priority order
+            const aPriority = priorityOrder.indexOf(a.id.toLowerCase());
+            const bPriority = priorityOrder.indexOf(b.id.toLowerCase());
+            if (aPriority !== -1 && bPriority !== -1) return aPriority - bPriority;
+            if (aPriority !== -1) return -1;
+            if (bPriority !== -1) return 1;
+            
+            // Final fallback: alphabetical by display name
+            return a.displayName.localeCompare(b.displayName);
+          });
+        };
+        
+        const prioritizedTranslations = prioritizeTranslations(fetchedTranslations, userDefaultTranslation);
+        console.log('[ScriptureOverlay] Prioritized translations:', prioritizedTranslations.map(t => `${t.id} (${t.displayName})`));
+        setAvailableTranslations(prioritizedTranslations);
+        
+      } catch (error) {
+        console.error('[ScriptureOverlay] Error loading translations:', error);
+        setAvailableTranslations([]);
+      }
+    };
+      loadTranslationsAndUserPrefs();
+  }, [functions]); // Include functions in dependencies
 
   useEffect(() => {
     // Guard against running if not open or essential 'effective' props are missing
@@ -180,22 +249,28 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
       typeof_endVerse: typeof endVerse,
     });
     // --- END DEBUG ---
-    
-    const fetchVerses = async () => {
+      const fetchVerses = async () => {
       try {
+        // Only proceed if we have available translations loaded
+        if (availableTranslations.length === 0) {
+          console.log('[ScriptureOverlay] Waiting for available translations to load...');
+          setLoading(false);
+          return;
+        }
+
         // Query the correct 'verses' collection for this book/chapter
         const versesRef = collection(db, 'verses');
         const chapterNum = Number(normChapter);
         const startV = Number(startVerse);
         const endV = Number(endVerse);
         const bookLower = String(normBook).toLowerCase().replace(/\s+/g, ' ').trim();
-          // Check if this is a chapter-only reference (endVerse is 999 indicates whole chapter)
+        
+        // Check if this is a chapter-only reference (endVerse is 999 indicates whole chapter)
         const isChapterOnly = endV === 999;
         
         // Use Firestore query() and where() for all conditions
         let qRef;
         if (isChapterOnly) {
-          // For chapter-only references, don't set an upper bound on verse numbers
           qRef = query(
             versesRef,
             where('book_lower', '==', bookLower),
@@ -203,7 +278,6 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             where('verse', '>=', startV)
           );
         } else {
-          // For specific verse ranges, use both bounds
           qRef = query(
             versesRef,
             where('book_lower', '==', bookLower),
@@ -214,105 +288,80 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
         }
         
         const snap = await getDocs(qRef);
-        console.log('[Overlay] Firestore returned', snap.docs.length, 'docs');
+        console.log('[ScriptureOverlay] Firestore returned', snap.docs.length, 'docs');
         
-        // Robust: force verse to number, log type, and filter in JS for range
+        // Process verse data
         const docs = snap.docs
           .map(doc => {
             const data = doc.data();
             const verseNum = Number(data.verse);
-            console.log('Verse type:', typeof data.verse, data.verse, data.translation, data.text);
             return { ...data, verse: verseNum };
           })
           .filter(d => {
-            // For chapter-only, include all verses in the chapter
-            // For specific ranges, filter by the exact range
             return isChapterOnly ? d.verse >= startV : (d.verse >= startV && d.verse <= endV);
           });
-        console.log('[Overlay] After filter, docs:', docs.map(d => ({ verse: d.verse, translation: d.translation, text: d.text })));
-        console.log('[Overlay] Raw docs from Firestore:', docs);
-        if (docs.length === 0) {
-          console.warn('[Overlay] No verses found for query:', { bookLower, chapterNum, startV, endV });
-        }
-        console.log('Query:', { bookLower, chapterNum, startVerse: startV, endVerse: endV });
-        console.log('Fetched verses:', docs.map(d => `${d.book} ${d.chapter}:${d.verse} ${d.text?.slice(0,20)}`));
-        console.log('Docs:', docs.map(d => ({ book: d.book, chapter: d.chapter, verse: d.verse })));
-        docs.sort((a, b) => a.verse - b.verse);        const translationMap = {};
+        
+        docs.sort((a, b) => a.verse - b.verse);
+        
+        // Build translation map from verse data
+        const translationMap = {};
         for (const d of docs) {
           const code = d.translation;
           if (!translationMap[code]) {
-            translationMap[code] = { code, label: code.toUpperCase(), text: '', verses: [] };
+            translationMap[code] = { code, label: code.toUpperCase(), verses: [] };
           }
           translationMap[code].verses.push({ verse: d.verse, text: d.text.trim() });
-        }        const list = Object.values(translationMap).map(t => {
-          t.verses.sort((a, b) => a.verse - b.verse);
-          return {
-            code: t.code,
-            label: t.label.toUpperCase(), // Ensure label is always uppercase
-            text: t.verses.map(v => v.text).join('\n'), // legacy
-            verses: t.verses,
-          };
-        });
-        
-        // Normalize codes for robust comparison
-        const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, '');
-        
-        console.log('[Overlay] Before reordering, list:', list.map(t => t.code));
-        console.log('[Overlay] Default translation provided:', defaultTranslation);
-        
-        let preferredIdx = -1;
-        let preferredTranslation = null;
-        
-        if (defaultTranslation) {
-          preferredIdx = list.findIndex(t => norm(t.code) === norm(defaultTranslation));
-          console.log('[Overlay] Found preferred translation at index:', preferredIdx);
-          if (preferredIdx !== -1) {
-            preferredTranslation = list[preferredIdx];
-            console.log('[Overlay] Preferred translation object:', preferredTranslation);
-          }
         }
-          if (preferredIdx !== -1 && preferredTranslation) {
-          // Remove preferred from list and put it first
-          const preferred = list.splice(preferredIdx, 1)[0];
-          const rest = list.sort((a, b) => norm(a.code).localeCompare(norm(b.code)));
-          const reorderedList = [preferred, ...rest];
-          console.log('[Overlay] Reordered list:', reorderedList.map(t => t.code));
-          
-          // Set both translations and current translation together to avoid race condition
-          setTranslations(reorderedList);
-          setCurrent(preferred.code);
-          console.log('[Overlay] Setting current to preferred translation:', preferred.code);
+        
+        // Filter and order translations based on availableTranslations (like Universal Search)
+        const availableTranslationsWithData = availableTranslations
+          .filter(t => translationMap[t.id] || translationMap[t.name]) // Check both id and name
+          .map(t => {
+            const translationCode = translationMap[t.id] ? t.id : t.name;
+            const translationData = translationMap[translationCode];
+            if (translationData) {
+              translationData.verses.sort((a, b) => a.verse - b.verse);
+              return {
+                code: translationCode,
+                label: t.displayName || t.name.toUpperCase(),
+                text: translationData.verses.map(v => v.text).join('\n'),
+                verses: translationData.verses,
+                isUserDefault: userDefaultTranslation && (
+                  t.id.toLowerCase() === userDefaultTranslation.toLowerCase() ||
+                  t.name.toLowerCase() === userDefaultTranslation.toLowerCase()
+                )
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
+        
+        console.log('[ScriptureOverlay] Available translations with data:', availableTranslationsWithData.map(t => `${t.code} (${t.label})`));
+        
+        // Set translations in the prioritized order
+        setTranslations(availableTranslationsWithData);
+        
+        // Set current translation (prefer user default, then first available)
+        if (availableTranslationsWithData.length > 0) {
+          const defaultTranslation = availableTranslationsWithData.find(t => t.isUserDefault);
+          const currentTranslation = defaultTranslation || availableTranslationsWithData[0];
+          setCurrent(currentTranslation.code);
+          console.log('[ScriptureOverlay] Setting current translation:', currentTranslation.code, 
+                     defaultTranslation ? '(user default)' : '(first available)');
         } else {
-          // Sort alphabetically if no preferred translation
-          list.sort((a, b) => norm(a.code).localeCompare(norm(b.code)));
-          console.log('[Overlay] No preferred translation, sorted list:', list.map(t => t.code));
-          
-          // Set both translations and current translation together
-          setTranslations(list);
-          if (list[0]?.code) {
-            setCurrent(list[0].code);
-            console.log('[Overlay] No preferred translation found, using first available:', list[0].code);
-          } else {
-            setCurrent('');
-            console.log('[Overlay] No translations available');
-          }
+          setCurrent('');
+          console.log('[ScriptureOverlay] No translations with data available');
         }
-        // Debug: show what will be rendered
-        console.log('[Overlay] Translations list:', list);        // Debug: show what will be rendered
-        console.log('[Overlay] Translations list:', list);
-        if (list.length > 0) {
-          console.log('[Overlay] Active translation verses:', list[0].verses);
-        }
+        
       } catch (err) {
-        console.error('Error fetching verses:', err);
+        console.error('[ScriptureOverlay] Error fetching verses:', err);
         setTranslations([]);
-        setCurrent('');
-      } finally {
+        setCurrent('');      } finally {
         setLoading(false);
       }
     };
     fetchVerses();
-  }, [open, effective, defaultTranslation]); // Dependencies for the fetchVerses effect
+  }, [open, effective, availableTranslations, userDefaultTranslation]); // Dependencies for the fetchVerses effect
   
   useEffect(() => {
     console.log('[ScriptureOverlay] Translation selection effect triggered:', {
@@ -403,24 +452,48 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
             </div>
 
             {/* Content Wrapper (for consistent padding and scroll handling) */}
-            <div className="flex-grow overflow-y-auto">
-              {/* Translation Selector - Placed above scripture text */}
+            <div className="flex-grow overflow-y-auto">              {/* Translation Selector - Placed above scripture text */}
               {!loading && translations.length > 1 && (
-                <div className="p-3 md:p-4 border-b border-gray-800/60 sticky top-0 z-10 backdrop-blur-sm bg-gray-900/50">                  <div className="flex flex-wrap gap-2 justify-center">
+                <div className="p-3 md:p-4 border-b border-gray-800/60 sticky top-0 z-10 backdrop-blur-sm bg-gray-900/50">                  {/* Desktop: flex-wrap, Mobile: horizontal scroll */}
+                  <div className="hidden md:flex flex-wrap gap-2 justify-center">
                     {translations.map(t => (
                       <button
                         key={t.code}
                         onClick={() => setCurrent(t.code)}
-                        className={`px-3 py-1.5 text-xs md:text-sm rounded-md transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-yellow-500/70 shadow-sm font-semibold
+                        className={`px-3 py-1.5 text-sm rounded-md transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-yellow-500/70 shadow-sm font-semibold
                           ${
                           current === t.code
                             ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-black font-bold border border-yellow-600/80 shadow-lg transform scale-105' // Active style
-                            : 'bg-[#23232b] text-[#ffd700] border border-[#e0c97f] hover:bg-[#1a1a20] hover:text-[#fffbe6] hover:border-[#ffe082] hover:shadow-lg' // Black styling to match Universal Search
+                            : `bg-[#23232b] text-[#ffd700] border border-[#e0c97f] hover:bg-[#1a1a20] hover:text-[#fffbe6] hover:border-[#ffe082] hover:shadow-lg ${t.isUserDefault ? 'user-default' : ''}` // Black styling to match Universal Search
                         }`}
+                        title={`${t.label}${t.isUserDefault ? ' (Your Default)' : ''}`}
                       >
                         {t.label}
+                        {t.isUserDefault && <span className="text-yellow-400 ml-1">★</span>}
                       </button>
                     ))}
+                  </div>
+                  
+                  {/* Mobile: horizontal scrollable container */}
+                  <div className="flex md:hidden overflow-x-auto gap-2 pb-2 scrollbar-hide">
+                    <div className="flex gap-2 min-w-max px-1">
+                      {translations.map(t => (
+                        <button
+                          key={t.code}
+                          onClick={() => setCurrent(t.code)}
+                          className={`px-3 py-1.5 text-xs rounded-md transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-yellow-500/70 shadow-sm font-semibold whitespace-nowrap flex-shrink-0
+                            ${
+                            current === t.code
+                              ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-black font-bold border border-yellow-600/80 shadow-lg transform scale-105' // Active style
+                              : `bg-[#23232b] text-[#ffd700] border border-[#e0c97f] hover:bg-[#1a1a20] hover:text-[#fffbe6] hover:border-[#ffe082] hover:shadow-lg ${t.isUserDefault ? 'user-default' : ''}` // Black styling to match Universal Search
+                          }`}
+                          title={`${t.label}${t.isUserDefault ? ' (Your Default)' : ''}`}
+                        >
+                          {t.label}
+                          {t.isUserDefault && <span className="text-yellow-400 ml-1">★</span>}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

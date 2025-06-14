@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Search Debug - Romans Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .test-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background-color: #2a2a2a;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00aa00;
+        }
+        .error {
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid #aa0000;
+        }
+        .info {
+            background-color: rgba(0, 100, 255, 0.1);
+            border: 1px solid #0066cc;
+        }
+        button {
+            background: linear-gradient(135deg, #b8860b, #daa520);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #daa520, #ffd700);
+        }
+        .debug-info {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            background-color: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .verse-count {
+            font-weight: bold;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <h1>Universal Search Debug - Romans Test</h1>
+    <p>This page will test the Universal Search functionality to see why it's not returning all verses for Romans.</p>
+    
+    <div class="test-container">
+        <h2>Test 1: Direct Romans Book Filter (Should return ALL Romans verses)</h2>
+        <button onclick="testRomansBookFilter()">Test Romans Book Filter</button>
+        <div id="romans-book-result"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 2: Romans Search Query (Current behavior)</h2>
+        <button onclick="testRomansSearchQuery()">Test Romans Search Query</button>
+        <div id="romans-search-result"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 3: Compare Firestore vs Search Results</h2>
+        <button onclick="compareFirestoreVsSearch()">Compare Firestore vs Search</button>
+        <div id="firestore-comparison-result"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 4: Different hitsPerPage Values</h2>
+        <button onclick="testDifferentHitsPerPage()">Test Different Limits</button>
+        <div id="hits-per-page-result"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
+        import { getFirestore, collection, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        // Initialize Firebase (you'll need to replace this with your actual config)
+        const firebaseConfig = {
+            // Your Firebase config here
+            apiKey: "AIzaSyAfk-Ng95YQKQZOOwQTuYcU8qsKggtpVQM",
+            authDomain: "sermon-notes-assistant.firebaseapp.com",
+            projectId: "sermon-notes-assistant",
+            storageBucket: "sermon-notes-assistant.appspot.com",
+            messagingSenderId: "590939455653",
+            appId: "1:590939455653:web:6f0dc9b2b5b9c54d7ade7b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app);
+        const db = getFirestore(app);        // Sign in anonymously for testing
+        let authReady = false;
+        signInAnonymously(auth).then((result) => {
+            console.log('Signed in anonymously for testing', result.user.uid);
+            authReady = true;
+        }).catch(error => {
+            console.error('Error signing in:', error);
+            // Try to get current user anyway
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log('User already signed in:', user.uid);
+                    authReady = true;
+                }
+            });
+        });
+
+        // Helper function to wait for auth
+        function waitForAuth() {
+            return new Promise((resolve, reject) => {
+                if (authReady) {
+                    resolve(true);
+                    return;
+                }
+                
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log('Auth state changed, user signed in:', user.uid);
+                        authReady = true;
+                        unsubscribe();
+                        resolve(true);
+                    }
+                });
+                
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    unsubscribe();
+                    reject(new Error('Authentication timeout'));
+                }, 10000);
+            });
+        }        window.testRomansBookFilter = async function() {
+            const resultDiv = document.getElementById('romans-book-result');
+            resultDiv.innerHTML = '<div class="info">Waiting for authentication...</div>';
+            
+            try {
+                await waitForAuth();
+                resultDiv.innerHTML = '<div class="info">Testing Romans book filter with max results...</div>';
+                
+                const universalScriptureSearch = httpsCallable(functions, 'universalScriptureSearch');
+                
+                const searchParams = {
+                    query: '', // Empty query - just filter by book
+                    translations: ['kjv'], // Use KJV as test translation
+                    books: ['Romans'], // Filter by Romans book
+                    page: 0,
+                    hitsPerPage: 1000 // Max results
+                };
+                
+                console.log('Testing Romans book filter with params:', searchParams);
+                const response = await universalScriptureSearch(searchParams);
+                const { results, nbHits, hitsPerPage } = response.data;
+                
+                let html = `<div class="success">
+                    <strong>✅ Romans Book Filter Results:</strong><br>
+                    <span class="verse-count">Found ${results.length} verses (${nbHits} total hits)</span><br>
+                    Hits per page: ${hitsPerPage}<br>
+                    First 5 verses: ${results.slice(0, 5).map(v => `${v.reference}`).join(', ')}<br>
+                    Last 5 verses: ${results.slice(-5).map(v => `${v.reference}`).join(', ')}
+                </div>`;
+                
+                html += `<div class="debug-info">Debug Info:\\n${JSON.stringify({
+                    totalResults: results.length,
+                    totalHits: nbHits,
+                    hitsPerPage: hitsPerPage,
+                    sampleReferences: results.slice(0, 10).map(v => v.reference)
+                }, null, 2)}</div>`;
+                
+                resultDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><strong>❌ Error:</strong> ${error.message}</div>`;
+                console.error('Romans book filter test error:', error);
+            }
+        };        window.testRomansSearchQuery = async function() {
+            const resultDiv = document.getElementById('romans-search-result');
+            resultDiv.innerHTML = '<div class="info">Waiting for authentication...</div>';
+            
+            try {
+                await waitForAuth();
+                resultDiv.innerHTML = '<div class="info">Testing Romans search query...</div>';
+                
+                const universalScriptureSearch = httpsCallable(functions, 'universalScriptureSearch');
+                
+                const searchParams = {
+                    query: 'romans', // Search for "romans" as text
+                    translations: ['kjv'],
+                    page: 0,
+                    hitsPerPage: 1000
+                };
+                
+                console.log('Testing Romans search query with params:', searchParams);
+                const response = await universalScriptureSearch(searchParams);
+                const { results, nbHits, hitsPerPage } = response.data;
+                
+                let html = `<div class="success">
+                    <strong>📝 Romans Search Query Results:</strong><br>
+                    <span class="verse-count">Found ${results.length} verses (${nbHits} total hits)</span><br>
+                    Hits per page: ${hitsPerPage}<br>
+                    Books found: ${[...new Set(results.map(v => v.book))].join(', ')}<br>
+                    Sample references: ${results.slice(0, 10).map(v => `${v.reference}`).join(', ')}
+                </div>`;
+                
+                html += `<div class="debug-info">Debug Info:\\n${JSON.stringify({
+                    totalResults: results.length,
+                    totalHits: nbHits,
+                    bookBreakdown: results.reduce((acc, v) => {
+                        acc[v.book] = (acc[v.book] || 0) + 1;
+                        return acc;
+                    }, {})
+                }, null, 2)}</div>`;
+                
+                resultDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><strong>❌ Error:</strong> ${error.message}</div>`;
+                console.error('Romans search query test error:', error);
+            }
+        };        window.compareFirestoreVsSearch = async function() {
+            const resultDiv = document.getElementById('firestore-comparison-result');
+            resultDiv.innerHTML = '<div class="info">Waiting for authentication...</div>';
+            
+            try {
+                await waitForAuth();
+                resultDiv.innerHTML = '<div class="info">Comparing Firestore vs Search results...</div>';
+                
+                // Get Romans verses directly from Firestore - simplified query to avoid index issues
+                const versesQuery = query(
+                    collection(db, 'verses'),
+                    where('book', '==', 'Romans'),
+                    where('translation', '==', 'kjv')
+                );
+                
+                const firestoreSnapshot = await getDocs(versesQuery);
+                const firestoreVerses = firestoreSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Get the same from search
+                const universalScriptureSearch = httpsCallable(functions, 'universalScriptureSearch');
+                const searchResponse = await universalScriptureSearch({
+                    query: '',
+                    translations: ['kjv'],
+                    books: ['Romans'],
+                    page: 0,
+                    hitsPerPage: 1000
+                });
+                const searchVerses = searchResponse.data.results;
+                
+                let html = `<div class="info">
+                    <strong>🔍 Firestore vs Search Comparison:</strong><br>
+                    <span class="verse-count">Firestore: ${firestoreVerses.length} verses</span><br>
+                    <span class="verse-count">Search: ${searchVerses.length} verses</span><br>
+                    <span class="verse-count">Difference: ${Math.abs(firestoreVerses.length - searchVerses.length)} verses</span>
+                </div>`;
+                
+                if (firestoreVerses.length !== searchVerses.length) {
+                    // Find missing verses
+                    const firestoreRefs = new Set(firestoreVerses.map(v => `${v.book} ${v.chapter}:${v.verse}`));
+                    const searchRefs = new Set(searchVerses.map(v => `${v.book} ${v.chapter}:${v.verse}`));
+                    
+                    const missingInSearch = [...firestoreRefs].filter(ref => !searchRefs.has(ref));
+                    const extraInSearch = [...searchRefs].filter(ref => !firestoreRefs.has(ref));
+                    
+                    if (missingInSearch.length > 0) {
+                        html += `<div class="error">
+                            <strong>⚠️ Missing in Search (${missingInSearch.length}):</strong><br>
+                            ${missingInSearch.slice(0, 10).join(', ')}${missingInSearch.length > 10 ? '...' : ''}
+                        </div>`;
+                    }
+                    
+                    if (extraInSearch.length > 0) {
+                        html += `<div class="error">
+                            <strong>⚠️ Extra in Search (${extraInSearch.length}):</strong><br>
+                            ${extraInSearch.slice(0, 10).join(', ')}${extraInSearch.length > 10 ? '...' : ''}
+                        </div>`;
+                    }
+                } else {
+                    html += `<div class="success"><strong>✅ Perfect match!</strong> Both sources return the same number of verses.</div>`;
+                }
+                
+                html += `<div class="debug-info">Firestore Sample:\\n${JSON.stringify(firestoreVerses.slice(0, 3).map(v => ({
+                    reference: `${v.book} ${v.chapter}:${v.verse}`,
+                    translation: v.translation,
+                    text: v.text.substring(0, 50) + '...'
+                })), null, 2)}\\n\\nSearch Sample:\\n${JSON.stringify(searchVerses.slice(0, 3).map(v => ({
+                    reference: v.reference,
+                    translation: v.translation,
+                    text: v.text.substring(0, 50) + '...'
+                })), null, 2)}</div>`;
+                
+                resultDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><strong>❌ Error:</strong> ${error.message}</div>`;
+                console.error('Firestore vs Search comparison error:', error);
+            }
+        };
+
+        window.testDifferentHitsPerPage = async function() {
+            const resultDiv = document.getElementById('hits-per-page-result');
+            resultDiv.innerHTML = '<div class="info">Testing different hitsPerPage values...</div>';
+            
+            try {
+                const universalScriptureSearch = httpsCallable(functions, 'universalScriptureSearch');
+                const hitLimits = [20, 50, 100, 200, 500, 1000];
+                const results = [];
+                
+                for (const limit of hitLimits) {
+                    const response = await universalScriptureSearch({
+                        query: '',
+                        translations: ['kjv'],
+                        books: ['Romans'],
+                        page: 0,
+                        hitsPerPage: limit
+                    });
+                    
+                    results.push({
+                        limit,
+                        returned: response.data.results.length,
+                        totalHits: response.data.nbHits,
+                        actualHitsPerPage: response.data.hitsPerPage
+                    });
+                }
+                
+                let html = `<div class="info"><strong>📊 Different hitsPerPage Test Results:</strong></div>`;
+                
+                results.forEach(result => {
+                    const isComplete = result.returned === result.totalHits;
+                    html += `<div class="${isComplete ? 'success' : 'error'}">
+                        Limit: ${result.limit} → Returned: ${result.returned} / ${result.totalHits} total 
+                        ${isComplete ? '✅ Complete' : '⚠️ Partial'}
+                    </div>`;
+                });
+                
+                html += `<div class="debug-info">Detailed Results:\\n${JSON.stringify(results, null, 2)}</div>`;
+                
+                resultDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><strong>❌ Error:</strong> ${error.message}</div>`;
+                console.error('Different hitsPerPage test error:', error);
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Search Filter Test</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: #f0f0f0;
+            font-family: 'Georgia', serif;
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffd700;
+            font-family: 'Trajan Pro', serif;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .test-section {
+            background: rgba(42, 42, 42, 0.8);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 2px solid #333;
+            text-align: left;
+        }
+
+        .test-title {
+            color: #ffd700;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .book-list {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #ffd700;
+        }
+
+        .book-list h3 {
+            color: #ffd700;
+            margin-top: 0;
+        }
+
+        .book-list ul {
+            columns: 2;
+            column-gap: 2rem;
+            margin: 0.5rem 0;
+        }
+
+        .book-list li {
+            break-inside: avoid;
+            margin-bottom: 0.3rem;
+            color: #cccccc;
+        }
+
+        .instructions {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .instructions h2 {
+            color: #ffd700;
+            margin-top: 0;
+        }
+
+        .step {
+            margin: 1rem 0;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .step:last-child {
+            border-bottom: none;
+        }
+
+        .step strong {
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>📖 Universal Search Filter Testing Guide</h1>
+        
+        <div class="instructions">
+            <h2>🧪 How to Test the New Group Filters</h2>
+            
+            <div class="step">
+                <strong>Step 1:</strong> Navigate to the Universal Search page and expand the "Filters" section.
+            </div>
+            
+            <div class="step">
+                <strong>Step 2:</strong> Select a translation (e.g., KJV, ESV) from the translations section.
+            </div>
+            
+            <div class="step">
+                <strong>Step 3:</strong> In the "Common Groups" section, check one of the groups (e.g., "Pauline Epistles").
+            </div>
+            
+            <div class="step">
+                <strong>Step 4:</strong> Notice that when you select a group, it now shows "Includes: [list of books]" below the checkbox.
+            </div>
+            
+            <div class="step">
+                <strong>Step 5:</strong> Perform a search (either with a search term like "faith" or just with the group filter selected).
+            </div>
+            
+            <div class="step">
+                <strong>Step 6:</strong> Check the browser console (F12 → Console) to see debug logs showing the expanded book list.
+            </div>
+            
+            <div class="step">
+                <strong>Step 7:</strong> Verify that results only come from the books in that group.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📋 Expected Group Memberships</div>
+            <p>The following groups should filter to include only these specific books:</p>
+            
+            <div class="book-list">
+                <h3>✝️ Pauline Epistles</h3>
+                <ul>
+                    <li>Romans</li>
+                    <li>1 Corinthians</li>
+                    <li>2 Corinthians</li>
+                    <li>Galatians</li>
+                    <li>Ephesians</li>
+                    <li>Philippians</li>
+                    <li>Colossians</li>
+                    <li>1 Thessalonians</li>
+                    <li>2 Thessalonians</li>
+                    <li>1 Timothy</li>
+                    <li>2 Timothy</li>
+                    <li>Titus</li>
+                    <li>Philemon</li>
+                </ul>
+            </div>
+
+            <div class="book-list">
+                <h3>📜 Pentateuch (Torah)</h3>
+                <ul>
+                    <li>Genesis</li>
+                    <li>Exodus</li>
+                    <li>Leviticus</li>
+                    <li>Numbers</li>
+                    <li>Deuteronomy</li>
+                </ul>
+            </div>
+
+            <div class="book-list">
+                <h3>📖 Gospels</h3>
+                <ul>
+                    <li>Matthew</li>
+                    <li>Mark</li>
+                    <li>Luke</li>
+                    <li>John</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔍 What to Look For</div>
+            <ul>
+                <li><strong>UI Enhancement:</strong> When you select a group, you should see "Includes: [books]" appear below it</li>
+                <li><strong>Console Logs:</strong> Check browser console for "Selected groups:" and "Expanded books from groups:" messages</li>
+                <li><strong>Search Results:</strong> Results should only come from books in the selected group(s)</li>
+                <li><strong>Combination Filtering:</strong> You can select multiple groups and individual books - they should all work together</li>
+                <li><strong>No Duplicates:</strong> If you select both a group and an individual book that's in that group, it shouldn't cause duplicates</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🚀 Test Scenarios</div>
+            
+            <div class="step">
+                <strong>Scenario 1 - Pauline Epistles Only:</strong><br>
+                Select "Pauline Epistles" group and search for "love". Results should only come from Romans through Philemon.
+            </div>
+            
+            <div class="step">
+                <strong>Scenario 2 - Pentateuch Only:</strong><br>
+                Select "Pentateuch" group and search for "God". Results should only come from Genesis through Deuteronomy.
+            </div>
+            
+            <div class="step">
+                <strong>Scenario 3 - Multiple Groups:</strong><br>
+                Select both "Gospels" and "Pauline Epistles" and search for "faith". Results should come from both groups.
+            </div>
+            
+            <div class="step">
+                <strong>Scenario 4 - Group + Individual Book:</strong><br>
+                Select "Gospels" group and also select "Revelation" individually. Search for "Jesus" and verify results come from all 5 books.
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; text-align: center;">
+            <p style="color: #ffd700; font-size: 1.1rem;">
+                <strong>Ready to test?</strong> Open the Universal Search page and try these scenarios!
+            </p>
+        </div>
+    </div>
+</body>
+</html>

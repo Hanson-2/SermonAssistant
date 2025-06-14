@@ -4,7 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'android/', 'node_modules/', 'build/', '*.min.js', 'functions/lib/', 'scripts/'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -30,4 +30,17 @@ export default [
       ],
     },
   },
+  // Service Worker specific config
+  {
+    files: ['service-worker.js'],
+    languageOptions: {
+      globals: {
+        ...globals.serviceworker,
+        ...globals.browser
+      }
+    },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
+    }
+  }
 ]

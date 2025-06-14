@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { deleteVerseById, updateVerseTextById, getUserProfile } from "../services/firebaseService";
 import { auth } from "../lib/firebase";
@@ -101,45 +101,87 @@ const UniversalSearchPage: React.FC = () => {
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [tagLoadError, setTagLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalHits, setTotalHits] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);  const [totalHits, setTotalHits] = useState(0);
   const [currentResults, setCurrentResults] = useState<Verse[]>([]);
-  const [sortOrder, setSortOrder] = useState<string>("chronological"); 
-
+  // Removed sortOrder state - we always sort chronologically now
+  
   // New state for collapsible sections and hits per page
   const [isTranslationsCollapsed, setIsTranslationsCollapsed] = useState(false);
-  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);  const [selectedHitsPerPage, setSelectedHitsPerPage] = useState(50); // Default 50
+  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
+  const [selectedHitsPerPage, setSelectedHitsPerPage] = useState(50); // Default 50
   const [deletingVerseId, setDeletingVerseId] = useState<string | null>(null);
   const [editingVerseId, setEditingVerseId] = useState<string | null>(null);
   const [editText, setEditText] = useState<string>("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [authLoaded, setAuthLoaded] = useState(false);
+  const translationsLoadedRef = useRef(false);
 
   const functions = getFunctions();
 
   // Auth listener to get current user ID for EXB restriction
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUserId(user ? user.uid : null);
+      const newUserId = user ? user.uid : null;
+      console.log('[UniversalSearch] Auth state changed. User:', user?.email, 'UID:', newUserId);
+      setUserId(newUserId);
+      setAuthLoaded(true); // Mark auth as loaded regardless of whether user is signed in
+      translationsLoadedRef.current = false; // Reset to allow re-fetching with new auth state
     });
     return () => unsubscribe();
   }, []);
-
   const sortVerses = useCallback((verses: Verse[]) => {
-    if (sortOrder === "chronological") {
-      return [...verses].sort((a, b) => {
-        const bookAOrder = bookOrder[a.book] || 999;
-        const bookBOrder = bookOrder[b.book] || 999;
-        if (bookAOrder !== bookBOrder) return bookAOrder - bookBOrder;
-        if (a.chapter !== b.chapter) return a.chapter - b.chapter;
-        return a.verse - b.verse;
-      });
-    }
-    return verses;
-  }, [sortOrder]);
+    // ALWAYS sort chronologically - removed sortOrder check for guaranteed chronological order
+    return [...verses].sort((a, b) => {
+      // Primary sort: Book order (chronological order in Bible)
+      const bookAOrder = bookOrder[a.book] || 999;
+      const bookBOrder = bookOrder[b.book] || 999;
+      if (bookAOrder !== bookBOrder) return bookAOrder - bookBOrder;
+      
+      // Secondary sort: Chapter number
+      if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+      
+      // Tertiary sort: Verse number
+      return a.verse - b.verse;
+    });
+  }, []); // Removed sortOrder dependency since we always sort chronologically
 
+  // Helper function to group verses by book for sectioned display
+  const groupVersesByBook = useCallback((verses: Verse[]) => {
+    const grouped: { [book: string]: Verse[] } = {};
+    
+    verses.forEach(verse => {
+      if (!grouped[verse.book]) {
+        grouped[verse.book] = [];
+      }
+      grouped[verse.book].push(verse);
+    });
+    
+    // Sort the books themselves chronologically and return as array of [book, verses] pairs
+    return Object.entries(grouped).sort(([bookA], [bookB]) => {
+      const orderA = bookOrder[bookA] || 999;
+      const orderB = bookOrder[bookB] || 999;
+      return orderA - orderB;
+    });
+  }, []);
+
+  // Fetch translations and tags when auth state loads
   useEffect(() => {
     const fetchInitialData = async () => {
+      // Don't fetch until auth state has loaded
+      if (!authLoaded) {
+        console.log('[UniversalSearch] Waiting for auth to load before fetching translations...');
+        return;
+      }
+      
+      // Don't fetch if we've already loaded translations (unless auth changed)
+      if (translationsLoadedRef.current && availableTranslations.length > 0) {
+        console.log('[UniversalSearch] Translations already loaded, skipping fetch...');
+        return;
+      }
+      
+      console.log('[UniversalSearch] Fetching translations with userId:', userId, 'authLoaded:', authLoaded);
+      
       // Fetch Tags
       setIsLoadingTags(true); // Set loading true for tags
       try {
@@ -161,15 +203,13 @@ const UniversalSearchPage: React.FC = () => {
       try {        // First, get user's preferred translation from Firestore profile
         let userDefaultTranslation: string | null = null;
         try {
-          console.log('[UniversalSearch] Fetching user profile for default translation...');
-          const userProfile = await getUserProfile();
+          console.log('[UniversalSearch] Fetching user profile for default translation...');          const userProfile = await getUserProfile();
           userDefaultTranslation = userProfile?.preferences?.defaultBibleVersion || null;
           console.log('[UniversalSearch] User default translation from Firestore:', userDefaultTranslation);
           setUserDefaultTranslation(userDefaultTranslation); // Store in state for UI display
         } catch (profileError) {
           console.error('[UniversalSearch] Error fetching user profile:', profileError);
-          userDefaultTranslation = localStorage.getItem('defaultTranslation');
-          userDefaultTranslation = localStorage.getItem('defaultBibleVersion');
+          userDefaultTranslation = localStorage.getItem('defaultTranslation') || localStorage.getItem('defaultBibleVersion');
           console.log('[UniversalSearch] Fallback to localStorage default translation:', userDefaultTranslation);
           setUserDefaultTranslation(userDefaultTranslation); // Store in state for UI display
         }
@@ -177,15 +217,43 @@ const UniversalSearchPage: React.FC = () => {
         const getAllUniqueTranslationsCallable = httpsCallable<
           void,
           { uniqueTranslations: Translation[] }
-        >(functions, "getAllUniqueTranslations");        const result = await getAllUniqueTranslationsCallable();
+        >(functions, "getAllUniqueTranslations");
+        const result = await getAllUniqueTranslationsCallable();
         const fetchedTranslations = result.data.uniqueTranslations || [];
         
-        // Filter out EXB translation unless user is authorized
-        const filteredTranslations = fetchedTranslations.filter((translation) => 
-          translation.id.toUpperCase() !== "EXB" || userId === "89UdurybrVSwbPmp4boEMeYdVzk1"
-        );
+        console.log('[UniversalSearch] Raw fetched translations:', fetchedTranslations.map(t => `${t.id}|${t.name}|${t.displayName}`));
+        
+        // Deduplicate translations by ID (case-insensitive)
+        const deduplicatedTranslations = fetchedTranslations.reduce((acc: Translation[], current) => {
+          const exists = acc.find(t => t.id.toLowerCase() === current.id.toLowerCase());
+          if (!exists) {
+            acc.push(current);
+          } else {
+            console.log('[UniversalSearch] Skipping duplicate translation:', current.id);
+          }
+          return acc;
+        }, []);
+          console.log('[UniversalSearch] Deduplicated translations:', deduplicatedTranslations.map(t => `${t.id}|${t.name}|${t.displayName}`));
+          // Filter out EXB translation unless user is authorized
+        const expectedUserId = "89UdurybrVSwbPmp4boEMeYdVzk1";
+        console.log('[UniversalSearch] Before EXB filtering - userId:', userId, 'expected:', expectedUserId);
+        console.log('[UniversalSearch] User ID match:', userId === expectedUserId, 'userId type:', typeof userId, 'length:', userId?.length);
+        console.log('[UniversalSearch] EXB translations before filter:', deduplicatedTranslations.filter(t => t.id.toUpperCase() === "EXB"));
+        
+        const filteredTranslations = deduplicatedTranslations.filter((translation) => {
+          const isEXB = translation.id.toUpperCase() === "EXB";
+          const isAuthorized = userId === expectedUserId;
+          const shouldInclude = !isEXB || isAuthorized;
+          
+          if (isEXB) {
+            console.log(`[UniversalSearch] EXB check: isEXB=${isEXB}, userId="${userId}", expectedUserId="${expectedUserId}", isAuthorized=${isAuthorized}, shouldInclude=${shouldInclude}`);
+          }
+          
+          return shouldInclude;
+        });
         
         console.log('[UniversalSearch] Filtered translations (EXB restricted):', filteredTranslations.map(t => `${t.id} (${t.displayName})`));
+        console.log('[UniversalSearch] EXB translations after filter:', filteredTranslations.filter(t => t.id.toUpperCase() === "EXB"));
         
         // Advanced prioritization system - prioritize translations based on user preferences and common usage
         const prioritizeTranslations = (translations: Translation[], userDefault: string | null): Translation[] => {
@@ -242,9 +310,30 @@ const UniversalSearchPage: React.FC = () => {
             
             // Final fallback: alphabetical by display name
             return a.displayName.localeCompare(b.displayName);
-          });        };            const prioritizedTranslations = prioritizeTranslations(filteredTranslations, userDefaultTranslation);
+          });        };        const prioritizedTranslations = prioritizeTranslations(filteredTranslations, userDefaultTranslation);
         console.log('[UniversalSearch] Prioritized translations:', prioritizedTranslations.map(t => `${t.id} (${t.displayName})`));
-        setAvailableTranslations(prioritizedTranslations);        // Immediately set the default translation when translations are loaded
+        
+        // Final deduplication to ensure no duplicate keys in React render
+        const finalTranslations = prioritizedTranslations.reduce((acc: Translation[], current) => {
+          const exists = acc.find(t => t.id === current.id);
+          if (!exists) {
+            acc.push(current);
+          } else {
+            console.warn('[UniversalSearch] Final deduplication - removing duplicate:', current.id);
+          }
+          return acc;
+        }, []);
+          console.log('[UniversalSearch] Final translations after deduplication:', finalTranslations.map(t => t.id));
+        
+        // Verify no duplicates before setting state
+        const duplicateIds = finalTranslations.map(t => t.id).filter((id, index, arr) => arr.indexOf(id) !== index);
+        if (duplicateIds.length > 0) {
+          console.error('[UniversalSearch] DUPLICATE IDs DETECTED:', duplicateIds);
+        }
+          setAvailableTranslations(finalTranslations);
+        translationsLoadedRef.current = true; // Mark as loaded to prevent re-fetching
+
+        // Immediately set the default translation when translations are loaded
         if (prioritizedTranslations.length > 0) {
           // Priority: 1) User's Firestore default, 2) localStorage default, 3) first prioritized translation
           let defaultTranslation = userDefaultTranslation;
@@ -268,25 +357,26 @@ const UniversalSearchPage: React.FC = () => {
           localStorage.setItem('defaultTranslation', defaultTranslation);
         }
         
-      } catch (err: any) {
-        console.error("Error fetching translations:", err);
+      } catch (err: any) {        console.error("Error fetching translations:", err);
         setTranslationLoadError(`Failed to load translations: ${err.message || "Unknown error"}`);
       } finally {
         setIsLoadingTranslations(false);
-      }};    fetchInitialData();
-  }, [functions, userId]); // Re-run when userId changes (auth loads) to get user's default translation
-
+      }
+    };
+    
+    fetchInitialData();
+  }, [functions, userId, authLoaded]); // Re-run when userId changes (auth loads) to get user's default translation
   // Additional effect to ensure default translation is maintained
   useEffect(() => {
-    // If no translations are selected but we have available translations and user data, set the default
-    if (availableTranslations.length > 0 && selectedTranslations.length === 0 && userId !== null) {
+    // If no translations are selected but we have available translations and auth is loaded, set the default
+    if (availableTranslations.length > 0 && selectedTranslations.length === 0 && authLoaded) {
       const defaultTranslation = getUserDefaultTranslation();
       if (defaultTranslation) {
         console.log('[UniversalSearch] Restoring default translation on load:', defaultTranslation);
         setSelectedTranslations([defaultTranslation]);
       }
     }
-  }, [availableTranslations, selectedTranslations.length, userId, userDefaultTranslation]);
+  }, [availableTranslations, selectedTranslations.length, authLoaded, userDefaultTranslation]);
   const toggleFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
     setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
   };
@@ -335,9 +425,12 @@ const UniversalSearchPage: React.FC = () => {
       setTotalPages(0);
       setTotalHits(0);
       return;
-    }
-    // Keep existing check or adjust if only translation is enough
-    if (!searchQuery.trim() && selectedBooks.length === 0 && selectedTags.length === 0 && selectedTestaments.length === 0 && selectedGroups.length === 0) {
+    }    // Check if we have any meaningful search criteria
+    const hasGroupFilters = selectedGroups.length > 0;
+    const hasIndividualBookFilters = selectedBooks.length > 0;
+    const hasBookFilters = hasGroupFilters || hasIndividualBookFilters;
+    
+    if (!searchQuery.trim() && !hasBookFilters && selectedTags.length === 0 && selectedTestaments.length === 0) {
       setError("Please enter a search term or select at least one filter (in addition to translation)." );
       setCurrentResults([]);
       setTotalPages(0);
@@ -360,20 +453,48 @@ const UniversalSearchPage: React.FC = () => {
         any,
         // Update the expected return type to match the flat structure
         { results: Verse[]; nbHits: number; page: number; nbPages: number; hitsPerPage: number }
-      >(functions, 'universalScriptureSearch');
+      >(functions, 'universalScriptureSearch');      // Intelligent hits per page based on search type
+      let intelligentHitsPerPage = selectedHitsPerPage;
       
+      // If user is filtering by specific books (either individual books or groups), 
+      // they likely want to see all results from those books
+      if (hasBookFilters && !searchQuery.trim()) {
+        // When filtering by books without a search term, use max results
+        intelligentHitsPerPage = 1000;
+        console.log('[UniversalSearch] Book-only filter detected, using max results (1000)');
+      } else if (hasBookFilters && searchQuery.trim()) {
+        // When searching within specific books, use a higher limit
+        intelligentHitsPerPage = Math.max(selectedHitsPerPage, 200);
+        console.log('[UniversalSearch] Book filter + search term detected, using enhanced limit:', intelligentHitsPerPage);
+      }
+
       const searchParams: any = {
         query: searchQuery,
         translations: selectedTranslations,
         page: pageToFetch,
-        hitsPerPage: selectedHitsPerPage, // Use state variable for hitsPerPage
+        hitsPerPage: intelligentHitsPerPage,
       };
+      
+      // Expand selected groups into individual books and combine with selected books
+      let allSelectedBooks = [...selectedBooks];
+      if (selectedGroups.length > 0) {
+        selectedGroups.forEach(groupName => {
+          const booksInGroup = commonBookGroups[groupName as keyof typeof commonBookGroups];
+          if (booksInGroup) {
+            allSelectedBooks = [...allSelectedBooks, ...booksInGroup];
+          }
+        });
+        // Remove duplicates
+        allSelectedBooks = [...new Set(allSelectedBooks)];
+      }
+      
       if (selectedTestaments.length > 0) searchParams.testaments = selectedTestaments;
-      if (selectedGroups.length > 0) searchParams.commonGroups = selectedGroups; // Ensure backend expects commonGroups
-      if (selectedBooks.length > 0) searchParams.books = selectedBooks;
+      if (allSelectedBooks.length > 0) searchParams.books = allSelectedBooks; // Use expanded book list
       if (selectedTags.length > 0) searchParams.tags = selectedTags;
 
       console.log("Calling Firebase Function with params:", searchParams);
+      console.log("Selected groups:", selectedGroups);
+      console.log("Expanded books from groups:", allSelectedBooks);
 
       const response = await universalScriptureSearch(searchParams);
       // Adjust destructuring to match the flat structure from the function
@@ -383,7 +504,10 @@ const UniversalSearchPage: React.FC = () => {
 
       if (results && results.length > 0) {
         const sortedResults = sortVerses(results);
-        setCurrentResults(pageToFetch === 0 ? sortedResults : prev => sortVerses([...prev, ...sortedResults]));
+        setCurrentResults(pageToFetch === 0
+          ? sortedResults
+          : prev => [...prev, ...sortedResults] // Assume backend returns sorted results for each page
+        );
         // Use directly destructured pagination fields
         setTotalHits(nbHits);
         setCurrentPage(page);
@@ -476,6 +600,20 @@ const UniversalSearchPage: React.FC = () => {
     }
   };
 
+  // Helper function to detect if search query matches a book name
+  const detectBookNameSearch = useCallback((query: string): string | null => {
+    if (!query.trim()) return null;
+    
+    const queryLower = query.toLowerCase().trim();
+    const matchedBook = ALL_BOOKS.find(book => 
+      book.toLowerCase() === queryLower || 
+      book.toLowerCase().includes(queryLower) ||
+      queryLower.includes(book.toLowerCase())
+    );
+    
+    return matchedBook || null;
+  }, []);
+
   return (
     <div className="universal-search-page">
       <div className="universal-search-content">
@@ -497,40 +635,54 @@ const UniversalSearchPage: React.FC = () => {
           </button>
           <button onClick={clearFilters} disabled={isLoading} className="clear-filters-btn">
             Clear Filters
-          </button>
-          <div className="hits-per-page-selector">
-            <label htmlFor="hitsPerPage">Results:</label>
+          </button>          <div className="hits-per-page-selector">
+            <label htmlFor="hitsPerPage">Results per page:</label>
             <select
               id="hitsPerPage"
               value={selectedHitsPerPage}
               onChange={(e) => {
                 setSelectedHitsPerPage(Number(e.target.value));
-                // Optionally, trigger a new search immediately when this changes
-                // if (currentResults.length > 0) handleSearch(0); 
+                // Trigger a new search immediately when this changes
+                if (currentResults.length > 0) {
+                  console.log('[UniversalSearch] Results limit changed, re-running search...');
+                  handleSearch(0);
+                }
               }}
-              className="hits-per-page-dropdown" // Add a class for styling if needed
+              className="hits-per-page-dropdown"
+              title="Change how many results are shown per page. Use 'All' for complete book searches."
             >
-              <option value={50}>50</option>
+              <option value={25}>25</option>
+              <option value={50}>50 (Default)</option>
               <option value={100}>100</option>
-              <option value={1000}>All (Max 1000)</option> {/* Algolia's default max is 1000 */}
+              <option value={200}>200</option>
+              <option value={500}>500</option>
+              <option value={1000}>All (Max 1000)</option>
             </select>
+            <div className="hits-per-page-hint" style={{
+              fontSize: '0.8rem',
+              color: '#cccccc',
+              marginTop: '0.3rem',
+              fontStyle: 'italic'
+            }}>
+              💡 Use "All" when searching entire books
+            </div>
           </div>
         </div>
 
         <div className="translations-filter">
           <h3 className="filter-title clickable" onClick={() => setIsTranslationsCollapsed(!isTranslationsCollapsed)}>
-            Translations (Required) {isTranslationsCollapsed ? '+' : '−'}
+            Translations {isTranslationsCollapsed ? '+' : '−'}
           </h3>
-          {!isTranslationsCollapsed && (
-            <>              {translationLoadError && <p className="search-error">{translationLoadError}</p>}
+          {!isTranslationsCollapsed && (            <>
+              {translationLoadError && <p className="search-error">{translationLoadError}</p>}
               {isLoadingTranslations ? <p className="loading-indicator">Loading translations...</p> : (
                 <>
-                  <p className="translation-help-text">Translations are ordered by your preferences and popularity. Your selections are saved for future sessions.</p>                  <div className="translation-buttons">
-                  {availableTranslations.map((translation) => {
+                  <p className="translation-help-text">Translations are ordered by your preferences and popularity. Your selections are saved for future sessions.</p>
+                  <div className="translation-buttons">{availableTranslations.map((translation, index) => {
                     const isUserDefault = userDefaultTranslation && translation.id.toLowerCase() === userDefaultTranslation.toLowerCase();
                     return (
                       <button
-                        key={translation.id}
+                        key={`translation-${translation.id}-${index}`}
                         onClick={() => handleTranslationSelect(translation.id)}
                         className={`translation-btn ${selectedTranslations.includes(translation.id) ? "selected" : ""} ${isUserDefault ? "user-default" : ""}`}
                         title={`${translation.displayName}${isUserDefault ? ' (Your Default)' : ''}`}
@@ -545,9 +697,39 @@ const UniversalSearchPage: React.FC = () => {
               )}
             </>
           )}
-        </div>
-
-        {error && <p className="search-error">{error}</p>}
+        </div>        {error && <p className="search-error">{error}</p>}
+        
+        {/* Smart suggestion for book name searches */}
+        {searchQuery && selectedBooks.length === 0 && selectedGroups.length === 0 && detectBookNameSearch(searchQuery) && (
+          <div className="book-search-suggestion" style={{
+            margin: '1rem 0',
+            padding: '1rem',
+            background: 'rgba(59, 130, 246, 0.1)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '0.5rem',
+            color: '#60a5fa'
+          }}>
+            <strong>💡 Smart Suggestion:</strong> It looks like you're searching for "{detectBookNameSearch(searchQuery)}". 
+            For better results, try using the <strong>Books filter</strong> below instead of the search box, 
+            or <button 
+              onClick={() => {
+                setSelectedBooks([detectBookNameSearch(searchQuery)!]);
+                setSearchQuery('');
+                setSelectedHitsPerPage(1000);
+              }}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: '#ffd700', 
+                textDecoration: 'underline', 
+                cursor: 'pointer',
+                fontSize: 'inherit'
+              }}
+            >
+              click here to auto-select it
+            </button>.
+          </div>
+        )}
 
         <div className="filter-section">
           <h3 className="filter-title clickable" onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)} >
@@ -560,17 +742,23 @@ const UniversalSearchPage: React.FC = () => {
                   <strong>Testament:</strong>
                   <label><input type="checkbox" onChange={() => toggleFilter(setSelectedTestaments, "Old Testament")} checked={selectedTestaments.includes("Old Testament")} /> Old Testament</label>
                   <label><input type="checkbox" onChange={() => toggleFilter(setSelectedTestaments, "New Testament")} checked={selectedTestaments.includes("New Testament")} /> New Testament</label>
-                </div>
-                <div className="filter-group">
+                </div>                <div className="filter-group">
                   <strong>Common Groups:</strong>
-                  {Object.entries(commonBookGroups).map(([groupName]) => (
-                    <label key={groupName}>
-                      <input 
-                        type="checkbox" 
-                        onChange={() => toggleFilter(setSelectedGroups, groupName)} 
-                        checked={selectedGroups.includes(groupName)} 
-                      /> {groupName}
-                    </label>
+                  {Object.entries(commonBookGroups).map(([groupName, books]) => (
+                    <div key={groupName} className="group-filter-item">
+                      <label>
+                        <input 
+                          type="checkbox" 
+                          onChange={() => toggleFilter(setSelectedGroups, groupName)} 
+                          checked={selectedGroups.includes(groupName)} 
+                        /> {groupName}
+                      </label>
+                      {selectedGroups.includes(groupName) && (
+                        <div className="group-books-preview">
+                          <small>Includes: {books.join(', ')}</small>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -614,80 +802,115 @@ const UniversalSearchPage: React.FC = () => {
           )}
         </div>
 
-        {isLoading && currentResults.length === 0 && <div className="loading-indicator">Loading results...</div>}
-        {!isLoading && currentResults.length === 0 && !error && (searchQuery || selectedBooks.length > 0 || selectedTags.length > 0 || selectedTestaments.length > 0 || selectedGroups.length > 0) && <p className="no-results-message">No results found. Try adjusting your search or filters.</p>}
+        {isLoading && currentResults.length === 0 && <div className="loading-indicator">Loading results...</div>}        {!isLoading && currentResults.length === 0 && !error && (searchQuery || selectedBooks.length > 0 || selectedTags.length > 0 || selectedTestaments.length > 0 || selectedGroups.length > 0) && <p className="no-results-message">No results found. Try adjusting your search or filters.</p>}
         {!isLoading && currentResults.length === 0 && !error && !searchQuery && selectedBooks.length === 0 && selectedTags.length === 0 && selectedTestaments.length === 0 && selectedGroups.length === 0 && selectedTranslations.length > 0 && <p className="no-results-message">Enter a search term or select filters to begin.</p>}
-        
-        {currentResults.length > 0 && (
-          <>
-            <div className="results-title-with-icon">
+          {currentResults.length > 0 && (
+          <>            <div className="results-title-with-icon">
               <h2 className="results-title" style={{ display: 'inline', verticalAlign: 'middle', margin: 0 }}>
                 Search Results ({totalHits})
               </h2>
               <img src="/Algolia-mark-blue.png" alt="Results Icon" style={{ height: 32, width: 32, marginLeft: 10, verticalAlign: 'middle', display: 'inline-block' }} />
-            </div>
-            <ul className="search-results-list">
-              {currentResults.map((verse) => (
-                <li key={verse.objectID} className="search-result-item">
-                  {/* Removed logo image from each result */}
-                  <h3 
-                    className="result-reference" 
-                    dangerouslySetInnerHTML={{
-                      __html: verse._highlightResult?.reference?.value || `${verse.reference} (${verse.translation})`
+              
+              {/* Result limit notification */}
+              {totalHits > currentResults.length && (
+                <div className="result-limit-notice" style={{ 
+                  marginTop: '0.5rem', 
+                  padding: '0.5rem 1rem', 
+                  background: 'rgba(255, 165, 0, 0.1)', 
+                  border: '1px solid rgba(255, 165, 0, 0.3)', 
+                  borderRadius: '0.5rem',
+                  color: '#ffa500',
+                  fontSize: '0.9rem'
+                }}>
+                  📋 Showing {currentResults.length} of {totalHits} results. 
+                  {totalPages > 1 && ` Use pagination below or `}
+                  <button 
+                    onClick={() => setSelectedHitsPerPage(1000)}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      color: '#ffd700', 
+                      textDecoration: 'underline', 
+                      cursor: 'pointer',
+                      fontSize: 'inherit'
                     }}
-                    style={{ display: 'inline', marginLeft: 0 }}
-                  />
-                  {editingVerseId === verse.objectID ? (
-                    <>
-                      <textarea
-                        value={editText}
-                        onChange={e => setEditText(e.target.value)}
-                        rows={3}
-                        style={{ width: '100%', marginBottom: 8 }}
-                        disabled={savingEdit}
-                        placeholder="Edit verse text"
-                        title="Edit verse text"
-                      />
-                      <button onClick={() => handleSaveEdit(verse)} disabled={savingEdit} style={{ marginRight: 8 }}>
-                        {savingEdit ? 'Saving...' : 'Save'}
-                      </button>
-                      <button onClick={handleCancelEdit} disabled={savingEdit}>Cancel</button>
-                    </>
-                  ) : (
-                    <>
-                      <p 
-                        className="result-text" 
-                        dangerouslySetInnerHTML={{
-                          __html: verse._highlightResult?.text?.value || verse.text
-                        }}
-                      />
-                      <button
-                        className="edit-verse-btn"
-                        onClick={() => handleEditVerse(verse)}
-                        style={{ marginLeft: 8, color: '#e0c97f', background: 'none', border: 'none', cursor: 'pointer' }}
-                        title="Edit this verse text"
-                      >
-                        Edit
-                      </button>
-                    </>
-                  )}
-                  {verse.tags && verse.tags.length > 0 && (
-                    <div className="result-tags">
-                      <strong>Tags:</strong> {verse.tags.join(', ')}
-                    </div>
-                  )}
-                  <button
-                    className="delete-verse-btn"
-                    onClick={() => handleDeleteVerse(verse.objectID)}
-                    disabled={deletingVerseId === verse.objectID}
-                    style={{ marginLeft: 12, color: '#ff4040', background: 'none', border: 'none', cursor: 'pointer' }}
-                    title="Delete this verse from Firestore"
                   >
-                    {deletingVerseId === verse.objectID ? 'Deleting...' : 'Delete'}
-                  </button>
-                </li>
+                    change results limit
+                  </button> to see more.
+                </div>
+              )}
+            </div>
+            
+            {/* Enhanced results display with book sectioning */}
+            <div className="search-results-sectioned">
+              {groupVersesByBook(currentResults).map(([bookName, verses]) => (
+                <div key={bookName} className="book-section">
+                  <h3 className="book-section-title gradient-gold-text">
+                    📖 {bookName} ({verses.length} verse{verses.length === 1 ? '' : 's'})
+                  </h3>
+                  <ul className="search-results-list book-verses">
+                    {verses.map((verse) => (
+                      <li key={verse.objectID} className="search-result-item">
+                        <h4 
+                          className="result-reference" 
+                          dangerouslySetInnerHTML={{
+                            __html: verse._highlightResult?.reference?.value || `${verse.reference} (${verse.translation})`
+                          }}
+                        />                        {editingVerseId === verse.objectID ? (
+                          <>
+                            <textarea
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              rows={3}
+                              style={{ width: '100%', marginBottom: 8 }}
+                              disabled={savingEdit}
+                              placeholder="Edit verse text"
+                              title="Edit verse text"
+                            />
+                            <button onClick={() => handleSaveEdit(verse)} disabled={savingEdit} style={{ marginRight: 8 }}>
+                              {savingEdit ? 'Saving...' : 'Save'}
+                            </button>
+                            <button onClick={handleCancelEdit} disabled={savingEdit}>Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <p 
+                              className="result-text" 
+                              dangerouslySetInnerHTML={{
+                                __html: verse._highlightResult?.text?.value || verse.text
+                              }}
+                            />
+                            <button
+                              className="edit-verse-btn"
+                              onClick={() => handleEditVerse(verse)}
+                              style={{ marginLeft: 8, color: '#e0c97f', background: 'none', border: 'none', cursor: 'pointer' }}
+                              title="Edit this verse text"
+                            >
+                              Edit
+                            </button>
+                          </>
+                        )}
+                        {verse.tags && verse.tags.length > 0 && (
+                          <div className="result-tags">
+                            <strong>Tags:</strong> {verse.tags.join(', ')}
+                          </div>
+                        )}
+                        <button
+                          className="delete-verse-btn"
+                          onClick={() => handleDeleteVerse(verse.objectID)}
+                          disabled={deletingVerseId === verse.objectID}
+                          style={{ marginLeft: 12, color: '#ff4040', background: 'none', border: 'none', cursor: 'pointer' }}
+                          title="Delete this verse from Firestore"
+                        >
+                          {deletingVerseId === verse.objectID ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
+            
             {totalPages > 1 && (
               <div className="pagination-container">
                 <button

@@ -123,3 +123,54 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Mobile translation selector with horizontal scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
+}
+
+/* Ensure smooth scrolling on mobile translation selector */
+@media (max-width: 768px) {
+  .scripture-overlay-card {
+    width: 95vw;
+    padding: 1.5rem 1rem;
+    max-height: 95vh;
+  }
+  
+  /* Mobile translation buttons container */
+  .translation-mobile-scroll {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .translation-mobile-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Add slight scroll indicators */
+  .translation-mobile-scroll::before,
+  .translation-mobile-scroll::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .translation-mobile-scroll::before {
+    left: 0;
+    background: linear-gradient(to right, rgba(31, 41, 55, 0.8), transparent);
+  }
+  
+  .translation-mobile-scroll::after {
+    right: 0;
+    background: linear-gradient(to left, rgba(31, 41, 55, 0.8), transparent);
+  }
+}

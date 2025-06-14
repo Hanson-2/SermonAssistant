@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblical Loading Indicators Demo</title>
+    <style>
+        /* Import the main theme colors */
+        :root {
+            --primary-color: #e0c97f;
+            --text-shadow-gold: 0 0 15px rgba(224, 201, 127, 0.3), 1px 1px 0px #4B3A1A, 2px 2px 3px rgba(0,0,0,0.7);
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: #f0f0f0;
+            font-family: 'Georgia', serif;
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffd700;
+            font-family: 'Trajan Pro', serif;
+            text-shadow: var(--text-shadow-gold);
+            margin-bottom: 3rem;
+            font-size: 2.5rem;
+        }
+
+        .loader-demo {
+            background: rgba(42, 42, 42, 0.8);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 2px solid #333;
+        }
+
+        .loader-title {
+            color: #ffd700;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .loader-description {
+            color: #cccccc;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Copy the loading indicator styles from ScriptureBookPage.css */
+        .loading-indicator-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            min-height: 200px;
+        }
+
+        .loading-text {
+            font-family: 'Trajan Pro', serif;
+            color: #ffd700;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-shadow: var(--text-shadow-gold);
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        /* Biblical Scroll Loading Animation */
+        .biblical-scroll-loader {
+            position: relative;
+            width: 120px;
+            height: 80px;
+            margin: 1rem 0;
+        }
+
+        .scroll-body {
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(135deg, #f4e4bc 0%, #e6d09a 50%, #d4c088 100%);
+            border-radius: 8px 8px 12px 12px;
+            position: relative;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: scrollGlow 2s ease-in-out infinite alternate;
+        }
+
+        .scroll-body:before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: calc(100% - 30px);
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #8b7355 20%, #8b7355 80%, transparent 100%);
+            animation: textReveal 3s ease-in-out infinite;
+        }
+
+        .scroll-body:after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: calc(100% - 40px);
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #8b7355 30%, #8b7355 70%, transparent 100%);
+            animation: textReveal 3s ease-in-out infinite 0.5s;
+        }
+
+        .scroll-ends {
+            position: absolute;
+            top: -10px;
+            width: 100%;
+            height: 80px;
+            pointer-events: none;
+        }
+
+        .scroll-end {
+            position: absolute;
+            width: 12px;
+            height: 80px;
+            background: linear-gradient(135deg, #8b4513 0%, #654321 50%, #4a2c17 100%);
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .scroll-end:first-child {
+            left: -6px;
+            animation: scrollRotateLeft 4s ease-in-out infinite;
+        }
+
+        .scroll-end:last-child {
+            right: -6px;
+            animation: scrollRotateRight 4s ease-in-out infinite;
+        }
+
+        /* Cross/Christian Symbol Alternative Loader */
+        .christian-cross-loader {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 1rem 0;
+        }
+
+        .cross-vertical {
+            position: absolute;
+            left: 50%;
+            top: 10%;
+            width: 6px;
+            height: 70%;
+            background: linear-gradient(180deg, #ffd700 0%, #e6c200 50%, #ccaa00 100%);
+            border-radius: 3px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+            animation: crossGlow 2s ease-in-out infinite alternate;
+        }
+
+        .cross-horizontal {
+            position: absolute;
+            left: 25%;
+            top: 35%;
+            width: 50%;
+            height: 6px;
+            background: linear-gradient(90deg, #ffd700 0%, #e6c200 50%, #ccaa00 100%);
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+            animation: crossGlow 2s ease-in-out infinite alternate 0.5s;
+        }
+
+        .cross-radiance {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120px;
+            height: 120px;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: radianceExpand 3s ease-in-out infinite;
+        }
+
+        /* Keyframe Animations */
+        @keyframes scrollGlow {
+            0% {
+                box-shadow: 
+                    0 4px 8px rgba(0, 0, 0, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            }
+            100% {
+                box-shadow: 
+                    0 6px 12px rgba(0, 0, 0, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                    0 0 15px rgba(255, 215, 0, 0.2);
+            }
+        }
+
+        @keyframes textReveal {
+            0%, 100% { opacity: 0.3; transform: scaleX(0.3); }
+            50% { opacity: 0.8; transform: scaleX(1); }
+        }
+
+        @keyframes scrollRotateLeft {
+            0%, 100% { transform: rotateY(0deg); }
+            50% { transform: rotateY(-15deg); }
+        }
+
+        @keyframes scrollRotateRight {
+            0%, 100% { transform: rotateY(0deg); }
+            50% { transform: rotateY(15deg); }
+        }
+
+        @keyframes crossGlow {
+            0% {
+                box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+                filter: brightness(1);
+            }
+            100% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+                filter: brightness(1.2);
+            }
+        }
+
+        @keyframes radianceExpand {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.1;
+            }
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* Old loader for comparison */
+        .lds-roller {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .lds-roller div {
+            animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            transform-origin: 40px 40px;
+        }
+        .lds-roller div:after {
+            content: " ";
+            display: block;
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ffd700;
+            margin: -4px 0 0 -4px;
+        }
+        .lds-roller div:nth-child(1) { animation-delay: -0.036s; }
+        .lds-roller div:nth-child(1):after { top: 63px; left: 63px; }
+        .lds-roller div:nth-child(2) { animation-delay: -0.072s; }
+        .lds-roller div:nth-child(2):after { top: 68px; left: 56px; }
+        .lds-roller div:nth-child(3) { animation-delay: -0.108s; }
+        .lds-roller div:nth-child(3):after { top: 71px; left: 48px; }
+        .lds-roller div:nth-child(4) { animation-delay: -0.144s; }
+        .lds-roller div:nth-child(4):after { top: 72px; left: 40px; }
+        .lds-roller div:nth-child(5) { animation-delay: -0.18s; }
+        .lds-roller div:nth-child(5):after { top: 71px; left: 32px; }
+        .lds-roller div:nth-child(6) { animation-delay: -0.216s; }
+        .lds-roller div:nth-child(6):after { top: 68px; left: 24px; }
+        .lds-roller div:nth-child(7) { animation-delay: -0.252s; }
+        .lds-roller div:nth-child(7):after { top: 63px; left: 17px; }
+        .lds-roller div:nth-child(8) { animation-delay: -0.288s; }
+        .lds-roller div:nth-child(8):after { top: 56px; left: 12px; }
+        @keyframes lds-roller {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>Biblical Loading Indicators</h1>
+        
+        <div class="loader-demo">
+            <div class="loader-title">📜 Biblical Scroll Loader</div>
+            <div class="loader-description">
+                Perfect for loading chapters - represents ancient scrolls used for biblical texts.
+                Features animated parchment with revealing text lines and rotating scroll ends.
+            </div>
+            <div class="loading-indicator-container">
+                <div class="loading-text">Loading Chapters...</div>
+                <div class="biblical-scroll-loader">
+                    <div class="scroll-body"></div>
+                    <div class="scroll-ends">
+                        <div class="scroll-end"></div>
+                        <div class="scroll-end"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="loader-demo">
+            <div class="loader-title">✟ Christian Cross Loader</div>
+            <div class="loader-description">
+                Perfect for loading scripture verses - features a glowing golden cross with radiant light.
+                The gentle pulsing animation creates a reverent, spiritual atmosphere.
+            </div>
+            <div class="loading-indicator-container">
+                <div class="loading-text">Loading Scripture...</div>
+                <div class="christian-cross-loader">
+                    <div class="cross-radiance"></div>
+                    <div class="cross-vertical"></div>
+                    <div class="cross-horizontal"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison">
+            <div class="loader-demo">
+                <div class="loader-title">❌ Old Generic Spinner</div>
+                <div class="loader-description">
+                    The previous loading indicator - generic spinning dots that don't match the app's biblical theme.
+                </div>
+                <div class="loading-indicator-container">
+                    <div class="loading-text">Loading...</div>
+                    <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+                </div>
+            </div>
+
+            <div class="loader-demo">
+                <div class="loader-title">✅ New Themed Loaders</div>
+                <div class="loader-description">
+                    Biblical-themed loaders that enhance the spiritual atmosphere and match the app's golden color scheme.
+                </div>
+                <div class="loading-indicator-container">
+                    <div class="loading-text">Much Better!</div>
+                    <div style="display: flex; gap: 2rem; align-items: center; justify-content: center;">
+                        <div class="biblical-scroll-loader">
+                            <div class="scroll-body"></div>
+                            <div class="scroll-ends">
+                                <div class="scroll-end"></div>
+                                <div class="scroll-end"></div>
+                            </div>
+                        </div>
+                        <div class="christian-cross-loader">
+                            <div class="cross-radiance"></div>
+                            <div class="cross-vertical"></div>
+                            <div class="cross-horizontal"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem; padding: 2rem; background: rgba(255, 215, 0, 0.1); border-radius: 12px; border: 2px solid rgba(255, 215, 0, 0.3);">
+            <h2 style="color: #ffd700; margin-top: 0;">Design Features</h2>
+            <ul style="text-align: left; color: #cccccc; line-height: 1.8;">
+                <li><strong>Biblical Scroll:</strong> Parchment-colored background with animated text lines and rotating wooden ends</li>
+                <li><strong>Christian Cross:</strong> Golden glowing cross with radiant light expanding from the center</li>
+                <li><strong>Theme Integration:</strong> Uses the app's golden color palette and elegant animations</li>
+                <li><strong>Responsive Design:</strong> Scales appropriately on mobile devices</li>
+                <li><strong>Spiritual Atmosphere:</strong> Creates a reverent, peaceful loading experience</li>
+                <li><strong>Performance Optimized:</strong> Smooth CSS animations without JavaScript overhead</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
