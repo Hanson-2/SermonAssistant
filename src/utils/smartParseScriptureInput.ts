@@ -26,14 +26,16 @@ const aliasPattern = Object
   .join("|");
 
 // Combined regex: full book names OR aliases, then chapter:verse (REQUIRED verse), optional ranges
+// Added word boundaries (\b) to prevent matching abbreviations within other words
 const scriptureRegex = new RegExp(
-  `((?:${bookPattern}|${aliasPattern}))\\s+(\\d+):(\\d+)(?:\\s*-\\s*(\\d+)(?::(\\d+))?)?`,
+  `\\b((?:${bookPattern}|${aliasPattern}))\\s+(\\d+):(\\d+)(?:\\s*-\\s*(\\d+)(?::(\\d+))?)?`,
   "gi"
 );
 
 // Additional regex for chapter-only references (e.g., "Genesis 1", "Gen 1")
+// Added word boundaries (\b) to prevent matching abbreviations within other words
 const chapterOnlyRegex = new RegExp(
-  `((?:${bookPattern}|${aliasPattern}))\\s+(\\d+)(?!:)(?=\\s|$|[^\\d])`,
+  `\\b((?:${bookPattern}|${aliasPattern}))\\s+(\\d+)(?!:)(?=\\s|$|[^\\d])`,
   "gi"
 );
 

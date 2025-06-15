@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Ordinal Fix</title>
+</head>
+<body>    <h1>Test Word Boundary Fix - "His 1st" should NOT trigger Isaiah reference</h1>
+    <div>
+        <h3>Test Cases:</h3>
+        <ul>
+            <li>Input: "His 1st" → Should return: []</li>
+            <li>Input: "this 1st" → Should return: []</li>
+            <li>Input: "dismiss 1st" → Should return: []</li>
+            <li>Input: "Is 1" → Should return: [Isaiah 1]</li>
+            <li>Input: "Isaiah 1" → Should return: [Isaiah 1]</li>
+            <li>Input: "Is 1:1" → Should return: [Isaiah 1:1]</li>
+        </ul>
+    </div>
+    <div>
+        <h3>Test Results:</h3>
+        <div id="results"></div>
+    </div>
+
+    <script type="module">        async function testOrdinalFix() {
+            try {
+                const { extractScriptureReferences } = await import('./src/utils/smartParseScriptureInput.js');
+                
+                const testCases = [
+                    "His 1st",
+                    "this 1st", 
+                    "dismiss 1st",
+                    "misuse 2nd",
+                    "Is 1",
+                    "Isaiah 1",
+                    "We are looking at His 1st chapter",
+                    "In this 2nd verse",
+                    "The dismiss 3rd time",
+                    "Is 1:1",
+                    "Isaiah 1:1",
+                    "1st",
+                    "2nd", 
+                    "3rd"
+                ];
+                
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '';
+                
+                testCases.forEach(testCase => {
+                    const results = extractScriptureReferences(testCase);
+                    const resultDiv = document.createElement('div');
+                    resultDiv.style.marginBottom = '10px';
+                    resultDiv.style.padding = '5px';
+                    resultDiv.style.border = '1px solid #ccc';
+                    
+                    // Only "Is 1", "Isaiah 1", "Is 1:1", "Isaiah 1:1" should have results
+                    const shouldHaveResults = testCase.startsWith('Is ') || testCase.startsWith('Isaiah');
+                    const passed = shouldHaveResults ? results.length > 0 : results.length === 0;
+                    
+                    resultDiv.style.backgroundColor = passed ? '#e8f5e8' : '#f5e8e8';
+                    
+                    resultDiv.innerHTML = `
+                        <strong>Input:</strong> "${testCase}"<br>
+                        <strong>Results:</strong> ${results.length > 0 ? JSON.stringify(results.map(r => r.reference || `${r.book} ${r.chapter}${r.verse ? ':' + r.verse : ''}`), null, 2) : '[]'}<br>
+                        <strong>Status:</strong> ${passed ? '✅ PASS' : '❌ FAIL'}
+                    `;
+                    
+                    resultsDiv.appendChild(resultDiv);
+                });
+                
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+                console.error('Test error:', error);
+            }
+        }
+        
+        // Run tests
+        testOrdinalFix();
+    </script>
+</body>
+</html>

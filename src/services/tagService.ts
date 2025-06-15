@@ -6,7 +6,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } 
 export interface Tag {
   id: string;
   name: string;
-  userId: string;
+  userId?: string; // Optional for global tags
   createdAt?: any;
   updatedAt?: any;
 }
@@ -25,15 +25,13 @@ export async function fetchTags(): Promise<Tag[]> {
     const userId = getCurrentUserId();
     const tagsRef = collection(db, "tags");
 
-    // Query for global tags (no userId field)
-    const globalTagsQuery = query(tagsRef, where("userId", "==", null));
-    const globalTagsSnapshot = await getDocs(globalTagsQuery);
-    const globalTags = globalTagsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tag));
+    // Fetch all tags (we'll filter in JavaScript since Firestore can't query for null values)
+    const allTagsSnapshot = await getDocs(tagsRef);
+    const allTags = allTagsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tag));
 
-    // Query for user-specific tags
-    const userTagsQuery = query(tagsRef, where("userId", "==", userId));
-    const userTagsSnapshot = await getDocs(userTagsQuery);
-    const userTags = userTagsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tag));
+    // Separate global tags (no userId field) and user-specific tags
+    const globalTags = allTags.filter(tag => !tag.userId);
+    const userTags = allTags.filter(tag => tag.userId === userId);
 
     // Combine global and user tags
     const combinedTags = [...globalTags, ...userTags];
