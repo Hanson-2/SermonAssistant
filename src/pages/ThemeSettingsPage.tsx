@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { app } from '../lib/firebase';
-import { getUserProfile, updateUserProfile } from '../services/firebaseService';
+import { getUserProfile, updateUserProfile, uploadThemeBackgroundImage } from '../services/firebaseService';
 import { useTheme } from '../context/ThemeContext';
 import { 
   ThemeSettings, 
@@ -189,8 +189,7 @@ export default function ThemeSettingsPage() {
       setSuccess('Theme settings reset to defaults.');
     }
   };
-
-  const handleBackgroundUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBackgroundUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // Clear any previous errors
@@ -211,18 +210,26 @@ export default function ThemeSettingsPage() {
         return;
       }
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        setSettings({...settings, backgroundImage: dataUrl});
+      try {
+        // Upload to Firebase Storage
+        const user = getAuth(app).currentUser;
+        if (!user) {
+          setError('You must be logged in to upload images.');
+          setUploading(false);
+          return;
+        }
+        
+        const downloadURL = await uploadThemeBackgroundImage(file, user.uid);
+        const newSettings = {...settings, backgroundImage: downloadURL};
+        setSettings(newSettings);
+        updateTheme(newSettings); // Apply theme immediately
         setSuccess('Background image uploaded successfully!');
         setUploading(false);
-      };
-      reader.onerror = () => {
-        setError('Failed to read the image file.');
+      } catch (error) {
+        console.error('Error uploading background image:', error);
+        setError('Failed to upload background image. Please try again.');
         setUploading(false);
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -270,12 +277,15 @@ export default function ThemeSettingsPage() {
               </div>
                 <div className="form-group">
                 <label>Background Image</label>
-                <div className="background-grid">
-                  {backgroundImages.map(bg => (
+                <div className="background-grid">                  {backgroundImages.map(bg => (
                     <div
                       key={bg.name}
                       className={`background-option ${settings.backgroundImage === bg.path ? 'selected' : ''}`}
-                      onClick={() => setSettings({...settings, backgroundImage: bg.path})}
+                      onClick={() => {
+                        const newSettings = {...settings, backgroundImage: bg.path};
+                        setSettings(newSettings);
+                        updateTheme(newSettings); // Apply theme immediately
+                      }}
                     >
                       {bg.path ? (
                         <div className="background-thumbnail">
@@ -300,12 +310,13 @@ export default function ThemeSettingsPage() {
                         <img src={settings.backgroundImage} alt="Custom Background" />
                         <div className="background-overlay"></div>
                       </div>
-                      <span className="background-label">Custom</span>
-                      <button 
+                      <span className="background-label">Custom</span>                      <button 
                         className="remove-custom-bg"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSettings({...settings, backgroundImage: '/Blue Wall Background.png'});
+                          const newSettings = {...settings, backgroundImage: '/Blue Wall Background.png'};
+                          setSettings(newSettings);
+                          updateTheme(newSettings); // Apply theme immediately
                         }}
                         title="Remove custom background"
                       >

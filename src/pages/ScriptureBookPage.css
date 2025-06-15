@@ -6,7 +6,7 @@
 .scripture-book-layout {
   min-height: 100vh;
   /* Updated background */
-  background: linear-gradient(rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.85)), url('/Texas_Logo_Wallpaper.png') no-repeat center center fixed; /* Added 'fixed' */
+  background: linear-gradient(rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.85)), var(--bg-image-url) no-repeat center center fixed; /* Added 'fixed' */
   background-size: cover; /* Ensure it covers the area */
   color: #fff;
   padding: 4rem 1rem;

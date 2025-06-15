@@ -9,7 +9,7 @@
   padding: 2.5rem 1rem 2rem 1rem;
   max-width: 1200px;
   margin: 0 auto;
-  background: linear-gradient(135deg, rgba(17,24,39,0.97) 0%, rgba(24,24,32,0.98) 100%), url('/Texas_Logo_Background.png') center center fixed no-repeat;
+  background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), var(--bg-image-url) center center fixed no-repeat;
   background-size: cover;
   z-index: 1;
 }
@@ -21,7 +21,7 @@
   z-index: 0;
   pointer-events: none;
   opacity: 0.22;
-  background: url('/Texas_Logo_Wallpaper.png') center center no-repeat;
+  background: var(--bg-image-url) center center no-repeat;
   background-size: cover;
 }
 
@@ -85,7 +85,7 @@
 
 /* --- FILTER PANEL --- */
 .analytics-filters-panel {
-  background: linear-gradient(135deg, rgba(35,35,35,0.95) 0%, rgba(24,24,24,0.97) 100%), url('/Texas_Logo_Background.png') center center fixed no-repeat;
+  background: linear-gradient(135deg, rgba(35,35,35,0.95) 0%, rgba(24,24,24,0.97) 100%), var(--bg-image-url) center center fixed no-repeat;
   background-size: cover;
   border-radius: 16px;
   border: 1.5px solid #4B3A1A;
@@ -147,6 +147,28 @@
   font-weight: 500;
   box-shadow: 0 2px 6px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.03);
 }
+
+/* Style the dropdown options for better visibility */
+.analytics-filter-select option {
+  background: #181b22;
+  color: #e0c97f;
+  padding: 8px 12px;
+  font-weight: 500;
+  border: none;
+}
+
+/* Hover state for dropdown options */
+.analytics-filter-select option:hover {
+  background: #23262e;
+  color: #ffffff;
+}
+
+/* Selected option styling */
+.analytics-filter-select option:checked {
+  background: #4B3A1A;
+  color: #ffffff;
+}
+
 .analytics-filter-select:focus {
   outline: none;
   border-color: #e0c97f;
@@ -399,12 +421,12 @@
   font-weight: 700;
   text-shadow: 0 1px 2px #000a;
 }
-.recent-sermons-grid {
+.recent-expositories-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
 }
-.recent-sermon-card {
+.recent-expository-card {
   background: rgba(30, 41, 59, 0.93);
   border: 1.5px solid #4B3A1A;
   border-left: 5px solid #e0c97f;
@@ -413,19 +435,19 @@
   transition: all 0.3s;
   box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 10px #e0c97f22;
 }
-.recent-sermon-card:hover {
+.recent-expository-card:hover {
   border-color: #e0c97f;
   box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 15px #e0c97f33;
   transform: translateY(-2px);
 }
-.sermon-header {
+.expository-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 0.75rem;
   gap: 1rem;
 }
-.sermon-title {
+.expository-title {
   color: #e0c97f;
   text-decoration: none;
   font-weight: 700;
@@ -434,16 +456,16 @@
   font-family: 'Georgia', serif;
   text-shadow: 0 1px 2px #000a;
 }
-.sermon-title:hover {
+.expository-title:hover {
   text-decoration: underline;
   color: #ffe082;
 }
-.sermon-date {
+.expository-date {
   color: #c0b08f;
   font-size: 0.85rem;
   white-space: nowrap;
 }
-.sermon-details {
+.expository-details {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -855,8 +877,7 @@
     min-width: 0;
     width: 100%;
     margin-bottom: 1rem;
-  }
-  .analytics-dashboard-page .recent-sermons-grid {
+  }  .analytics-dashboard-page .recent-expositories-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -908,11 +929,10 @@
   }
   .analytics-card, .recent-activity, .insights-section {
     padding: 1rem;
-  }
-  .recent-sermons-grid {
+  }  .recent-expositories-grid {
     grid-template-columns: 1fr;
   }
-  .sermon-header {
+  .expository-header {
     flex-direction: column;
     gap: 0.5rem;
   }
@@ -957,8 +977,7 @@
   .analytics-dashboard-page .bar-label,
   .analytics-dashboard-page .bar-value {
     font-size: 0.9rem;
-  }
-  .analytics-dashboard-page .sermon-month-labels {
+  }  .analytics-dashboard-page .expository-month-labels {
     font-size: 10px;
   }
 }

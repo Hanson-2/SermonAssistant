@@ -651,6 +651,7 @@ export type Sermon = {
   category?: string;
   tags?: string[];
   books?: string[];
+  isArchived?: boolean; // New: archived status
   // ...other fields...
 };
 
@@ -1207,5 +1208,30 @@ export async function getVersesByTag(tagName: string): Promise<{ [book: string]:
 }
 
 /**
- * Update tags for a specific verse document
+ * Upload a theme background image and return its URL
  */
+export async function uploadThemeBackgroundImage(file: File, userId: string): Promise<string> {
+  // Create a separate folder for theme background images
+  const fileExtension = file.name.split('.').pop();
+  const fileName = `background-${userId}-${Date.now()}.${fileExtension}`;
+  const fileRef = ref(storage, `theme-backgrounds/${fileName}`);
+  
+  await uploadBytes(fileRef, file);
+  const downloadURL = await getDownloadURL(fileRef);
+  
+  return downloadURL;
+}
+
+// Delete a theme background image from storage
+export async function deleteThemeBackgroundImage(imageUrl: string): Promise<void> {
+  try {
+    // Only delete if it's a custom uploaded image (contains theme-backgrounds)
+    if (imageUrl.includes('theme-backgrounds')) {
+      const imageRef = ref(storage, imageUrl);
+      await deleteObject(imageRef);
+    }
+  } catch (error) {
+    console.error('Error deleting theme background image:', error);
+    // Non-blocking error - continue even if deletion fails
+  }
+}

@@ -1,7 +1,7 @@
 /* Layout */
 .add-scripture-layout {
   min-height: 100vh;
-  background: linear-gradient(rgba(17, 24, 39, 0.92), rgba(10, 15, 25, 0.95)), url('/Texas_Logo_Background.png') center center fixed no-repeat; /* Darker overlay, Blue Wall BG */
+  background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), var(--bg-image-url) center center fixed no-repeat; /* Consistent black overlay */
   background-size: cover;
   color: #e0c97f; /* Default text color to gold */
   padding: 2rem 1rem;

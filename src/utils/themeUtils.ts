@@ -142,41 +142,32 @@ export const applyThemeGlobally = (settings: ThemeSettings, isPreview: boolean =
     root.style.setProperty('--accent-hover', darkenColor(settings.accentColor, 10));
     root.style.setProperty('--accent-light', `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.3)`);
   }
-  
-  // Apply background image
-  if (settings.backgroundImage) {
-    // Remove existing background classes
-    document.body.className = document.body.className.replace(/bg-[\w-]+/g, '');
+    // Apply background image
+  if (settings.backgroundImage && settings.backgroundImage !== '') {
+    console.log('Applying background image:', settings.backgroundImage);
     
-    // Check if it's a predefined background
-    if (settings.backgroundImage.includes('Blue Wall') || settings.backgroundImage === '/Blue Wall Background.png') {
-      document.body.classList.add('bg-blue-wall');
-      root.style.setProperty('--bg-image-url', 'url("/Blue Wall Background.png")');
-    } else if (settings.backgroundImage.includes('Red Wall') || settings.backgroundImage === '/Red Wall Background.png') {
-      document.body.classList.add('bg-red-wall');
-      root.style.setProperty('--bg-image-url', 'url("/Red Wall Background.png")');
-    } else if (settings.backgroundImage.includes('Texas_Logo') || settings.backgroundImage === '/Texas_Logo_Wallpaper.png') {
-      document.body.classList.add('bg-texas-logo');
-      root.style.setProperty('--bg-image-url', 'url("/Texas_Logo_Wallpaper.png")');
-    } else if (settings.backgroundImage) {
-      // Custom background image (base64 or URL)
-      root.style.setProperty('--bg-image-url', `url("${settings.backgroundImage}")`);
-      document.body.style.backgroundImage = `url("${settings.backgroundImage}")`;
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundAttachment = 'fixed';
-      document.body.style.backgroundRepeat = 'no-repeat';
-    }
+    // Always set the CSS custom property for consistent styling
+    root.style.setProperty('--bg-image-url', `url("${settings.backgroundImage}")`);
+    
+    // For consistency, also apply directly to body
+    document.body.style.backgroundImage = `url("${settings.backgroundImage}")`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundAttachment = 'fixed';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    
+    // Remove any "no background" classes
+    document.body.classList.remove('bg-none');
   } else {
-    // Remove all background classes and styles
-    document.body.className = document.body.className.replace(/bg-[\w-]+/g, '');
-    document.body.classList.add('bg-none');
+    console.log('Removing background image');
+    // Remove background
     root.style.setProperty('--bg-image-url', 'none');
     document.body.style.backgroundImage = '';
     document.body.style.backgroundSize = '';
     document.body.style.backgroundPosition = '';
     document.body.style.backgroundAttachment = '';
     document.body.style.backgroundRepeat = '';
+    document.body.classList.add('bg-none');
   }
 
   // Apply custom CSS

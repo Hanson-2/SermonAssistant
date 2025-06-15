@@ -10,7 +10,7 @@
   z-index: 0;
   pointer-events: none;
   opacity: 0.15;
-  background: url('/Texas_Logo_Wallpaper.png') left center no-repeat;
+  background: var(--bg-image-url) left center no-repeat;
   background-size: cover;
   filter: grayscale(0.2) brightness(0.8) contrast(1.1);
 }
@@ -24,6 +24,8 @@
   align-items: center;
   padding: 4rem 2rem 2rem 2rem;
   min-height: 100vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), var(--bg-image-url) center center fixed no-repeat;
+  background-size: cover;
   
   /* Content container */
   .folder-management-container {

@@ -20,7 +20,7 @@
   height: 100vh;
   z-index: -1; /* Behind content */
   pointer-events: none;
-  background: #111827 url('/Texas_Logo_Wallpaper.png') no-repeat center center;
+  background: #111827 var(--bg-image-url) no-repeat center center;
   background-size: cover;
   opacity: 0.35;
   overflow: hidden;

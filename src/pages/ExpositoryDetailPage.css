@@ -22,7 +22,7 @@
   right: 0;
   width: 100vw;
   height: 100vh;
-  background: url('/Texas_Logo_Wallpaper.png') center center no-repeat;
+  background: var(--bg-image-url) center center no-repeat;
   background-size: cover;
   opacity: 0.25;
 }

@@ -3,9 +3,10 @@ import {
   getSermonAnalyticsFunc, 
   fetchSermons,
   getSermonCategoriesFunc,
-  getSermonSeriesFunc 
+  getSermonSeriesFunc,
+  getSermonFolders 
 } from '../services/firebaseService';
-import { SermonAnalytics, Sermon, SermonCategory, SermonSeries } from '../services/firebaseService';
+import { SermonAnalytics, Sermon, SermonCategory, SermonSeries, SermonFolder } from '../services/firebaseService';
 import { Link } from 'react-router-dom';
 import { extractScriptureReferences } from '../utils/smartParseScriptureInput';
 import { CANONICAL_BOOKS, EXTRA_CANONICAL_BOOKS } from '../utils/bookOrder';
@@ -17,15 +18,17 @@ const AnalyticsDashboardPage: React.FC = () => {
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [categories, setCategories] = useState<SermonCategory[]>([]);
   const [series, setSeries] = useState<SermonSeries[]>([]);
+  const [folders, setFolders] = useState<SermonFolder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'month' | 'quarter' | 'year' | 'all'>('year');
-  // --- Enhancement: Tag Filter State ---
-  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
+  // --- Enhancement: Folder Filter State ---
+  const [selectedFolderFilter, setSelectedFolderFilter] = useState<string>('');
   // --- Enhancement: Category Filter State ---
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
-  // --- Enhancement: Series Filter State ---
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');  // --- Enhancement: Series Filter State ---
   const [selectedSeriesFilter, setSelectedSeriesFilter] = useState<string>('');
+  // --- Enhancement: Archived Filter State ---
+  const [showArchived, setShowArchived] = useState<boolean>(false);
 
   // Add state for expanded book dropdowns
   const [expandedBooks, setExpandedBooks] = useState<string[]>([]);
@@ -51,23 +54,24 @@ const AnalyticsDashboardPage: React.FC = () => {
   });
 
   const toggleCardCollapse = (card: keyof typeof collapsedCards) => {
-    setCollapsedCards(prev => ({ ...prev, [card]: !prev[card] }));
-  };
+    setCollapsedCards(prev => ({ ...prev, [card]: !prev[card] }));  };
 
-  // Fetch sermons, categories, and series ONCE on mount
+  // Fetch expositories, categories, and series ONCE on mount
   useEffect(() => {
     const loadInitialData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const [sermonsData, categoriesData, seriesData] = await Promise.all([
+        const [expositoryData, categoriesData, seriesData, foldersData] = await Promise.all([
           fetchSermons(),
           getSermonCategoriesFunc(),
-          getSermonSeriesFunc()
+          getSermonSeriesFunc(),
+          getSermonFolders()
         ]);
-        setSermons(sermonsData);
+        setSermons(expositoryData);
         setCategories(categoriesData);
         setSeries(seriesData);
+        setFolders(foldersData);
       } catch (error) {
         console.error('Error loading initial data:', error);
         setError('Failed to load initial data. Please try again.');
@@ -96,13 +100,15 @@ const AnalyticsDashboardPage: React.FC = () => {
     };
     loadAnalytics();
     // eslint-disable-next-line
-  }, [selectedTimeframe]);
-
-  // --- Enhancement: Filtered Sermons Helper (with series) ---
+  }, [selectedTimeframe]);  // --- Enhancement: Filtered Expositories Helper (with series and folders) ---
   const getFilteredSermons = () => {
     let filtered = Array.isArray(sermons) ? sermons : [];
-    if (selectedTagFilter) {
-      filtered = filtered.filter(s => Array.isArray(s.tags) && s.tags.includes(selectedTagFilter));
+    if (selectedFolderFilter) {
+      if (selectedFolderFilter === 'unassigned') {
+        filtered = filtered.filter(s => !s.folderId);
+      } else {
+        filtered = filtered.filter(s => s.folderId === selectedFolderFilter);
+      }
     }
     if (selectedCategoryFilter) {
       filtered = filtered.filter(s => s.category === selectedCategoryFilter);
@@ -110,16 +116,19 @@ const AnalyticsDashboardPage: React.FC = () => {
     if (selectedSeriesFilter) {
       filtered = filtered.filter(s => s.seriesId === selectedSeriesFilter);
     }
+    // Filter by archived status
+    if (!showArchived) {
+      filtered = filtered.filter(s => !s.isArchived);
+    }
     return filtered.filter(s => !!s && typeof s === 'object');
   };
 
-  // Defensive: If getFilteredSermons() is empty, fallback to all sermons for analytics
+  // Defensive: If getFilteredSermons() is empty, fallback to all expositories for analytics
   const getSafeSermons = () => {
     const filtered = getFilteredSermons();
     return filtered.length > 0 ? filtered : sermons;
   };
-
-  // --- Recent Sermons: Use sermon.date (prefer Timestamp, fallback to string) ---
+  // --- Recent Expositories: Use sermon.date (prefer Timestamp, fallback to string) ---
   const getRecentSermons = (count: number = 5) => {
     return getSafeSermons()
       .filter(s => s && s.date)
@@ -352,7 +361,7 @@ const AnalyticsDashboardPage: React.FC = () => {
   // --- Enhancement: Export Analytics to CSV ---
   const exportAnalyticsToCSV = () => {
     const rows = [
-      ['Total Sermons', analytics?.totalSermons || sermons.length],
+      ['Total Expositories', getFilteredSermons().length],
       ['Categories', categories.length],
       ['Series', series.length],
       // Removed Bible Books and Unique Tags
@@ -363,13 +372,12 @@ const AnalyticsDashboardPage: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'sermon_analytics.csv');
+    link.setAttribute('download', 'expository_analytics.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-
-  // --- Enhancement: Sermons Over Time Data ---
+  // --- Enhancement: Expositories Over Time Data ---
   const getSermonsPerMonth = () => {
     const months: { [key: string]: number } = {};
     getFilteredSermons().forEach(sermon => {
@@ -384,12 +392,11 @@ const AnalyticsDashboardPage: React.FC = () => {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, count]) => ({ month, count }));
   };
-
-  // --- Helper: Calculate Average Sermons Per Month ---
+  // --- Helper: Calculate Average Expositories Per Month ---
   const getAverageSermonsPerMonth = () => {
     const filtered = getFilteredSermons();
     if (!filtered.length) return '0.0';
-    // Find earliest sermon date
+    // Find earliest expository date
     const earliest = filtered.reduce((min, s) => {
       if (s.dateAdded && typeof s.dateAdded === 'object' && 'seconds' in s.dateAdded) {
         const d = s.dateAdded.seconds;
@@ -453,7 +460,7 @@ const AnalyticsDashboardPage: React.FC = () => {
           >
             Analytics Dashboard
           </h1>
-          <p>Insights and statistics about your sermon collection</p>
+          <p>Insights and statistics about your expository collection</p>
         </div>
         <button className="btn export-btn" onClick={exportAnalyticsToCSV} title="Export analytics as CSV">
           Export CSV
@@ -473,18 +480,18 @@ const AnalyticsDashboardPage: React.FC = () => {
         <div className="analytics-filters-header">
           <span className="analytics-filters-title">Filters <span className="analytics-filters-dash">—</span></span>
         </div>
-        <div className="analytics-filters-row">
-          <div className="analytics-filter-group">
-            <label htmlFor="tagFilter" className="analytics-filter-label">Tag:</label>
+        <div className="analytics-filters-row">          <div className="analytics-filter-group">
+            <label htmlFor="folderFilter" className="analytics-filter-label">Folder:</label>
             <select
-              id="tagFilter"
-              value={selectedTagFilter}
-              onChange={e => setSelectedTagFilter(e.target.value)}
+              id="folderFilter"
+              value={selectedFolderFilter}
+              onChange={e => setSelectedFolderFilter(e.target.value)}
               className="analytics-filter-select"
             >
-              <option value="">All Tags</option>
-              {Array.from(new Set(sermons.flatMap(s => s.tags || []))).sort().map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
+              <option value="">All Folders</option>
+              <option value="unassigned">Unassigned</option>
+              {folders.map(folder => (
+                <option key={folder.id} value={folder.id}>{folder.name}</option>
               ))}
             </select>
           </div>
@@ -513,8 +520,19 @@ const AnalyticsDashboardPage: React.FC = () => {
               <option value="">All Series</option>
               {series.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+              ))}            </select>
+          </div>
+          <div className="analytics-filter-group">
+            <label htmlFor="archivedToggle" className="analytics-filter-label">
+              <input
+                type="checkbox"
+                id="archivedToggle"
+                checked={showArchived}
+                onChange={e => setShowArchived(e.target.checked)}
+                style={{ marginRight: '8px' }}
+              />
+              Include Archived
+            </label>
           </div>
           <div className="analytics-filter-group timeframe-group">
             <label className="analytics-filter-label">Timeframe:</label>
@@ -550,15 +568,13 @@ const AnalyticsDashboardPage: React.FC = () => {
 
       {/* Recent Activity - moved to top */}
       <div className="recent-activity">
-        <h3>Recent Sermons</h3>
-        <div className="recent-sermons-grid">
+        <h3>Recent Expositories</h3>        <div className="recent-expositories-grid">
           {getRecentSermons().map((sermon) => (
-            <div key={sermon.id} className="recent-sermon-card">
-              <div className="sermon-header">
-                <Link to={`/expository/${sermon.id}`} className="sermon-title">
+            <div key={sermon.id} className="recent-expository-card">              <div className="expository-header">
+                <Link to={`/expository/${sermon.id}`} className="expository-title">
                   {sermon.title || 'Untitled'}
                 </Link>
-                <span className="sermon-date">
+                <span className="expository-date">
                   {sermon.date && typeof sermon.date === 'object' && sermon.date !== null && 'seconds' in sermon.date
                     ? new Date((sermon.date as any).seconds * 1000).toLocaleDateString()
                     : (sermon.date ? new Date(sermon.date).toLocaleDateString() : 'No date')}
@@ -570,16 +586,15 @@ const AnalyticsDashboardPage: React.FC = () => {
       </div>
 
       {/* Overview Stats */}
-      <div className="stats-overview">
-        <div className="stat-card" title="Total number of sermons in your collection.">
+      <div className="stats-overview">        <div className="stat-card" title="Total number of expositories in your collection.">
           <div className="stat-icon">📝</div>
           <div className="stat-content">
-            <h3>Total Sermons</h3>
-            <span className="stat-number">{analytics?.totalSermons || sermons.length}</span>
+            <h3>Total Expositories</h3>
+            <span className="stat-number">{getFilteredSermons().length}</span>
           </div>
         </div>
 
-        <div className="stat-card" title="Number of unique categories assigned to your sermons.">
+        <div className="stat-card" title="Number of unique categories assigned to your expositories.">
           <div className="stat-icon">🏷️</div>
           <div className="stat-content">
             <h3>Categories</h3>
@@ -587,7 +602,7 @@ const AnalyticsDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="stat-card" title="Number of unique series your sermons belong to.">
+        <div className="stat-card" title="Number of unique series your expositories belong to.">
           <div className="stat-icon">📚</div>
           <div className="stat-content">
             <h3>Series</h3>
@@ -595,7 +610,7 @@ const AnalyticsDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="stat-card" title="Average number of sermons added per month (since your first sermon).">
+        <div className="stat-card" title="Average number of expositories added per month (since your first expository).">
           <div className="stat-icon">📊</div>
           <div className="stat-content">
             <h3>Avg per Month</h3>
@@ -606,7 +621,7 @@ const AnalyticsDashboardPage: React.FC = () => {
         </div>
       </div>      {/* Most Referenced Books - Full Width Row */}
       <div className="analytics-books-row">
-        <div className={`analytics-card analytics-card-scrollable${collapsedCards.books ? ' collapsed' : ''}`} title="Shows all Bible books referenced in your sermons, ordered by total references.">
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.books ? ' collapsed' : ''}`} title="Shows all Bible books referenced in your expositories, ordered by total references.">
           <div className="analytics-card-header" onClick={() => toggleCardCollapse('books')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
             <span>{collapsedCards.books ? '▶' : '▼'}</span>
             <h3 style={{margin:0}}>Most Referenced Books</h3>
@@ -669,7 +684,7 @@ const AnalyticsDashboardPage: React.FC = () => {
 
       {/* Charts and Analytics - Remaining Cards */}
       <div className="analytics-grid">        {/* Top Tags */}
-        <div className={`analytics-card analytics-card-scrollable${collapsedCards.tags ? ' collapsed' : ''}`} title="Shows the top 10 tags used across all sermons.">
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.tags ? ' collapsed' : ''}`} title="Shows the top 10 tags used across all expositories.">
           <div className="analytics-card-header" onClick={() => toggleCardCollapse('tags')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
             <span>{collapsedCards.tags ? '▶' : '▼'}</span>
             <h3 style={{margin:0}}>Most Used Tags</h3>
@@ -680,7 +695,7 @@ const AnalyticsDashboardPage: React.FC = () => {
               <div className="tags-divider"></div>
               <div className="chart-container analytics-card-content-scrollable">
                 {getTagStats().length === 0 ? (
-                  <p className="no-data">No tags assigned to sermons yet.</p>
+                  <p className="no-data">No tags assigned to expositories yet.</p>
                 ) : (
                   <div className="bar-chart tags-bar-chart">
                     {getTagStats().map(({ tag, count }, index) => (
@@ -703,7 +718,7 @@ const AnalyticsDashboardPage: React.FC = () => {
                                 hsl(${(index * 30 + 160) % 360}, 65%, 40%) 100%)`,
                               animationDelay: `${index * 0.1}s`
                             }}
-                            title={`Used in ${count} sermon${count !== 1 ? 's' : ''}`}
+                            title={`Used in ${count} expositor${count !== 1 ? 'ies' : 'y'}`}
                           ></div>
                           <span className="bar-value tags-bar-value">{count}</span>
                         </div>
@@ -717,15 +732,15 @@ const AnalyticsDashboardPage: React.FC = () => {
         </div>
 
         {/* Category Distribution */}
-        <div className={`analytics-card analytics-card-scrollable${collapsedCards.categories ? ' collapsed' : ''}`} title="Distribution of sermons by category.">
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.categories ? ' collapsed' : ''}`} title="Distribution of expositories by category.">
           <div className="analytics-card-header" onClick={() => toggleCardCollapse('categories')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
             <span>{collapsedCards.categories ? '▶' : '▼'}</span>
-            <h3 style={{margin:0}}>Sermons by Category</h3>
+            <h3 style={{margin:0}}>Expositories by Category</h3>
           </div>
           {!collapsedCards.categories && (
             <div className="chart-container analytics-card-content-scrollable">
               {getCategoryStats().length === 0 ? (
-                <p className="no-data">No categories assigned to sermons yet.</p>
+                <p className="no-data">No categories assigned to expositories yet.</p>
               ) : (
                 <div className="bar-chart">
                   {getCategoryStats().map(({ category, count }, index) => (
@@ -738,7 +753,7 @@ const AnalyticsDashboardPage: React.FC = () => {
                             width: `${(count / Math.max(...getCategoryStats().map(s => s.count))) * 100}%`,
                             backgroundColor: `hsl(${index * 45}, 70%, 60%)`
                           }}
-                          title={`${count} sermon${count !== 1 ? 's' : ''} in this category`}
+                          title={`${count} expositor${count !== 1 ? 'ies' : 'y'} in this category`}
                         ></div>
                         <span className="bar-value">{count}</span>
                       </div>
@@ -751,10 +766,10 @@ const AnalyticsDashboardPage: React.FC = () => {
         </div>
 
         {/* Series Distribution */}
-        <div className={`analytics-card analytics-card-scrollable${collapsedCards.series ? ' collapsed' : ''}`} title="Distribution of sermons by series.">
+        <div className={`analytics-card analytics-card-scrollable${collapsedCards.series ? ' collapsed' : ''}`} title="Distribution of expositories by series.">
           <div className="analytics-card-header" onClick={() => toggleCardCollapse('series')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:8}}>
             <span>{collapsedCards.series ? '▶' : '▼'}</span>
-            <h3 style={{margin:0}}>Sermons by Series</h3>
+            <h3 style={{margin:0}}>Expositories by Series</h3>
           </div>
           {!collapsedCards.series && (
             <div className="chart-container analytics-card-content-scrollable">
@@ -772,7 +787,7 @@ const AnalyticsDashboardPage: React.FC = () => {
                             width: `${(count / Math.max(...getSeriesStats().map(s => s.count))) * 100}%`,
                             backgroundColor: `hsl(${index * 60}, 65%, 55%)`
                           }}
-                          title={`${count} sermon${count !== 1 ? 's' : ''} in this series`}
+                          title={`${count} expositor${count !== 1 ? 'ies' : 'y'} in this series`}
                         ></div>
                         <span className="bar-value">{count}</span>
                       </div>

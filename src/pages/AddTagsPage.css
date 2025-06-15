@@ -1,9 +1,9 @@
 /* Base layout - inspired by UniversalSearchPage and original AddTagsPage */
 .add-tags-layout {
   min-height: 100vh;
-  /* background: linear-gradient(rgba(17, 24, 39, 0.92), rgba(10, 15, 25, 0.95)), url('/Texas_Logo_Background.png') center center fixed no-repeat; */
+  /* background: linear-gradient(rgba(17, 24, 39, 0.92), rgba(10, 15, 25, 0.95)), var(--bg-image-url) center center fixed no-repeat; */
   /* Using a simpler background for now to match UniversalSearchPage's direct body background */
-  background: url('/Texas_Logo_Background.png') center center fixed no-repeat;
+  background: var(--bg-image-url) center center fixed no-repeat;
   background-size: cover;
   color: #e0c97f;
   padding: 2rem 1rem;
@@ -25,7 +25,7 @@
   flex-direction: column;
   gap: 1.5rem; 
   /* Match filter-section from UniversalSearchPage for container background */
-  background: linear-gradient(135deg, rgba(35,35,35,0.95) 0%, rgba(24,24,24,0.95) 100%), url('/Texas_Logo_Background.png') center center fixed no-repeat;
+  background: linear-gradient(135deg, rgba(35,35,35,0.95) 0%, rgba(24,24,24,0.95) 100%), var(--bg-image-url) center center fixed no-repeat;
   background-size: cover; /* Ensure cover for the image part */
   padding: 25px;
   border-radius: 16px;
