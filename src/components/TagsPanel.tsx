@@ -15,13 +15,9 @@ interface TagsPanelProps {
 
 const TagsPanel: React.FC<TagsPanelProps> = ({ expositoryTags = [], onVerseSelect, onTagClick }) => {
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
+  const [loading, setLoading] = useState(false);  useEffect(() => {
     loadTags();
-  }, []);
-
-  const loadTags = async () => {
+  }, []);const loadTags = async () => {
     setLoading(true);
     try {
       const tags = await fetchTags();
@@ -41,9 +37,7 @@ const TagsPanel: React.FC<TagsPanelProps> = ({ expositoryTags = [], onVerseSelec
   };
   const handleTagClick = (tagName: string) => {
     onTagClick(tagName);
-  };
-
-  // Filter tags that are associated with this expository
+  };  // Filter tags that are associated with this expository
   const expositoryTagObjects = allTags.filter(tag => expositoryTags.includes(tag.name));
   
   // Filter remaining tags (not associated with expository) for browsing

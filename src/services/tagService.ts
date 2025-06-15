@@ -21,11 +21,32 @@ function getCurrentUserId(): string {
 }
 
 export async function fetchTags(): Promise<Tag[]> {
-  const userId = getCurrentUserId();
-  const tagsRef = collection(db, "tags");
-  const q = query(tagsRef, where("userId", "==", userId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tag));
+  try {
+    const userId = getCurrentUserId();
+    const tagsRef = collection(db, "tags");
+
+    // Query for global tags (no userId field)
+    const globalTagsQuery = query(tagsRef, where("userId", "==", null));
+    const globalTagsSnapshot = await getDocs(globalTagsQuery);
+    const globalTags = globalTagsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tag));
+
+    // Query for user-specific tags
+    const userTagsQuery = query(tagsRef, where("userId", "==", userId));
+    const userTagsSnapshot = await getDocs(userTagsQuery);
+    const userTags = userTagsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tag));
+
+    // Combine global and user tags
+    const combinedTags = [...globalTags, ...userTags];
+
+    console.log('[fetchTags] Loaded global tags:', globalTags.length);
+    console.log('[fetchTags] Loaded user tags:', userTags.length);
+    console.log('[fetchTags] Combined tags:', combinedTags.length);
+
+    return combinedTags;
+  } catch (error) {
+    console.error('[fetchTags] Error:', error);
+    throw error;
+  }
 }
 
 export async function addTag(name: string): Promise<void> {

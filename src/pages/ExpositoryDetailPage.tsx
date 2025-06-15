@@ -324,12 +324,19 @@ export default function ExpositoryDetailPage() {
     });
     setScriptureRefs(normalizedRefs);
   }
-
   function addSlide() {
     setSlides(prevSlides => {
       const updatedSlides = [...prevSlides];
       const newIndex = activeSlide + 1;
       updatedSlides.splice(newIndex, 0, "");
+      
+      // Update slideTitles to preserve existing titles and add default for new slide
+      setSlideTitles(prevTitles => {
+        const updatedTitles = [...prevTitles];
+        updatedTitles.splice(newIndex, 0, `Page ${newIndex + 1}`);
+        return updatedTitles;
+      });
+      
       // Batch update activeSlide after slides update
       setActiveSlide(newIndex);
       debouncedPersistSlides();
@@ -341,6 +348,13 @@ export default function ExpositoryDetailPage() {
     if (slides.length <= 1) return;
     setSlides(prevSlides => {
       const updatedSlides = prevSlides.filter((_, idx) => idx !== activeSlide);
+      
+      // Update slideTitles to remove the deleted slide's title
+      setSlideTitles(prevTitles => {
+        const updatedTitles = prevTitles.filter((_, idx) => idx !== activeSlide);
+        return updatedTitles;
+      });
+      
       // Batch update activeSlide after slides update
       setActiveSlide(prev => Math.max(prev - 1, 0));
       debouncedPersistSlides();
@@ -550,12 +564,26 @@ export default function ExpositoryDetailPage() {
     // Only update if different from current state
     if (JSON.stringify(refsObject) !== JSON.stringify(slideScriptureRefs)) {
       setSlideScriptureRefs(refsObject);
-    }
-
-    // Initialize slide titles if not set or slides changed
+    }    // Initialize slide titles if not set or slides changed
     setSlideTitles(prev => {
-      if (!prev || prev.length !== slides.length) {
+      if (!prev || prev.length === 0) {
+        // Initial setup - create default titles for all slides
         return slides.map((_, idx) => `Page ${idx + 1}`);
+      } else if (prev.length !== slides.length) {
+        // Slides were added/removed, but preserve existing custom titles
+        const newTitles = [...prev];
+        
+        // If we have more slides than titles, add default titles for new slides
+        while (newTitles.length < slides.length) {
+          newTitles.push(`Page ${newTitles.length + 1}`);
+        }
+        
+        // If we have fewer slides than titles, remove excess titles
+        while (newTitles.length > slides.length) {
+          newTitles.pop();
+        }
+        
+        return newTitles;
       }
       return prev;
     });
@@ -921,6 +949,33 @@ export default function ExpositoryDetailPage() {
     return sortedRefs;
   }, []);
 
+  // Temporary helper function to create test tags
+  const createTestTags = useCallback(async () => {
+    try {
+      const { addTag } = await import('../services/tagService');
+      const testTags = ['Faith', 'Hope', 'Love', 'Prayer', 'Salvation', 'Grace'];
+      
+      for (const tagName of testTags) {
+        try {
+          await addTag(tagName);
+          console.log(`Created tag: ${tagName}`);
+        } catch (error) {
+          console.log(`Tag ${tagName} might already exist:`, error);
+        }
+      }
+      
+      // Refresh the tags panel
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+      alert('Test tags created! Page will refresh to show them.');
+    } catch (error) {
+      console.error('Error creating test tags:', error);
+      alert('Error creating test tags. Check console for details.');
+    }
+  }, []);
+
   if (!sermon) {
     return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
   }
@@ -1146,8 +1201,7 @@ export default function ExpositoryDetailPage() {
               </div>
             </div>
           </div>
-        </div>
-        {/* Only show TagsPanel on desktop/tablet */}
+        </div>        {/* Only show TagsPanel on desktop/tablet */}
         {!isMobile && (
           <TagsPanel
             expositoryTags={sermon?.tags || []}
