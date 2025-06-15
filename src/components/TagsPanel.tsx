@@ -11,9 +11,10 @@ interface TagsPanelProps {
   expositoryTags?: string[];
   onVerseSelect: (verses: any[]) => void;
   onTagClick: (tagName: string) => void;
+  onTagRemove?: (tagName: string) => void;
 }
 
-const TagsPanel: React.FC<TagsPanelProps> = ({ expositoryTags = [], onVerseSelect, onTagClick }) => {
+const TagsPanel: React.FC<TagsPanelProps> = ({ expositoryTags = [], onVerseSelect, onTagClick, onTagRemove }) => {
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(false);  useEffect(() => {
     loadTags();
@@ -56,21 +57,34 @@ const TagsPanel: React.FC<TagsPanelProps> = ({ expositoryTags = [], onVerseSelec
       )}
 
       {!loading && (
-        <div className="tags-content">
-          {/* Expository Tags Section */}
+        <div className="tags-content">          {/* Expository Tags Section */}
           {expositoryTagObjects.length > 0 && (
             <div className="tags-section">
               <h4 className="tags-section-title">Expository Tags</h4>
               <div className="tags-list">
                 {expositoryTagObjects.map(tag => (
-                  <button
-                    key={tag.id}
-                    className="tag-item expository-tag"
-                    onClick={() => handleTagClick(tag.name)}
-                    title={`View verses for ${normalizeTagForDisplay(tag.name)}`}
-                  >
-                    {normalizeTagForDisplay(tag.name)}
-                  </button>
+                  <div key={tag.id} className="tag-item-container">
+                    <button
+                      className="tag-item expository-tag"
+                      onClick={() => handleTagClick(tag.name)}
+                      title={`View verses for ${normalizeTagForDisplay(tag.name)}`}
+                    >
+                      {normalizeTagForDisplay(tag.name)}
+                    </button>
+                    {onTagRemove && (
+                      <button
+                        className="tag-remove-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTagRemove(tag.name);
+                        }}
+                        title={`Remove ${normalizeTagForDisplay(tag.name)} from expository`}
+                        aria-label={`Remove ${normalizeTagForDisplay(tag.name)} tag`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>

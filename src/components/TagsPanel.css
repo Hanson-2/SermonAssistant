@@ -125,6 +125,54 @@
   font-size: 0.875rem;
 }
 
+/* Tag removal styling */
+.tag-item-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tag-item-container .tag-item {
+  flex: 1;
+  margin: 0;
+}
+
+.tag-remove-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.2s, transform 0.2s;
+  z-index: 10;
+}
+
+.tag-remove-btn:hover {
+  color: #dc2626;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.tag-remove-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Ensure the tag text doesn't overlap with the remove button */
+.tag-item-container .tag-item.expository-tag {
+  padding-right: 35px;
+}
+
 /* Custom scrollbar for tags list */
 .tags-list.scrollable::-webkit-scrollbar {
   width: 4px;

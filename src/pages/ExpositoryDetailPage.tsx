@@ -869,6 +869,50 @@ export default function ExpositoryDetailPage() {
     setSelectedTagFromDropdown(tagName);
     setTagOverlayOpen(true);
   }, []);
+  
+  // Handle tags from verse insertions via scripture search
+  const handleVerseTagsSelect = useCallback(async (tags: string[]) => {
+    if (!tags || tags.length === 0 || !sermon) return;
+    
+    console.log('[ExpositoryDetailPage] Received tags from verse insertion:', tags);
+    
+    try {
+      const currentTags = sermon.tags || [];
+      const newTags = tags.filter(tag => !currentTags.includes(tag));
+      
+      if (newTags.length > 0) {
+        const updatedTags = [...currentTags, ...newTags];
+        await updateSermon(sermon.id.toString(), { tags: updatedTags });
+        
+        // Update local sermon state
+        setSermon(prev => prev ? { ...prev, tags: updatedTags } : null);
+        
+        console.log('[ExpositoryDetailPage] Added new tags to expository:', newTags);
+      }
+    } catch (error) {
+      console.error('[ExpositoryDetailPage] Failed to add tags from verse insertion:', error);
+    }
+  }, [sermon]);
+  
+  // Handle tag removal from expository
+  const handleTagRemove = useCallback(async (tagToRemove: string) => {
+    if (!sermon) return;
+    
+    try {
+      const currentTags = sermon.tags || [];
+      const updatedTags = currentTags.filter(tag => tag !== tagToRemove);
+      
+      await updateSermon(sermon.id.toString(), { tags: updatedTags });
+      
+      // Update local sermon state
+      setSermon(prev => prev ? { ...prev, tags: updatedTags } : null);
+      
+      console.log('[ExpositoryDetailPage] Removed tag from expository:', tagToRemove);
+    } catch (error) {
+      console.error('[ExpositoryDetailPage] Failed to remove tag:', error);
+    }
+  }, [sermon]);
+  
   const handleTagOverlayClose = useCallback(() => {
     setTagOverlayOpen(false);
     setSelectedTagFromDropdown(null);
@@ -1181,6 +1225,7 @@ export default function ExpositoryDetailPage() {
                 activeSlide={activeSlide}
                 onTagSelect={handleTagSelect}
                 onCompositionStateChange={setIsComposing} // NEW
+                onVerseTagsSelect={handleVerseTagsSelect} // NEW
               />
               <div className="expository-slide-status">
                 {saving ? <span className="saving">Saving...</span> : saveStatus && <span className="saved">{saveStatus}</span>}
@@ -1207,6 +1252,7 @@ export default function ExpositoryDetailPage() {
             expositoryTags={sermon?.tags || []}
             onVerseSelect={handleVerseSelectionFromTag}
             onTagClick={handleTagClick}
+            onTagRemove={handleTagRemove}
           />
         )}
       </div>

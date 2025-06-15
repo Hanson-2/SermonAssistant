@@ -2,12 +2,14 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import './CustomRichTextEditor.css';
 import { wrapScriptureRefsInEditor, debounceWrapScriptureRefs } from '../utils/wrapScriptureRefsInEditor';
 import { fetchTags } from '../services/tagService';
+import ScriptureSearchOverlay from './ScriptureSearchOverlay';
 
 interface BasicRTEProps {
   html: string;
   onHtmlChange: (html: string) => void;
   onRefsChange?: (refs: any[]) => void;
   onTagSelect?: (tagName: string) => void;
+  onVerseTagsSelect?: (tags: string[]) => void; // NEW: for handling multiple tags from verses
   onCompositionStateChange?: (isComposing: boolean) => void; // NEW
 }
 
@@ -16,20 +18,35 @@ interface Tag {
   name: string;
 }
 
-function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onCompositionStateChange }: BasicRTEProps) {
+interface SearchVerse {
+  objectID: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  text: string;
+  translation: string;
+  reference: string;
+  tags?: string[];
+}
+
+function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onVerseTagsSelect, onCompositionStateChange }: BasicRTEProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const lastSetHtml = useRef<string>('');
   const [isComposing, setIsComposing] = useState(false);
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());  const [currentHeading, setCurrentHeading] = useState<string>('p');
   const [currentFontSize, setCurrentFontSize] = useState<string>('16');
   const [currentFontFamily, setCurrentFontFamily] = useState<string>('Arial');
-  
-  // Tag autocomplete state
+    // Tag autocomplete state
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [tagSuggestions, setTagSuggestions] = useState<Tag[]>([]);
   const [selectedTagIndex, setSelectedTagIndex] = useState(0);
   const [tagDropdownPosition, setTagDropdownPosition] = useState({ top: 0, left: 0 });
   const [tagInputRange, setTagInputRange] = useState<Range | null>(null);
+
+  // Scripture search overlay state
+  const [showSearchOverlay, setShowSearchOverlay] = useState(false);
+  const [searchOverlayPosition, setSearchOverlayPosition] = useState({ top: 0, left: 0 });
+  const [searchInputRange, setSearchInputRange] = useState<Range | null>(null);
 
   // Debounced scripture reference wrapper - DISABLED for now
   // const debouncedWrapRefs = useRef(
@@ -58,7 +75,6 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
       setTagSuggestions([]);
     });
   }, []);
-
   // Tag autocomplete functionality
   const checkForTagTrigger = useCallback(() => {
     const selection = window.getSelection();
@@ -73,19 +89,23 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
     const textContent = textNode.textContent || '';
     const cursorPos = range.startOffset;
     
-    // Look for /tag trigger
+    // Look for /tag or /search triggers
     const beforeCursor = textContent.substring(0, cursorPos);
     const lastSlashIndex = beforeCursor.lastIndexOf('/');
     
     if (lastSlashIndex === -1) {
       setShowTagDropdown(false);
+      setShowSearchOverlay(false);
       return;
     }
     
-    const potentialTag = beforeCursor.substring(lastSlashIndex + 1);
+    const potentialCommand = beforeCursor.substring(lastSlashIndex + 1);
     
     // Check if it's a tag trigger (starts with 'tag')
-    if (potentialTag.startsWith('tag') && potentialTag.length <= 20) {
+    if (potentialCommand.startsWith('tag') && potentialCommand.length <= 20) {
+      // Close search overlay if open
+      setShowSearchOverlay(false);
+      
       // Get cursor position for dropdown placement
       const tempRange = document.createRange();
       tempRange.setStart(textNode, lastSlashIndex);
@@ -106,7 +126,7 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
       // Fetch and filter tags
       fetchTags().then(tags => {
         const filtered = tags.filter(tag => 
-          tag.name.toLowerCase().includes(potentialTag.substring(3).toLowerCase())
+          tag.name.toLowerCase().includes(potentialCommand.substring(3).toLowerCase())
         );
         setTagSuggestions(filtered);
         setSelectedTagIndex(0);
@@ -115,8 +135,33 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
         setTagSuggestions([]);
         setShowTagDropdown(false);
       });
+    } 
+    // Check if it's a search trigger (starts with 'search')
+    else if (potentialCommand.startsWith('search') && potentialCommand.length <= 10) {
+      // Close tag dropdown if open
+      setShowTagDropdown(false);
+      
+      // Get cursor position for overlay placement
+      const tempRange = document.createRange();
+      tempRange.setStart(textNode, lastSlashIndex);
+      tempRange.setEnd(textNode, cursorPos);
+      const rect = tempRange.getBoundingClientRect();
+      
+      setSearchOverlayPosition({
+        top: rect.bottom + window.scrollY + 10,
+        left: rect.left + window.scrollX
+      });
+      
+      // Create range for replacement
+      const replaceRange = document.createRange();
+      replaceRange.setStart(textNode, lastSlashIndex);
+      replaceRange.setEnd(textNode, cursorPos);
+      setSearchInputRange(replaceRange);
+      
+      setShowSearchOverlay(true);
     } else {
       setShowTagDropdown(false);
+      setShowSearchOverlay(false);
     }
   }, []);
   // Handle content changes
@@ -976,7 +1021,6 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
       }
       handleContentChange();
     }  }, [handleContentChange]);
-
   const insertTagLink = useCallback((tag: Tag) => {
     if (!tagInputRange || !editorRef.current) return;
 
@@ -1033,6 +1077,92 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
     setTagInputRange(null);
     handleContentChange();
   }, [tagInputRange, onTagSelect, handleContentChange, normalizeTagForDisplay]);
+  // Handle scripture search insertion
+  const handleScriptureSearchInsert = useCallback((insertions: { references?: string[]; verses?: SearchVerse[]; tags?: string[] }) => {
+    console.log('[BasicRichTextEditor] handleScriptureSearchInsert called with:', insertions);
+    
+    if (!searchInputRange || !editorRef.current) {
+      console.log('[BasicRichTextEditor] Missing searchInputRange or editorRef, aborting');
+      return;
+    }
+
+    // Build plain text to insert
+    let textToInsert = '';
+    
+    // Insert references if selected (as plain text)
+    if (insertions.references && insertions.references.length > 0) {
+      textToInsert += insertions.references.join(', ');
+      console.log('[BasicRichTextEditor] Adding references to insert:', insertions.references);
+    }
+    
+    // Insert full verse text if selected
+    if (insertions.verses && insertions.verses.length > 0) {
+      if (insertions.references && insertions.references.length > 0) {
+        textToInsert += '\n\n';
+      }
+      
+      insertions.verses.forEach((verse, index) => {
+        if (index > 0) {
+          textToInsert += '\n\n';
+        }
+        
+        // Add reference and text as plain text
+        textToInsert += `${verse.reference} (${verse.translation.toUpperCase()})\n`;
+        textToInsert += verse.text;
+      });
+      
+      console.log('[BasicRichTextEditor] Adding verses to insert:', insertions.verses.length, 'verses');
+    }
+
+    console.log('[BasicRichTextEditor] Final text to insert:', textToInsert);
+
+    // Replace the "/search" text with plain text
+    searchInputRange.deleteContents();
+    const textNode = document.createTextNode(textToInsert);
+    searchInputRange.insertNode(textNode);
+
+    // Position cursor after the inserted content
+    const newRange = document.createRange();
+    newRange.setStartAfter(textNode);
+    newRange.collapse(true);
+    
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(newRange);
+
+    // Insert a space after the content
+    const spaceNode = document.createTextNode(' ');
+    newRange.insertNode(spaceNode);
+    newRange.setStartAfter(spaceNode);
+    newRange.collapse(true);
+    selection?.removeAllRanges();
+    selection?.addRange(newRange);
+    
+    console.log('[BasicRichTextEditor] Text inserted and cursor positioned');
+
+    // Clean up
+    setShowSearchOverlay(false);
+    setSearchInputRange(null);
+    
+    // Handle verse tags if included
+    if (insertions.tags && insertions.tags.length > 0 && onVerseTagsSelect) {
+      console.log('[BasicRichTextEditor] Calling onVerseTagsSelect with tags:', insertions.tags);
+      onVerseTagsSelect(insertions.tags);
+    }
+    
+    console.log('[BasicRichTextEditor] Calling handleContentChange to update HTML...');
+    // Trigger content change to update HTML and trigger scripture reference detection
+    handleContentChange();
+    
+    // After a short delay, trigger scripture reference wrapping to create mini cards
+    console.log('[BasicRichTextEditor] Setting timeout for scripture wrapping...');
+    setTimeout(() => {
+      if (editorRef.current) {
+        console.log('[BasicRichTextEditor] Executing delayed scripture reference wrapping');
+        wrapScriptureRefsInEditor(editorRef.current);
+      }
+    }, 100);
+  }, [searchInputRange, handleContentChange, onVerseTagsSelect]);
 
   const handleTagDropdownKeydown = useCallback((e: KeyboardEvent) => {
     if (!showTagDropdown) return;
@@ -1307,8 +1437,7 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
           outline: 'none',
           overflowY: 'auto',
         }}
-      />
-        {/* Tag Dropdown - Added for tag autocomplete */}
+      />        {/* Tag Dropdown - Added for tag autocomplete */}
       {showTagDropdown && tagSuggestions.length > 0 && (
         <div 
           className="tag-dropdown" 
@@ -1345,6 +1474,17 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
           ))}
         </div>
       )}
+
+      {/* Scripture Search Overlay */}
+      <ScriptureSearchOverlay
+        isOpen={showSearchOverlay}
+        onClose={() => {
+          setShowSearchOverlay(false);
+          setSearchInputRange(null);
+        }}
+        onInsert={handleScriptureSearchInsert}
+        position={searchOverlayPosition}
+      />
     </div>
   );
 }
