@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { getScriptureVersesForChapter } from '../services/firebaseService';
+import { auth } from '../lib/firebase';
 import { getDisplayBookAbbrev, normalizeBookName } from '../utils/getDisplayBookAbbrev';
 import { buildScriptureReference } from '../utils/scriptureReferenceUtils';
 import { httpsCallable, getFunctions } from 'firebase/functions';
@@ -141,12 +141,63 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
           userDefaultTranslation = localStorage.getItem('defaultTranslation') || localStorage.getItem('defaultBibleVersion');
           console.log('[ScriptureOverlay] Fallback to localStorage default translation:', userDefaultTranslation);
           setUserDefaultTranslation(userDefaultTranslation);
+        }        // Get all unique translations using Firebase Functions (like Universal Search)
+        let allTranslations = [];
+        try {
+          const getAllUniqueTranslationsCallable = httpsCallable(functions, "getAllUniqueTranslations");
+          const result = await getAllUniqueTranslationsCallable();
+          const fetchedTranslations = result.data.uniqueTranslations || [];
+          console.log('[ScriptureOverlay] Fetched translations from Firebase Functions:', fetchedTranslations);
+          allTranslations = fetchedTranslations;
+        } catch (functionsError) {
+          console.error('[ScriptureOverlay] Error calling Firebase Functions:', functionsError);
+          allTranslations = [];
         }
-
-        // Get all unique translations using Firebase Functions (like Universal Search)
-        const getAllUniqueTranslationsCallable = httpsCallable(functions, "getAllUniqueTranslations");
-        const result = await getAllUniqueTranslationsCallable();
-        const fetchedTranslations = result.data.uniqueTranslations || [];
+        
+        // If no translations from Firebase Functions, create a fallback list
+        if (allTranslations.length === 0) {
+          console.log('[ScriptureOverlay] No translations from Firebase Functions, using fallback list');
+          allTranslations = [
+            { id: 'kjv', name: 'kjv', displayName: 'King James Version' },
+            { id: 'niv', name: 'niv', displayName: 'New International Version' },
+            { id: 'esv', name: 'esv', displayName: 'English Standard Version' },
+            { id: 'nkjv', name: 'nkjv', displayName: 'New King James Version' },
+            { id: 'nasb', name: 'nasb', displayName: 'New American Standard Bible' },
+            { id: 'nlt', name: 'nlt', displayName: 'New Living Translation' },
+            { id: 'csb', name: 'csb', displayName: 'Christian Standard Bible' },
+            { id: 'msg', name: 'msg', displayName: 'The Message' },
+            { id: 'amp', name: 'amp', displayName: 'Amplified Bible' },
+            { id: 'net_bible', name: 'net_bible', displayName: 'NET Bible' },
+            { id: 'rsv', name: 'rsv', displayName: 'Revised Standard Version' },
+            { id: 'nasb95', name: 'nasb95', displayName: 'NASB 1995' },
+            { id: 'web', name: 'web', displayName: 'World English Bible' },
+            { id: 'ylt', name: 'ylt', displayName: 'Young\'s Literal Translation' },
+            { id: 'asv', name: 'asv', displayName: 'American Standard Version' },
+            { id: 'darby', name: 'darby', displayName: 'Darby Translation' },
+            { id: 'geneva', name: 'geneva', displayName: 'Geneva Bible' },
+            { id: 'exb', name: 'exb', displayName: 'Expanded Bible' }
+          ];
+        }
+        
+        // Apply EXB authorization logic (same as Universal Search and ScriptureBookPage)
+        const currentUser = auth.currentUser;
+        const userId = currentUser?.uid;
+        const expectedUserId = "89UdurybrVSwbPmp4boEMeYdVzk1"; // Authorized EXB user
+        const isAuthorized = userId === expectedUserId;
+        
+        // Filter out EXB translation unless user is authorized
+        const filteredTranslations = allTranslations.filter(translation => {
+          const isEXB = translation.id.toUpperCase() === "EXB";
+          const shouldInclude = !isEXB || isAuthorized;
+          
+          if (isEXB) {
+            console.log(`[ScriptureOverlay] EXB check: isEXB=${isEXB}, userId="${userId}", expectedUserId="${expectedUserId}", isAuthorized=${isAuthorized}, shouldInclude=${shouldInclude}`);
+          }
+          
+          return shouldInclude;
+        });
+        
+        console.log('[ScriptureOverlay] Filtered translations (EXB restricted):', filteredTranslations.map(t => `${t.id} (${t.displayName})`));
         
         // Use the same prioritization logic as Universal Search
         const prioritizeTranslations = (translations, userDefault) => {
@@ -185,7 +236,7 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
           });
         };
         
-        const prioritizedTranslations = prioritizeTranslations(fetchedTranslations, userDefaultTranslation);
+        const prioritizedTranslations = prioritizeTranslations(filteredTranslations, userDefaultTranslation);
         console.log('[ScriptureOverlay] Prioritized translations:', prioritizedTranslations.map(t => `${t.id} (${t.displayName})`));
         setAvailableTranslations(prioritizedTranslations);
         
@@ -249,7 +300,8 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
       typeof_endVerse: typeof endVerse,
     });
     // --- END DEBUG ---
-      const fetchVerses = async () => {
+    
+    const fetchVerses = async () => {
       try {
         // Only proceed if we have available translations loaded
         if (availableTranslations.length === 0) {
@@ -258,71 +310,53 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
           return;
         }
 
-        // Query the correct 'verses' collection for this book/chapter
-        const versesRef = collection(db, 'verses');
-        const chapterNum = Number(normChapter);
-        const startV = Number(startVerse);
-        const endV = Number(endVerse);
-        const bookLower = String(normBook).toLowerCase().replace(/\s+/g, ' ').trim();
+        // Use the same function that works in other pages
+        const verses = await getScriptureVersesForChapter(normBook, String(normChapter));
+        console.log('[ScriptureOverlay] Firestore returned', verses.length, 'docs');
         
-        // Check if this is a chapter-only reference (endVerse is 999 indicates whole chapter)
-        const isChapterOnly = endV === 999;
+        // Filter verses by the range we need
+        const filteredVerses = verses.filter(v => {
+          const verseNum = Number(v.verse);
+          const isChapterOnly = endVerse === 999;
+          return isChapterOnly ? verseNum >= startVerse : (verseNum >= startVerse && verseNum <= endVerse);
+        });
         
-        // Use Firestore query() and where() for all conditions
-        let qRef;
-        if (isChapterOnly) {
-          qRef = query(
-            versesRef,
-            where('book_lower', '==', bookLower),
-            where('chapter', '==', chapterNum),
-            where('verse', '>=', startV)
-          );
-        } else {
-          qRef = query(
-            versesRef,
-            where('book_lower', '==', bookLower),
-            where('chapter', '==', chapterNum),
-            where('verse', '>=', startV),
-            where('verse', '<=', endV)
-          );
-        }
-        
-        const snap = await getDocs(qRef);
-        console.log('[ScriptureOverlay] Firestore returned', snap.docs.length, 'docs');
-        
-        // Process verse data
-        const docs = snap.docs
-          .map(doc => {
-            const data = doc.data();
-            const verseNum = Number(data.verse);
-            return { ...data, verse: verseNum };
-          })
-          .filter(d => {
-            return isChapterOnly ? d.verse >= startV : (d.verse >= startV && d.verse <= endV);
-          });
-        
-        docs.sort((a, b) => a.verse - b.verse);
-        
-        // Build translation map from verse data
+        console.log('[ScriptureOverlay] Filtered verses:', filteredVerses.length, 'docs');
+          // Build translation map from verse data (same logic as before)
         const translationMap = {};
-        for (const d of docs) {
-          const code = d.translation;
+        for (const v of filteredVerses) {
+          const code = v.translation;
           if (!translationMap[code]) {
             translationMap[code] = { code, label: code.toUpperCase(), verses: [] };
           }
-          translationMap[code].verses.push({ verse: d.verse, text: d.text.trim() });
+          translationMap[code].verses.push({ verse: Number(v.verse), text: v.text.trim() });
         }
+          console.log('[ScriptureOverlay] Translation map keys (what we found in Firestore):', Object.keys(translationMap));
+        console.log('[ScriptureOverlay] Available translations from Firebase Functions:', availableTranslations.map(t => `${t.id}/${t.name}`));
         
         // Filter and order translations based on availableTranslations (like Universal Search)
         const availableTranslationsWithData = availableTranslations
-          .filter(t => translationMap[t.id] || translationMap[t.name]) // Check both id and name
+          .filter(t => {
+            // Case-insensitive matching - check if any Firestore translation matches this one
+            const hasData = Object.keys(translationMap).some(firestoreCode => 
+              firestoreCode.toLowerCase() === t.id.toLowerCase() || 
+              firestoreCode.toLowerCase() === t.name.toLowerCase()
+            );
+            console.log(`[ScriptureOverlay] Translation ${t.id}/${t.name} (${t.displayName}): hasData=${hasData}`);
+            return hasData;
+          })
           .map(t => {
-            const translationCode = translationMap[t.id] ? t.id : t.name;
+            // Find the matching Firestore translation code (case-insensitive)
+            const translationCode = Object.keys(translationMap).find(firestoreCode => 
+              firestoreCode.toLowerCase() === t.id.toLowerCase() || 
+              firestoreCode.toLowerCase() === t.name.toLowerCase()
+            );
+            
             const translationData = translationMap[translationCode];
             if (translationData) {
               translationData.verses.sort((a, b) => a.verse - b.verse);
               return {
-                code: translationCode,
+                code: translationCode, // Use the actual Firestore code
                 label: t.displayName || t.name.toUpperCase(),
                 text: translationData.verses.map(v => v.text).join('\n'),
                 verses: translationData.verses,
@@ -336,8 +370,7 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
           })
           .filter(Boolean);
         
-        console.log('[ScriptureOverlay] Available translations with data:', availableTranslationsWithData.map(t => `${t.code} (${t.label})`));
-        
+        console.log('[ScriptureOverlay] Available translations with data:', availableTranslationsWithData.map(t => `${t.code} (${t.label})`));        
         // Set translations in the prioritized order
         setTranslations(availableTranslationsWithData);
         
@@ -352,14 +385,15 @@ export default function ScriptureOverlay({ open, onClose, book, chapter, verseRa
           setCurrent('');
           console.log('[ScriptureOverlay] No translations with data available');
         }
-        
-      } catch (err) {
+          } catch (err) {
         console.error('[ScriptureOverlay] Error fetching verses:', err);
         setTranslations([]);
-        setCurrent('');      } finally {
+        setCurrent('');
+      } finally {
         setLoading(false);
       }
     };
+    
     fetchVerses();
   }, [open, effective, availableTranslations, userDefaultTranslation]); // Dependencies for the fetchVerses effect
   

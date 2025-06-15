@@ -203,9 +203,17 @@ export async function listExpositoryImages(): Promise<string[]> {
 
 /**
  * Saves scripture verses under the structure: scriptures/{Book}/{Chapter}/{Verse}
+ * Verses are stored globally but tag associations are user-specific
  */
 export async function saveScriptureVerses(verses: { book: string, chapter: string | number, verse: string | number, text: string, translation: string, tags?: string[] }[]) {
   const batch = writeBatch(db);
+  const currentUser = auth.currentUser;
+  
+  if (!currentUser) {
+    throw new Error('User must be authenticated to save verses');
+  }
+  
+  const userId = currentUser.uid;
 
   for (const verse of verses) {
     const { book, chapter, verse: verseNumber, text, translation, tags } = verse;
@@ -226,7 +234,7 @@ export async function saveScriptureVerses(verses: { book: string, chapter: strin
     const verseId = `${bookStr.toLowerCase().replace(/\s+/g, "-")}-${chapterStr}-${verseStr}-${translationStr}`;
     const verseDocRef = doc(versesRef, verseId);
 
-    // Data to be saved for the verse
+    // Data to be saved for the verse (global, no user-specific tags here)
     const verseData = {
       book: bookStr,
       book_lower: bookStr.toLowerCase(),
@@ -234,24 +242,41 @@ export async function saveScriptureVerses(verses: { book: string, chapter: strin
       verse: Number(verseStr),     // Store verse as a number if appropriate
       text,
       translation: String(translation).trim(), // Store the original translation string for display
-      tags: tags ? tags.map(tag => normalizeTagForDisplay(tag)) : [], // Store display-normalized tags in the verse document
       reference: `${bookStr} ${chapterStr}:${verseStr}`,
     };
 
     // Use set with merge: true to update if exists, or create if not.
-    // This will overwrite the document if the ID (including translation) matches.
     batch.set(verseDocRef, verseData, { merge: true });
 
-    // Update the tags collection
+    // Store user-specific tag associations in a separate collection
     if (tags && tags.length > 0) {
+      // Create user-specific tags in the tags collection
       for (const tag of tags) {
         const storageTag = normalizeTagForStorage(tag); // Use storage-normalized tag for doc ID
         const displayTag = normalizeTagForDisplay(tag); // Use display-normalized tag for the 'name' field
         if (storageTag) {
-          const tagDocRef = doc(tagsRef, storageTag);
-          batch.set(tagDocRef, { name: displayTag, original_tag: tag }, { merge: true });
+          // Create a user-specific tag document
+          const userTagId = `${userId}_${storageTag}`;
+          const tagDocRef = doc(tagsRef, userTagId);
+          batch.set(tagDocRef, { 
+            name: displayTag, 
+            original_tag: tag,
+            userId: userId,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }, { merge: true });
         }
       }
+      
+      // Store the user-specific tag association
+      const userVerseTagRef = doc(db, 'user_verse_tags', `${userId}_${verseId}`);
+      batch.set(userVerseTagRef, {
+        userId: userId,
+        verseId: verseId,
+        tags: tags.map(tag => normalizeTagForDisplay(tag)),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }, { merge: true });
     }
   }
 
@@ -338,7 +363,12 @@ export async function getScriptureVersesForChapter(bookName: string, chapter: st
     console.error("[firebaseService] Invalid chapter number provided:", chapter);
     return [];
   }
-  const q = query(versesRef, where("book", "==", bookName), where("chapter", "==", chapterNumber));
+  
+  // Use book_lower field like the original ScriptureOverlay did
+  const bookLower = String(bookName).toLowerCase().replace(/\s+/g, ' ').trim();
+  console.log("[firebaseService] Using book_lower:", bookLower);
+  
+  const q = query(versesRef, where("book_lower", "==", bookLower), where("chapter", "==", chapterNumber));
   console.log("[firebaseService] getScriptureVersesForChapter query:", q); // Added log
   const snapshot = await getDocs(q);
   console.log("[firebaseService] getScriptureVersesForChapter snapshot empty:", snapshot.empty, "size:", snapshot.size); // Added log
@@ -589,7 +619,7 @@ export async function batchUpdateVerseTags(updates: BatchVerseTagUpdate[]): Prom
   }
 }
 
-export async function updateSermonNotes(sermonId: string, notes: Record<string, string>, slideScriptureRefs?: Record<number, any[]>): Promise<void> {
+export async function updateSermonNotes(sermonId: string, notes: Record<string, string>, slideScriptureRefs?: Record<number, any[]>, slideTitles?: string[]): Promise<void> {
   const sermonRef = doc(db, "sermons", sermonId);
   const updateData: any = { notes };
   
@@ -597,6 +627,7 @@ export async function updateSermonNotes(sermonId: string, notes: Record<string, 
   console.log('[firebaseService] sermonId:', sermonId);
   console.log('[firebaseService] notes:', notes);
   console.log('[firebaseService] slideScriptureRefs provided:', slideScriptureRefs !== undefined);
+  console.log('[firebaseService] slideTitles provided:', slideTitles !== undefined);
   
   // Include slideScriptureRefs if provided
   if (slideScriptureRefs !== undefined) {
@@ -609,6 +640,14 @@ export async function updateSermonNotes(sermonId: string, notes: Record<string, 
     });
   } else {
     console.log('[firebaseService] updateSermonNotes called without slideScriptureRefs');
+  }
+  
+  // Include slideTitles if provided
+  if (slideTitles !== undefined) {
+    updateData.slideTitles = slideTitles;
+    console.log('[firebaseService] updateSermonNotes saving slideTitles:', slideTitles);
+  } else {
+    console.log('[firebaseService] updateSermonNotes called without slideTitles');
   }
   
   console.log('[firebaseService] Final updateData structure:', JSON.stringify(updateData, null, 2));
@@ -646,6 +685,7 @@ export type Sermon = {
   imagePosition?: string; // CSS object-position value for image positioning
   notes?: Record<string, string>;
   slideScriptureRefs?: Record<number, any[]>; // New: per-slide scripture references
+  slideTitles?: string[]; // New: custom slide titles
   folderId?: string; // New: folder assignment
   seriesId?: string;
   category?: string;
@@ -1123,11 +1163,27 @@ export async function importUserData(importData: any, replaceExisting: boolean =
 
 /**
  * Delete a verse from the 'verses' collection by its document ID (objectID)
+ * Also cleans up user-specific tag associations for this verse
  */
 export async function deleteVerseById(objectID: string): Promise<void> {
   if (!objectID) throw new Error("No verse ID provided");
+  
+  const batch = writeBatch(db);
+  
+  // Delete the verse document
   const verseDocRef = doc(versesRef, objectID);
-  await deleteDoc(verseDocRef);
+  batch.delete(verseDocRef);
+  
+  // Clean up all user tag associations for this verse
+  // Note: In a production system, you might want to query and delete these more efficiently
+  // For now, we'll delete the current user's associations
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    const userVerseTagRef = doc(db, 'user_verse_tags', `${currentUser.uid}_${objectID}`);
+    batch.delete(userVerseTagRef);
+  }
+  
+  await batch.commit();
 }
 
 /**
@@ -1222,16 +1278,225 @@ export async function uploadThemeBackgroundImage(file: File, userId: string): Pr
   return downloadURL;
 }
 
-// Delete a theme background image from storage
-export async function deleteThemeBackgroundImage(imageUrl: string): Promise<void> {
+// Delete a theme background image from storage (only if owned by the user)
+export async function deleteThemeBackgroundImage(imageUrl: string, userId: string): Promise<void> {
   try {
     // Only delete if it's a custom uploaded image (contains theme-backgrounds)
     if (imageUrl.includes('theme-backgrounds')) {
-      const imageRef = ref(storage, imageUrl);
-      await deleteObject(imageRef);
+      // Extract filename from URL to verify ownership
+      const urlParts = imageUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1].split('?')[0]; // Remove query parameters
+      
+      // Check if this file belongs to the current user
+      if (fileName.includes(`background-${userId}-`)) {
+        const imageRef = ref(storage, imageUrl);
+        await deleteObject(imageRef);
+      } else {
+        throw new Error('Unauthorized: You can only delete your own uploaded backgrounds.');
+      }
+    } else {
+      throw new Error('Cannot delete default background images.');
     }
   } catch (error) {
     console.error('Error deleting theme background image:', error);
-    // Non-blocking error - continue even if deletion fails
+    throw error; // Re-throw so the UI can handle the error properly
   }
+}
+
+// Get all available theme background images for a specific user
+export async function getThemeBackgroundImages(userId: string): Promise<Array<{name: string; path: string; url: string; isCustom: boolean}>> {
+  try {
+    const images: Array<{name: string; path: string; url: string; isCustom: boolean}> = [];
+    
+    // Ensure default backgrounds are in storage
+    await ensureDefaultThemeBackgrounds();
+    
+    // Get all images from theme-backgrounds folder
+    const themeBackgroundsRef = ref(storage, 'theme-backgrounds');
+    try {
+      const listResult = await listAll(themeBackgroundsRef);
+      
+      for (const itemRef of listResult.items) {
+        const downloadURL = await getDownloadURL(itemRef);
+        const fileName = itemRef.name;
+        
+        let displayName = 'Custom Background';
+        let isCustom = true;
+        let shouldInclude = false;
+        
+        // Check if this is a default background (available to all users)
+        if (fileName.includes('default-blue-wall')) {
+          displayName = 'Blue Wall';
+          isCustom = false;
+          shouldInclude = true;
+        } else if (fileName.includes('default-red-wall')) {
+          displayName = 'Red Wall';
+          isCustom = false;
+          shouldInclude = true;
+        } else if (fileName.includes('default-texas-logo')) {
+          displayName = 'Black Wall';
+          isCustom = false;
+          shouldInclude = true;
+        } else if (fileName.includes(`background-${userId}-`)) {
+          // This is a custom background uploaded by this specific user
+          displayName = fileName.replace(/^background-.*?-\d+\./, '').replace(/\.[^.]+$/, '') || 'Custom Background';
+          isCustom = true;
+          shouldInclude = true;
+        }
+        // If it doesn't match any of the above conditions, it's another user's custom background - skip it
+        
+        if (shouldInclude) {
+          images.push({
+            name: displayName,
+            path: downloadURL,
+            url: downloadURL,
+            isCustom: isCustom
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Could not fetch theme backgrounds from storage:', error);
+    }
+    
+    // Always add "None" option
+    images.push({ name: 'None', path: '', url: '', isCustom: false });
+    
+    // If no images were found, add fallback defaults using public paths
+    if (images.length === 1) { // Only "None" was added
+      images.unshift(        { name: 'Blue Wall', path: '/Blue Wall Background.png', url: '/Blue Wall Background.png', isCustom: false },
+        { name: 'Red Wall', path: '/Red Wall Background.png', url: '/Red Wall Background.png', isCustom: false },
+        { name: 'Black Wall', path: '/Texas_Logo_Wallpaper.png', url: '/Texas_Logo_Wallpaper.png', isCustom: false }
+      );
+    }
+    
+    return images;
+  } catch (error) {
+    console.error('Error fetching theme background images:', error);
+    // Return default images as fallback
+    return [      { name: 'Blue Wall', path: '/Blue Wall Background.png', url: '/Blue Wall Background.png', isCustom: false },
+      { name: 'Red Wall', path: '/Red Wall Background.png', url: '/Red Wall Background.png', isCustom: false },
+      { name: 'Black Wall', path: '/Texas_Logo_Wallpaper.png', url: '/Texas_Logo_Wallpaper.png', isCustom: false },
+      { name: 'None', path: '', url: '', isCustom: false },
+    ];
+  }
+}
+
+// Ensure default theme backgrounds are available in storage
+export async function ensureDefaultThemeBackgrounds(): Promise<void> {
+  try {
+    const themeBackgroundsRef = ref(storage, 'theme-backgrounds');
+    
+    const defaultBackgrounds = [
+      { name: 'Blue Wall Background', filename: 'default-blue-wall.png', publicPath: '/Blue Wall Background.png' },
+      { name: 'Red Wall Background', filename: 'default-red-wall.png', publicPath: '/Red Wall Background.png' },
+      { name: 'Texas Logo Wallpaper', filename: 'default-texas-logo.png', publicPath: '/Texas_Logo_Wallpaper.png' },
+    ];
+
+    for (const bg of defaultBackgrounds) {
+      const defaultBgRef = ref(storage, `theme-backgrounds/${bg.filename}`);
+      
+      try {
+        // Check if the file already exists
+        await getDownloadURL(defaultBgRef);
+        // If we get here, the file exists, so skip it
+        continue;
+      } catch (error: any) {
+        if (error.code === 'storage/object-not-found') {
+          // File doesn't exist, so we should upload it
+          try {
+            // Fetch the file from the public folder
+            const response = await fetch(bg.publicPath);
+            if (response.ok) {
+              const blob = await response.blob();
+              await uploadBytes(defaultBgRef, blob);
+              console.log(`Default background ${bg.name} uploaded to storage`);
+            }
+          } catch (uploadError) {
+            console.warn(`Could not upload default background ${bg.name}:`, uploadError);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Could not ensure default theme backgrounds:', error);
+  }
+}
+
+// Get user-specific tags for a verse
+export async function getUserTagsForVerse(verseId: string, userId?: string): Promise<string[]> {
+  const currentUser = userId || auth.currentUser?.uid;
+  if (!currentUser) {
+    return [];
+  }
+  
+  try {
+    const userVerseTagRef = doc(db, 'user_verse_tags', `${currentUser}_${verseId}`);
+    const docSnap = await getDoc(userVerseTagRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return data.tags || [];
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching user tags for verse:', error);
+    return [];
+  }
+}
+
+// Update user-specific tags for a verse
+export async function updateUserTagsForVerse(verseId: string, tags: string[]): Promise<void> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User must be authenticated to update verse tags');
+  }
+  
+  const userId = currentUser.uid;
+  const batch = writeBatch(db);
+  
+  // Create user-specific tags in the tags collection if they don't exist
+  for (const tag of tags) {
+    const storageTag = normalizeTagForStorage(tag);
+    const displayTag = normalizeTagForDisplay(tag);
+    if (storageTag) {
+      const userTagId = `${userId}_${storageTag}`;
+      const tagDocRef = doc(tagsRef, userTagId);
+      batch.set(tagDocRef, { 
+        name: displayTag, 
+        original_tag: tag,
+        userId: userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }, { merge: true });
+    }
+  }
+  
+  // Update the user-specific tag association
+  const userVerseTagRef = doc(db, 'user_verse_tags', `${userId}_${verseId}`);
+  if (tags.length > 0) {
+    batch.set(userVerseTagRef, {
+      userId: userId,
+      verseId: verseId,
+      tags: tags.map(tag => normalizeTagForDisplay(tag)),
+      updatedAt: new Date()
+    }, { merge: true });
+  } else {
+    // If no tags, delete the association document
+    batch.delete(userVerseTagRef);
+  }
+  
+  await batch.commit();
+}
+
+// Delete user-specific tag associations for a verse
+export async function deleteUserTagsForVerse(verseId: string): Promise<void> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('User must be authenticated to delete verse tags');
+  }
+  
+  const userId = currentUser.uid;
+  const userVerseTagRef = doc(db, 'user_verse_tags', `${userId}_${verseId}`);
+  await deleteDoc(userVerseTagRef);
 }

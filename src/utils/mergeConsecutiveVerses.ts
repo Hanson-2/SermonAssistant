@@ -19,32 +19,14 @@ export function mergeConsecutiveVerses(verses: ScriptureReference[]): ScriptureR
   console.log('[mergeConsecutiveVerses] Input verses count:', verses.length);
   console.log('[mergeConsecutiveVerses] Input verses detailed:', JSON.stringify(verses, null, 2));
 
-  // Sort verses by book, chapter, then verse
-  const sortedVerses = [...verses].sort((a, b) => {
-    // Compare books
-    if (a.book !== b.book) {
-      return a.book.localeCompare(b.book);
-    }
-    
-    // Compare chapters - ensure numeric comparison
-    const aChapter = typeof a.chapter === 'string' ? parseInt(a.chapter, 10) : a.chapter;
-    const bChapter = typeof b.chapter === 'string' ? parseInt(b.chapter, 10) : b.chapter;
-    if (aChapter !== bChapter) {
-      return aChapter - bChapter;
-    }
-    
-    // Compare verses (handle undefined verses as 0) - ensure numeric comparison
-    const aVerse = a.verse ? (typeof a.verse === 'string' ? parseInt(a.verse, 10) : a.verse) : 0;
-    const bVerse = b.verse ? (typeof b.verse === 'string' ? parseInt(b.verse, 10) : b.verse) : 0;
-    return aVerse - bVerse;
-  });
-
-  console.log('[mergeConsecutiveVerses] Sorted verses:', JSON.stringify(sortedVerses, null, 2));
-
+  // DON'T SORT - preserve the original order from text position sorting
+  // Only merge consecutive verses that appear consecutively in the original order
+  console.log('[mergeConsecutiveVerses] Preserving original order (no sorting)...');
   const mergedVerses: ScriptureReference[] = [];
   let currentGroup: ScriptureReference[] = [];
 
-  for (const verse of sortedVerses) {
+  // Process verses in their original order (preserving text position)
+  for (const verse of verses) {
     if (currentGroup.length === 0) {
       currentGroup = [verse];
       console.log('[mergeConsecutiveVerses] Starting new group with:', verse);

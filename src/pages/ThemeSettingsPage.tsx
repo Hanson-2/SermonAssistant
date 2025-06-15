@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { app } from '../lib/firebase';
-import { getUserProfile, updateUserProfile, uploadThemeBackgroundImage } from '../services/firebaseService';
+import { getUserProfile, updateUserProfile, uploadThemeBackgroundImage, getThemeBackgroundImages, deleteThemeBackgroundImage } from '../services/firebaseService';
 import { useTheme } from '../context/ThemeContext';
 import { 
   ThemeSettings, 
@@ -21,13 +21,6 @@ const colorPresets = [
   { name: 'Forest Deep', primary: '#059669', accent: '#e0ffe0' },
   { name: 'Crimson Fire', primary: '#dc2626', accent: '#fff0f0' },
   { name: 'Midnight Azure', primary: '#1e40af', accent: '#e0e7ff' },
-];
-
-const backgroundImages = [
-  { name: 'Blue Wall', path: '/Blue Wall Background.png' },
-  { name: 'Red Wall', path: '/Red Wall Background.png' },
-  { name: 'Texas Logo', path: '/Texas_Logo_Wallpaper.png' },
-  { name: 'None', path: '' },
 ];
 
 const fontFamilies = [
@@ -69,6 +62,7 @@ export default function ThemeSettingsPage() {
   const [uploading, setUploading] = React.useState(false);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [backgroundImages, setBackgroundImages] = React.useState<Array<{name: string; path: string; url: string; isCustom: boolean}>>([]);
   const navigate = useNavigate();
   const { settings: themeSettings, updateTheme } = useTheme();
   const [settings, setSettings] = React.useState(themeSettings);
@@ -76,13 +70,15 @@ export default function ThemeSettingsPage() {
   React.useEffect(() => {
     setSettings(themeSettings);
   }, [themeSettings]);
-
   React.useEffect(() => {
     const auth = getAuth(app);
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        await loadThemeSettings();
+        await Promise.all([
+          loadThemeSettings(),
+          loadBackgroundImages()
+        ]);
       } else {
         navigate('/login');
       }
@@ -100,10 +96,30 @@ export default function ThemeSettingsPage() {
       return () => clearTimeout(timer);
     }
   }, [success, error]);
-
   React.useEffect(() => {
     applyThemePreview(settings);
   }, [settings]);
+  const loadBackgroundImages = async () => {
+    try {
+      const currentUser = getAuth(app).currentUser;
+      if (!currentUser) {
+        console.error('No authenticated user found');
+        return;
+      }
+      
+      const images = await getThemeBackgroundImages(currentUser.uid);
+      setBackgroundImages(images);
+    } catch (error) {
+      console.error('Error loading background images:', error);
+      // Set default images as fallback
+      setBackgroundImages([
+        { name: 'Blue Wall', path: '/Blue Wall Background.png', url: '/Blue Wall Background.png', isCustom: false },
+        { name: 'Red Wall', path: '/Red Wall Background.png', url: '/Red Wall Background.png', isCustom: false },
+        { name: 'Black Wall', path: '/Texas_Logo_Wallpaper.png', url: '/Texas_Logo_Wallpaper.png', isCustom: false },
+        { name: 'None', path: '', url: '', isCustom: false },
+      ]);
+    }
+  };
 
   const loadThemeSettings = async () => {
     try {
@@ -218,11 +234,14 @@ export default function ThemeSettingsPage() {
           setUploading(false);
           return;
         }
-        
-        const downloadURL = await uploadThemeBackgroundImage(file, user.uid);
+          const downloadURL = await uploadThemeBackgroundImage(file, user.uid);
         const newSettings = {...settings, backgroundImage: downloadURL};
         setSettings(newSettings);
         updateTheme(newSettings); // Apply theme immediately
+        
+        // Refresh the background images list to include the new upload
+        await loadBackgroundImages();
+        
         setSuccess('Background image uploaded successfully!');
         setUploading(false);
       } catch (error) {
@@ -280,50 +299,70 @@ export default function ThemeSettingsPage() {
                 <div className="background-grid">                  {backgroundImages.map(bg => (
                     <div
                       key={bg.name}
-                      className={`background-option ${settings.backgroundImage === bg.path ? 'selected' : ''}`}
+                      className={`background-option ${settings.backgroundImage === bg.url ? 'selected' : ''}`}
                       onClick={() => {
-                        const newSettings = {...settings, backgroundImage: bg.path};
+                        const newSettings = {...settings, backgroundImage: bg.url};
                         setSettings(newSettings);
                         updateTheme(newSettings); // Apply theme immediately
                       }}
                     >
-                      {bg.path ? (
+                      {bg.url ? (
                         <div className="background-thumbnail">
-                          <img src={bg.path} alt={bg.name} />
+                          <img src={bg.url} alt={bg.name} />
                           <div className="background-overlay"></div>
                         </div>
                       ) : (
                         <div className="no-background">
                           <div className="no-bg-icon">🚫</div>
-                          <span>None</span>
-                        </div>
+                          <span>None</span>                        </div>                      )}
+                      {bg.isCustom ? (                        <button 
+                          className="background-label delete-button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            
+                            // Show confirmation dialog
+                            const confirmed = window.confirm(
+                              'Are you sure you want to delete this background image? This action cannot be undone.'
+                            );
+                            
+                            if (!confirmed) {
+                              return;
+                            }
+                              try {
+                              const currentUser = getAuth(app).currentUser;
+                              if (!currentUser) {
+                                setError('You must be logged in to delete backgrounds.');
+                                return;
+                              }
+                              
+                              await deleteThemeBackgroundImage(bg.url, currentUser.uid);
+                              
+                              // If this was the selected background, reset to default
+                              if (settings.backgroundImage === bg.url) {
+                                const newSettings = {...settings, backgroundImage: '/Blue Wall Background.png'};
+                                setSettings(newSettings);
+                                updateTheme(newSettings);
+                              }
+                              
+                              // Refresh the backgrounds list
+                              await loadBackgroundImages();
+                              setSuccess('Background image deleted successfully!');
+                            } catch (error) {
+                              console.error('Error deleting background image:', error);
+                              setError('Failed to delete background image.');
+                            }
+                          }}
+                          title="Delete custom background"
+                        >
+                          Delete
+                        </button>
+                      ) : (
+                        <span className="background-label">{bg.name}</span>
                       )}
-                      <span className="background-label">{bg.name}</span>
                     </div>
                   ))}
                   
-                  {/* Show custom uploaded image if it exists and is not a predefined one */}
-                  {settings.backgroundImage && 
-                   !backgroundImages.some(bg => bg.path === settings.backgroundImage) && (
-                    <div className="background-option selected custom-bg">
-                      <div className="background-thumbnail">
-                        <img src={settings.backgroundImage} alt="Custom Background" />
-                        <div className="background-overlay"></div>
-                      </div>
-                      <span className="background-label">Custom</span>                      <button 
-                        className="remove-custom-bg"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const newSettings = {...settings, backgroundImage: '/Blue Wall Background.png'};
-                          setSettings(newSettings);
-                          updateTheme(newSettings); // Apply theme immediately
-                        }}
-                        title="Remove custom background"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
+                  {/* Removed the old custom background logic since it's now handled dynamically */}
                 </div>
               </div>
               

@@ -211,19 +211,26 @@ export default function ExpositoryDetailPage() {
           // Add a test to verify the restoration worked
           setTimeout(() => {
             console.log('[ExpositoryDetailPage] POST-RESTORATION CHECK - slideScriptureRefs state:', slideScriptureRefs);
-          }, 1000);
-        } else {
+          }, 1000);        } else {
           // Initialize empty slideScriptureRefs if none in database
           console.log('[ExpositoryDetailPage] No slideScriptureRefs in database, initializing empty');
           console.log('[ExpositoryDetailPage] Available fields in sermon data:', Object.keys(data));
           setSlideScriptureRefs({});
         }
+        
+        // Restore slideTitles from database if available
+        if (data.slideTitles && Array.isArray(data.slideTitles)) {
+          console.log('[ExpositoryDetailPage] Found slideTitles in database:', data.slideTitles);
+          setSlideTitles(data.slideTitles);
+        } else {
+          console.log('[ExpositoryDetailPage] No slideTitles in database, will initialize default titles');
+          // Note: Default titles will be initialized in the slides useEffect
+        }
       } else {
         navigate("/dashboard");
       }
     });
-  }, [id, navigate]);
-  const persistSlides = useCallback(() => {
+  }, [id, navigate]);  const persistSlides = useCallback(() => {
     if (!sermon) {
       console.log('[ExpositoryDetailPage] persistSlides: No sermon, skipping persistence');
       return;
@@ -239,6 +246,7 @@ export default function ExpositoryDetailPage() {
     console.log('  - slideScriptureRefs:', slideScriptureRefs);
     console.log('  - slideScriptureRefs keys:', Object.keys(slideScriptureRefs));
     console.log('  - slideScriptureRefs JSON:', JSON.stringify(slideScriptureRefs, null, 2));
+    console.log('  - slideTitles:', slideTitles);
     
     if (Object.keys(slideScriptureRefs).length > 0) {
       console.log('[ExpositoryDetailPage] persistSlides: Has scripture refs to save');
@@ -249,14 +257,14 @@ export default function ExpositoryDetailPage() {
       console.log('[ExpositoryDetailPage] persistSlides: No scripture refs to save');
     }
     
-    updateSermonNotes(sermon.id.toString(), newNotes, slideScriptureRefs)
+    updateSermonNotes(sermon.id.toString(), newNotes, slideScriptureRefs, slideTitles)
       .then(() => {
-        console.log('[ExpositoryDetailPage] Successfully persisted slides and scriptureRefs');
+        console.log('[ExpositoryDetailPage] Successfully persisted slides, scriptureRefs, and titles');
       })
       .catch((error) => {
         console.error("Failed to save slides", error);
       });
-  }, [sermon, slides, slideScriptureRefs]);
+  }, [sermon, slides, slideScriptureRefs, slideTitles]);
   const debouncedPersistSlides = useCallback(debounce(persistSlides, 500), [persistSlides]);
 
   // Debug slideScriptureRefs changes and auto-persist
@@ -269,12 +277,28 @@ export default function ExpositoryDetailPage() {
       debouncedPersistSlides();
     }
   }, [slideScriptureRefs, sermon, debouncedPersistSlides]);
+  const [isComposing, setIsComposing] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState<string | null>(null);
 
-  const [isComposing, setIsComposing] = useState(false); // NEW
+  // Handle deferred updates when composition ends
+  useEffect(() => {
+    if (!isComposing && pendingUpdate !== null) {
+      // Apply the pending update immediately when composition ends
+      setSlides((prevSlides) => {
+        return prevSlides.map((slide, idx) =>
+          idx === activeSlide ? pendingUpdate : slide
+        );
+      });
+      debouncedPersistSlides();
+      setSaveStatus("");
+      setPendingUpdate(null);
+    }
+  }, [isComposing, pendingUpdate, activeSlide, debouncedPersistSlides]);
+
   function updateSlideContent(newHtml: string) {
     if (isComposing) {
-      // Defer update until composition ends
-      setTimeout(() => updateSlideContent(newHtml), 100);
+      // Store the update to apply when composition ends
+      setPendingUpdate(newHtml);
       return;
     }
     setSlides((prevSlides) => {
@@ -630,22 +654,21 @@ export default function ExpositoryDetailPage() {
 
     setDraggedSlideIndex(null);
     setDragOverIndex(null);
-  }
-  function handleTitleChange(idx: number, value: string) {
+  }  function handleTitleChange(idx: number, value: string) {
     setSlideTitles(titles => titles.map((t, i) => (i === idx ? value : t)));
   }
   function handleTitleBlur(idx: number) {
     setEditingTitleIdx(null);
-    // Optionally: persist titles to backend here
+    // Persist titles to backend
+    debouncedPersistSlides();
   }
   function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>, idx: number) {
     if (e.key === 'Enter') {
       setEditingTitleIdx(null);
-      // Optionally: persist titles to backend here
+      // Persist titles to backend
+      debouncedPersistSlides();
     }
-  }
-
-  // Fix: Always use only text-based refs for each slide, and do not merge with existingRefs (which may contain stale or duplicate refs)
+  }// Fix: Always use only text-based refs for each slide, and do not merge with existingRefs (which may contain stale or duplicate refs)
   useEffect(() => {
     // For each slide, extract all scripture refs from text
     const refsBySlide = slides.map((slideText) => {
@@ -724,13 +747,16 @@ export default function ExpositoryDetailPage() {
 
     // DON'T add to slide text content - just add to slideScriptureRefs
     // This prevents duplication when the useEffect extracts refs from text
-    
-    // Update scripture refs for the current slide immediately
+      // Update scripture refs for the current slide immediately
     const existingRefs = slideScriptureRefs[activeSlide] || [];
-    const updatedRefs = [...existingRefs, ...taggedVerses];
+    const combinedRefs = [...existingRefs, ...taggedVerses];
+    
+    // Sort all refs by their position in the text to maintain left-to-right order
+    const currentSlideText = slides[activeSlide] || '';
+    const updatedRefs = sortReferencesByTextPosition(combinedRefs, currentSlideText);
     
     console.log('[ExpositoryDetailPage] Existing refs for slide', activeSlide, ':', JSON.stringify(existingRefs, null, 2));
-    console.log('[ExpositoryDetailPage] Updated refs for slide', activeSlide, ':', JSON.stringify(updatedRefs, null, 2));    setSlideScriptureRefs(prev => {
+    console.log('[ExpositoryDetailPage] Combined and sorted refs for slide', activeSlide, ':', JSON.stringify(updatedRefs, null, 2));setSlideScriptureRefs(prev => {
       const newState = {
         ...prev,
         [activeSlide]: updatedRefs
@@ -829,6 +855,71 @@ export default function ExpositoryDetailPage() {
     if (activeSlide < 0 || activeSlide >= slides.length) return "";
     return slides[activeSlide] || "";
   }, [slides, activeSlide]);
+  // Utility to sort scripture references by their position in the text
+  const sortReferencesByTextPosition = useCallback((refs: any[], slideText: string): any[] => {
+    // If we don't have slide text, return refs as-is
+    if (!slideText) return refs;
+    
+    console.log('[sortReferencesByTextPosition] Input refs:', refs.map(r => buildScriptureReference(r)));
+    console.log('[sortReferencesByTextPosition] Slide text:', slideText);
+    
+    // Extract all references from the text to get their actual positions in the text
+    const textRefs = extractScriptureReferences(slideText);
+    console.log('[sortReferencesByTextPosition] Text refs:', textRefs.map(r => r.reference));
+    
+    // Create a map of reference strings to their character positions in the text
+    const positionMap = new Map<string, number>();
+    
+    // For each reference found in text, find its actual character position
+    textRefs.forEach((ref) => {
+      const refString = ref.reference;
+      // Find the position of this reference in the original text
+      const position = slideText.indexOf(refString);
+      if (position !== -1) {
+        positionMap.set(refString, position);
+        console.log(`[sortReferencesByTextPosition] Found "${refString}" at position ${position}`);
+      } else {
+        // Try to find by looking for the original pattern in text
+        // Look for book name + chapter pattern
+        const bookPattern = ref.book.replace(/\s+/g, '\\s+');
+        const regex = new RegExp(`\\b${bookPattern}\\s+${ref.chapter}(?::\\d+(?:-\\d+)?)?\\b`, 'i');
+        const match = slideText.match(regex);
+        if (match && match.index !== undefined) {
+          positionMap.set(refString, match.index);
+          console.log(`[sortReferencesByTextPosition] Found "${refString}" via pattern at position ${match.index}`);
+        }
+      }
+    });
+    
+    // Sort the provided refs based on their position in text
+    const sortedRefs = [...refs].sort((a, b) => {
+      const aRef = buildScriptureReference(a);
+      const bRef = buildScriptureReference(b);
+      
+      const aPos = positionMap.get(aRef) ?? Number.MAX_SAFE_INTEGER;
+      const bPos = positionMap.get(bRef) ?? Number.MAX_SAFE_INTEGER;
+      
+      console.log(`[sortReferencesByTextPosition] Comparing "${aRef}" (pos: ${aPos}) vs "${bRef}" (pos: ${bPos})`);
+      
+      // If both have positions in text, sort by position
+      if (aPos !== Number.MAX_SAFE_INTEGER && bPos !== Number.MAX_SAFE_INTEGER) {
+        return aPos - bPos;
+      }
+      
+      // If only one has a position, prioritize it
+      if (aPos !== Number.MAX_SAFE_INTEGER) return -1;
+      if (bPos !== Number.MAX_SAFE_INTEGER) return 1;
+      
+      // If neither has a position (both are tag-added), maintain original order
+      // Or sort by book/chapter/verse
+      if (a.book !== b.book) return a.book.localeCompare(b.book);
+      if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+      return (a.verse || 0) - (b.verse || 0);
+    });
+    
+    console.log('[sortReferencesByTextPosition] Sorted refs:', sortedRefs.map(r => buildScriptureReference(r)));
+    return sortedRefs;
+  }, []);
 
   if (!sermon) {
     return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
@@ -934,8 +1025,13 @@ export default function ExpositoryDetailPage() {
       </div>      {/* Scripture mini cards banner */}
       <div className="expository-scripture-banner">        {(() => {
           const currentSlideRefs = slideScriptureRefs[activeSlide] || [];
+          
+          // Sort references by their position in the text
+          const currentSlideText = slides[activeSlide] || '';
+          const sortedRefs = sortReferencesByTextPosition(currentSlideRefs, currentSlideText);
+          
           // Normalize book name and reference for all refs before merging
-          const normalizedRefs = currentSlideRefs.map(ref => {
+          const normalizedRefs = sortedRefs.map(ref => {
             let bookName = ref.book;
             if (bookName) {
               let localRawBook = bookName.replace(/\s/g, "").toLowerCase();

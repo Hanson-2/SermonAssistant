@@ -66,7 +66,7 @@ export const bookAliases: BookAliasesType = {
   "2tim": "2 Timothy", "2 ti": "2 Timothy",
   titus: "Titus", ti: "Titus",
   philem: "Philemon", phm: "Philemon",
-  heb: "Hebrews", he: "Hebrews",
+  heb: "Hebrews",
   james: "James", ja: "James", jm: "James",
   "1pet": "1 Peter", "1 pe": "1 Peter",
   "2pet": "2 Peter", "2 pe": "2 Peter",

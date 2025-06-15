@@ -119,7 +119,6 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
       setShowTagDropdown(false);
     }
   }, []);
-
   // Handle content changes
   const handleContentChange = useCallback(() => {
     if (isComposing || !editorRef.current) return;
@@ -127,6 +126,7 @@ function BasicRTE({ html, onHtmlChange, onRefsChange, onTagSelect, onComposition
     const currentHtml = editorRef.current.innerHTML;
     if (currentHtml !== lastSetHtml.current) {
       onHtmlChange(currentHtml);
+      lastSetHtml.current = currentHtml;  // <-- keep latest user input
         // Extract scripture references if callback provided
       if (onRefsChange) {
         try {

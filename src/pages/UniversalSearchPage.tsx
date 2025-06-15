@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { deleteVerseById, updateVerseTextById, getUserProfile } from "../services/firebaseService";
+import { deleteVerseById, updateVerseTextById, getUserProfile, getUserTagsForVerse } from "../services/firebaseService";
 import { auth } from "../lib/firebase";
 import "./UniversalSearchPage.scss";
 
@@ -500,13 +500,14 @@ const UniversalSearchPage: React.FC = () => {
       // Adjust destructuring to match the flat structure from the function
       const { results, nbHits, page, nbPages } = response.data as { results: Verse[]; nbHits: number; page: number; nbPages: number; hitsPerPage: number };
 
-      console.log("Received response from Firebase Function:", response.data);
-
-      if (results && results.length > 0) {
-        const sortedResults = sortVerses(results);
+      console.log("Received response from Firebase Function:", response.data);      if (results && results.length > 0) {
+        const sortedResults = sortVerses(results);        // Enrich results with user-specific tags
+        // For now, keeping original tags from search results
+        // TODO: Implement user-specific tag enrichment
+        const enrichedResults = sortedResults;
         setCurrentResults(pageToFetch === 0
-          ? sortedResults
-          : prev => [...prev, ...sortedResults] // Assume backend returns sorted results for each page
+          ? enrichedResults
+          : prev => [...prev, ...enrichedResults] // Assume backend returns sorted results for each page
         );
         // Use directly destructured pagination fields
         setTotalHits(nbHits);
@@ -525,8 +526,7 @@ const UniversalSearchPage: React.FC = () => {
       console.error("Error calling Firebase Function:", e);
     } finally {
       setIsLoading(false);
-    }
-  }, [searchQuery, selectedTranslations, selectedTestaments, selectedGroups, selectedBooks, selectedTags, functions, sortVerses, selectedHitsPerPage]); // Added selectedHitsPerPage
+    }  }, [searchQuery, selectedTranslations, selectedTestaments, selectedGroups, selectedBooks, selectedTags, functions, sortVerses, selectedHitsPerPage]); // Will add enrichVersesWithUserTags back after defining it
 
   const handleBookClick = (book: string) => {
     toggleFilter(setSelectedBooks, book);
@@ -611,8 +611,7 @@ const UniversalSearchPage: React.FC = () => {
       queryLower.includes(book.toLowerCase())
     );
     
-    return matchedBook || null;
-  }, []);
+    return matchedBook || null;  }, []);
 
   return (
     <div className="universal-search-page">
@@ -802,7 +801,7 @@ const UniversalSearchPage: React.FC = () => {
           )}
         </div>
 
-        {isLoading && currentResults.length === 0 && <div className="loading-indicator">Loading results...</div>}        {!isLoading && currentResults.length === 0 && !error && (searchQuery || selectedBooks.length > 0 || selectedTags.length > 0 || selectedTestaments.length > 0 || selectedGroups.length > 0) && <p className="no-results-message">No results found. Try adjusting your search or filters.</p>}
+        {isLoading && currentResults.length === 0 && <div className="loading-indicator">Loading results...</div>}        {!isLoading && currentResults.length === 0 && !error && (searchQuery || selectedBooks.length > 0 || selectedTags.length > 0 || selectedTestaments.length === 0 || selectedGroups.length > 0) && <p className="no-results-message">No results found. Try adjusting your search or filters.</p>}
         {!isLoading && currentResults.length === 0 && !error && !searchQuery && selectedBooks.length === 0 && selectedTags.length === 0 && selectedTestaments.length === 0 && selectedGroups.length === 0 && selectedTranslations.length > 0 && <p className="no-results-message">Enter a search term or select filters to begin.</p>}
           {currentResults.length > 0 && (
           <>            <div className="results-title-with-icon">
