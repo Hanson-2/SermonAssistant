@@ -46,10 +46,12 @@ export default defineConfig({
           // Large utilities
           utils: ['pptxgenjs', 'lodash.debounce']
         },
-        // Ensure consistent file extensions
+        // Ensure consistent file extensions and ES modules
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // Ensure ES module format
+        format: 'es'
       }
     },
     assetsInclude: ['**/*.webmanifest'],
